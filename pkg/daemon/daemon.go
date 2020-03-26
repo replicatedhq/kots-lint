@@ -3,7 +3,7 @@ package daemon
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedcom/saaskit/log"
-	"github.com/replicatedhq/kots-lint/handlers"
+	"github.com/replicatedhq/kots-lint/pkg/handlers"
 	cors "github.com/tommy351/gin-cors"
 )
 

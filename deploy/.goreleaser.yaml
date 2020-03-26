@@ -1,0 +1,38 @@
+project_name: kots-lint
+release:
+  github:
+    owner: replicatedhq
+    name: kots-lint
+builds:
+  - id: kots-lint
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - "386"
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -tags="containers_image_ostree_stub exclude_graphdriver_devicemapper exclude_graphdriver_btrfs containers_image_openpgp"
+    ldflags: -s -w
+      -X github.com/replicatedhq/kots-lint/pkg/version.version={{.Version}}
+      -X github.com/replicatedhq/kots-lint/pkg/version.gitSHA={{.Commit}}
+      -X github.com/replicatedhq/kots-lint/pkg/version.buildTime={{.Date}}
+      -extldflags "-static"
+    binary: kots-lint
+    hooks: {}
+archives:
+  - id: kots-lint
+    builds:
+      - kots-lint
+    format: tar.gz
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - licence*
+      - LICENCE*
+      - license*
+      - LICENSE*
+      - readme*
+      - README*

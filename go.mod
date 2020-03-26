@@ -3,6 +3,7 @@ module github.com/replicatedhq/kots-lint
 go 1.13
 
 require (
+	github.com/Masterminds/semver/v3 v3.0.2
 	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
@@ -22,6 +23,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
+	go.undefinedlabs.com/scopeagent v0.1.12
 	gopkg.in/yaml.v2 v2.2.8
 )
 
