@@ -1,0 +1,11 @@
+.gopath
+*.orig
+.DS_Store
+bundles
+code
+bin/
+spec/
+test-results/
+.vscode
+junit.xml
+.idea
