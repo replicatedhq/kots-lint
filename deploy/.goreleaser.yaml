@@ -14,6 +14,7 @@ builds:
       - "386"
     env:
       - CGO_ENABLED=0
+      - GO111MODULE=on
     flags:
       - -tags="containers_image_ostree_stub exclude_graphdriver_devicemapper exclude_graphdriver_btrfs containers_image_openpgp"
     ldflags: -s -w
