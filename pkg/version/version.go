@@ -1,13 +1,8 @@
 package version
 
 import (
-	"io/ioutil"
-	"net/http"
 	"runtime"
 	"time"
-
-	semver "github.com/Masterminds/semver/v3"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -74,40 +69,4 @@ func getGoInfo() GoInfo {
 		OS:       runtime.GOOS,
 		Arch:     runtime.GOARCH,
 	}
-}
-
-// IsLatestRelease queries github for the latest release in the project repo. If that release has a semver greater
-// than the current release, it returns false and the new latest release semver. Otherwise, it returns true or error
-func IsLatestRelease() (bool, string, error) {
-	fastClient := &http.Client{
-		Timeout: time.Second * 1,
-	}
-	return isLatestRelease(fastClient, "https://kots.io")
-}
-
-func isLatestRelease(client *http.Client, upstream string) (bool, string, error) {
-	resp, err := client.Get(upstream + "/install?version")
-	if err != nil {
-		return false, "", errors.Wrapf(err, "find latest release")
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return false, "", errors.Wrapf(err, "read latest release body")
-	}
-
-	currentSemver, err := semver.NewVersion(Version())
-	if err != nil {
-		return false, "", errors.Wrapf(err, "current release %s does not parse as semver", Version())
-	}
-
-	latestSemver, err := semver.NewVersion(string(body))
-	if err != nil {
-		return false, "", errors.Wrapf(err, "latest release %s does not parse as semver", string(body))
-	}
-
-	if currentSemver.LessThan(latestSemver) {
-		return false, string(body), nil
-	}
-
-	return true, "", nil
 }
