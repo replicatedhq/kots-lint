@@ -346,7 +346,7 @@ spec:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintWithKubevalSchema(test.specFiles, "file://../kubernetes-json-schema")
+			actual, err := lintWithKubevalSchema(test.specFiles, "file://../../kubernetes-json-schema")
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})

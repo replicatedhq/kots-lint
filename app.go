@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/replicatedhq/kots-lint/daemon"
+	"github.com/replicatedhq/kots-lint/pkg/daemon"
 )
 
 func main() {

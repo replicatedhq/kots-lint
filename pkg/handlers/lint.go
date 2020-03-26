@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedcom/saaskit/log"
-	"github.com/replicatedhq/kots-lint/kots"
+	"github.com/replicatedhq/kots-lint/pkg/kots"
 )
 
 // LintReleaseParameters contains parameters to lint a release for an app

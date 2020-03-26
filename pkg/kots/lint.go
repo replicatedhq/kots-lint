@@ -10,7 +10,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
-	"github.com/replicatedhq/kots-lint/util"
+	"github.com/replicatedhq/kots-lint/pkg/util"
 	goyaml "gopkg.in/yaml.v2"
 )
 
