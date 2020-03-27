@@ -1,5 +1,7 @@
 FROM golang:1.13
 
+ENV DEBUG_MODE on
+
 ADD ./pkg/kots/rego /rego
 ADD ./kubernetes-json-schema /kubernetes-json-schema
 ADD . /go/src/github.com/replicatedhq/kots-lint

@@ -1,6 +1,8 @@
 package daemon
 
 import (
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
@@ -9,6 +11,11 @@ import (
 
 // Run is the main entry point of the kots lint.
 func Run() {
+	debugMode := os.Getenv("DEBUG_MODE")
+	if debugMode != "on" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	r := gin.New()
 
 	r.RedirectTrailingSlash = false

@@ -1,7 +1,5 @@
 FROM golang:1.13
 
-ENV GIN_MODE release
-
 ADD ./pkg/kots/rego /rego
 ADD ./kubernetes-json-schema /kubernetes-json-schema
 ADD . /go/src/github.com/replicatedhq/kots-lint
