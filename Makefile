@@ -1,3 +1,5 @@
+export GO111MODULE=on
+
 PROJECT_NAME ?= kots-lint
 VERSION_PACKAGE = github.com/replicatedhq/kots-lint/pkg/version
 VERSION ?=`git describe --tags --dirty`
@@ -54,8 +56,3 @@ test:
 dev:
 	docker build -f Dockerfile.dev -t ${PROJECT_NAME}-dev .
 	docker run -p 8082:8082 ${PROJECT_NAME}-dev
-
-.PHONY: prod
-prod:
-	docker build -t ${PROJECT_NAME} .
-	docker run -p 8082:8082 ${PROJECT_NAME}
