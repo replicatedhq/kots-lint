@@ -53,7 +53,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-    needs: build-kots-lint
+    needs: goreleaser
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v2
@@ -66,7 +66,7 @@ jobs:
 
   flyio:
     runs-on: ubuntu-latest
-    needs: build-kots-lint
+    needs: docker
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v2
