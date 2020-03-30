@@ -31,14 +31,6 @@ define LDFLAGS
 "
 endef
 
-.PHONY: clean
-clean:
-	rm -f ./bin/kots-lint
-	
-.PHONY: run
-run:
-	./bin/kots-lint
-
 .PHONY: build
 build:
 	mkdir -p bin
