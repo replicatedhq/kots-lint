@@ -1,12 +1,17 @@
-FROM golang:1.13
+FROM golang:1.13 AS builder
 
-ADD ./pkg/kots/rego /rego
-ADD ./kubernetes-json-schema /kubernetes-json-schema
 ADD . /go/src/github.com/replicatedhq/kots-lint
 WORKDIR /go/src/github.com/replicatedhq/kots-lint
 
-EXPOSE 8082
-
 RUN make build
 
-CMD ["make", "run"]
+
+FROM debian:stretch-slim
+
+ADD ./pkg/kots/rego /rego
+ADD ./kubernetes-json-schema /kubernetes-json-schema
+COPY --from=builder /go/src/github.com/replicatedhq/kots-lint/bin /app
+
+EXPOSE 8082
+
+CMD ["/app/kots-lint"]
