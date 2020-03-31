@@ -14,6 +14,7 @@ require (
 	github.com/johntdyer/slack-go v0.0.0-20180213144715-95fac1160b22 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mitchellh/mapstructure v1.2.2
+	github.com/newrelic/go-agent v2.13.0+incompatible
 	github.com/open-policy-agent/opa v0.18.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20180719175845-249c0d6c71b2
