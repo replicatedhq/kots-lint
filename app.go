@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/replicatedcom/saaskit/log"
-	"github.com/replicatedhq/kots-lint/newrelic"
 	"github.com/replicatedhq/kots-lint/pkg/daemon"
+	"github.com/replicatedhq/kots-lint/pkg/newrelic"
 )
 
 func main() {
