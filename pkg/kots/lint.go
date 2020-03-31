@@ -40,6 +40,8 @@ type LintExpressionItemLinePosition struct {
 	Line int `json:"line"`
 }
 
+var regoQuery *rego.PreparedEvalQuery
+
 func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	unnestedFiles := specFiles.unnest()
 
@@ -97,16 +99,21 @@ func lintWithOPAPolicy(specFiles SpecFiles, regoPath string) ([]LintExpression, 
 	}
 
 	ctx := context.Background()
-	query, err := rego.New(
-		rego.Query("data.kots.spec.lint"),
-		rego.Module("kots-spec-default.rego", string(regoContent)),
-	).PrepareForEval(ctx)
 
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to prepare query for eval")
+	if regoQuery == nil {
+		query, err := rego.New(
+			rego.Query("data.kots.spec.lint"),
+			rego.Module("kots-spec-default.rego", string(regoContent)),
+		).PrepareForEval(ctx)
+
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to prepare query for eval")
+		}
+
+		regoQuery = &query
 	}
 
-	results, err := query.Eval(ctx, rego.EvalInput(separatedSpecFiles))
+	results, err := regoQuery.Eval(ctx, rego.EvalInput(separatedSpecFiles))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to evaluate query")
 	}
