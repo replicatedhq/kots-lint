@@ -9,13 +9,13 @@ import (
 
 	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/daemon"
-	"github.com/replicatedhq/kots-lint/pkg/newrelic"
+	"github.com/replicatedhq/kots-lint/pkg/instrument"
 )
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	newrelicApp, err := newrelic.GetNewRelicApp()
+	newrelicApp, err := instrument.GetNewRelicApp()
 	if err != nil {
 		log.Errorf("Failed to configure newrelic: %v", err)
 		os.Exit(1)

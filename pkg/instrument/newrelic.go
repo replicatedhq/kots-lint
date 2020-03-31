@@ -1,4 +1,4 @@
-package newrelic
+package instrument
 
 import (
 	"os"
