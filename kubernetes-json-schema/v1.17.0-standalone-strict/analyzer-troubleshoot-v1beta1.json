@@ -222,7 +222,6 @@
                 "type": "object",
                 "required": [
                   "name",
-                  "namespace",
                   "outcomes"
                 ],
                 "properties": {
@@ -233,9 +232,6 @@
                     "type": "boolean"
                   },
                   "name": {
-                    "type": "string"
-                  },
-                  "namespace": {
                     "type": "string"
                   },
                   "outcomes": {
@@ -426,7 +422,6 @@
                 "type": "object",
                 "required": [
                   "ingressName",
-                  "namespace",
                   "outcomes"
                 ],
                 "properties": {
@@ -437,9 +432,6 @@
                     "type": "boolean"
                   },
                   "ingressName": {
-                    "type": "string"
-                  },
-                  "namespace": {
                     "type": "string"
                   },
                   "outcomes": {
@@ -590,7 +582,6 @@
               "secret": {
                 "type": "object",
                 "required": [
-                  "namespace",
                   "outcomes",
                   "secretName"
                 ],
@@ -602,9 +593,6 @@
                     "type": "boolean"
                   },
                   "key": {
-                    "type": "string"
-                  },
-                  "namespace": {
                     "type": "string"
                   },
                   "outcomes": {
@@ -666,7 +654,6 @@
                 "type": "object",
                 "required": [
                   "name",
-                  "namespace",
                   "outcomes"
                 ],
                 "properties": {
@@ -677,9 +664,6 @@
                     "type": "boolean"
                   },
                   "name": {
-                    "type": "string"
-                  },
-                  "namespace": {
                     "type": "string"
                   },
                   "outcomes": {
