@@ -4,19 +4,25 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	newrelic "github.com/newrelic/go-agent"
+	"github.com/newrelic/go-agent/_integrations/nrgin/v1"
 	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
 	cors "github.com/tommy351/gin-cors"
 )
 
 // Run is the main entry point of the kots lint.
-func Run() {
+func Run(newrelicApp newrelic.Application) {
 	debugMode := os.Getenv("DEBUG_MODE")
 	if debugMode != "on" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	r := gin.New()
+
+	if newrelicApp != nil {
+		r.Use(nrgin.Middleware(newrelicApp))
+	}
 
 	r.RedirectTrailingSlash = false
 	r.Use(
