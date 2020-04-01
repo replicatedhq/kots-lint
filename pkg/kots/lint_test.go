@@ -476,9 +476,11 @@ data:
 		},
 	}
 
+	InitOPALinting("./rego/kots-spec-default.rego")
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintWithOPAPolicy(test.specFiles, "./rego/kots-spec-default.rego")
+			actual, err := lintWithOPA(test.specFiles)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})

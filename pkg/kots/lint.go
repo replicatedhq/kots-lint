@@ -42,6 +42,28 @@ type LintExpressionItemLinePosition struct {
 
 var regoQuery *rego.PreparedEvalQuery
 
+func InitOPALinting(regoPath string) error {
+	regoContent, err := ioutil.ReadFile(regoPath)
+	if err != nil {
+		return errors.Wrap(err, "failed to read rego file")
+	}
+
+	ctx := context.Background()
+
+	query, err := rego.New(
+		rego.Query("data.kots.spec.lint"),
+		rego.Module("kots-spec-default.rego", string(regoContent)),
+	).PrepareForEval(ctx)
+
+	if err != nil {
+		errors.Wrap(err, "failed to prepare query for eval")
+	}
+
+	regoQuery = &query
+
+	return nil
+}
+
 func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	unnestedFiles := specFiles.unnest()
 
@@ -81,11 +103,9 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	return allLintExpressions, true, nil
 }
 
+// InitOPALinting needs to be called first with a rego policy
+// in order for this function to run successfully
 func lintWithOPA(specFiles SpecFiles) ([]LintExpression, error) {
-	return lintWithOPAPolicy(specFiles, "/rego/kots-spec-default.rego")
-}
-
-func lintWithOPAPolicy(specFiles SpecFiles, regoPath string) ([]LintExpression, error) {
 	lintExpressions := []LintExpression{}
 
 	separatedSpecFiles, err := specFiles.separate()
@@ -93,25 +113,7 @@ func lintWithOPAPolicy(specFiles SpecFiles, regoPath string) ([]LintExpression, 
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	regoContent, err := ioutil.ReadFile(regoPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read rego file")
-	}
-
 	ctx := context.Background()
-
-	if regoQuery == nil {
-		query, err := rego.New(
-			rego.Query("data.kots.spec.lint"),
-			rego.Module("kots-spec-default.rego", string(regoContent)),
-		).PrepareForEval(ctx)
-
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to prepare query for eval")
-		}
-
-		regoQuery = &query
-	}
 
 	results, err := regoQuery.Eval(ctx, rego.EvalInput(separatedSpecFiles))
 	if err != nil {

@@ -55,20 +55,20 @@ func (r LintReleaseResponse) JSON(c *gin.Context) {
 func LintRelease(c *gin.Context) {
 	var request LintReleaseParameters
 	if err := request.Bind(c); err != nil {
-		log.Infof("Failed to bind to lint release parameters: %v", err)
+		log.Infof("failed to bind to lint release parameters: %v", err)
 		return
 	}
 
 	specFiles := []kots.SpecFile{}
 	if err := json.Unmarshal([]byte(request.Body.Spec), &specFiles); err != nil {
-		log.Errorf("Failed to unmarshal spec: %v", err)
+		log.Errorf("failed to unmarshal spec: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	lintExpressions, isComplete, err := kots.LintSpecFiles(specFiles)
 	if err != nil {
-		log.Errorf("Failed to lint app spec %v", err)
+		log.Errorf("failed to lint app spec %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
