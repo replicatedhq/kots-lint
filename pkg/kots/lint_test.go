@@ -342,6 +342,27 @@ spec:
 			},
 			expect: []LintExpression{},
 		},
+		{
+			name: "kubeval no matching schema",
+			specFiles: SpecFiles{
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: nomatchingschema.io/v1
+kind: NoMatchingKind
+metadata:
+  name: no-matching-metadata`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "kubeval-schema-not-found",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "We currently have no matching schema to lint this type of file",
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
