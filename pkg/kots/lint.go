@@ -229,7 +229,7 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 		if err != nil {
 			var lintExpression LintExpression
 
-			if strings.Contains(err.Error(), "Failed initalizing schema") {
+			if strings.Contains(err.Error(), "Failed initalizing schema") && strings.Contains(err.Error(), "no such file or directory") {
 				lintExpression = LintExpression{
 					Rule:    "kubeval-schema-not-found",
 					Type:    "warn",
