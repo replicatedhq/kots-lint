@@ -1,6 +1,3 @@
-kots-lint
-==========
-
 ## kots-lint is a service used for linting Replicated [KOTS](https://kots.io) yaml files.
 
 ### Linting with this service includes:
