@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
+	"strings"
 
 	"github.com/instrumenta/kubeval/kubeval"
 	"github.com/mitchellh/mapstructure"
@@ -226,14 +227,22 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 		kubevalConfig.FileName = renderedFile.Path
 		results, err := kubeval.Validate([]byte(renderedFile.Content), &kubevalConfig)
 		if err != nil {
-			// TODO add the kotskinds and other specs that we can here
-			// but we can't ever guarantee to have all custom resources
+			var lintExpression LintExpression
 
-			lintExpression := LintExpression{
-				Rule:    "kubeval-error",
-				Type:    "error",
-				Path:    renderedFile.Path,
-				Message: err.Error(),
+			if strings.Contains(err.Error(), "Failed initalizing schema") && strings.Contains(err.Error(), "no such file or directory") {
+				lintExpression = LintExpression{
+					Rule:    "kubeval-schema-not-found",
+					Type:    "warn",
+					Path:    renderedFile.Path,
+					Message: "We currently have no matching schema to lint this type of file",
+				}
+			} else {
+				lintExpression = LintExpression{
+					Rule:    "kubeval-error",
+					Type:    "error",
+					Path:    renderedFile.Path,
+					Message: err.Error(),
+				}
 			}
 
 			lintExpressions = append(lintExpressions, lintExpression)
