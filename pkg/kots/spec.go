@@ -1,6 +1,7 @@
 package kots
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -41,9 +42,9 @@ func (f SpecFile) isYAML() bool {
 }
 
 func (f SpecFile) hasContent() bool {
-	lines := strings.Split(f.Content, "\n")
-	for _, line := range lines {
-		if util.IsLineEmpty(line) {
+	scanner := bufio.NewScanner(strings.NewReader(f.Content))
+	for scanner.Scan() {
+		if util.IsLineEmpty(scanner.Text()) {
 			continue
 		}
 		return true

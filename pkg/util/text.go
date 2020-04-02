@@ -208,7 +208,7 @@ func GetLineNumberForDoc(content string, docIndex int) (int, error) {
 }
 
 func IsLineEmpty(line string) bool {
-	trimmedLine := strings.TrimLeft(line, "\t ")
+	trimmedLine := strings.TrimSpace(line)
 	isComment := strings.HasPrefix(trimmedLine, "#")
 	return trimmedLine == "" || isComment
 }
