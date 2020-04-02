@@ -465,3 +465,110 @@ metadata:
 		})
 	}
 }
+
+func Test_isLineEmpty(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want bool
+	}{
+		{
+			name: "basic empty line",
+			line: "",
+			want: true,
+		},
+		{
+			name: "comment without spaces",
+			line: "# comment",
+			want: true,
+		},
+		{
+			name: "comment with spaces",
+			line: "    # comment",
+			want: true,
+		},
+		{
+			name: "comment with tabs",
+			line: "			# comment",
+			want: true,
+		},
+		{
+			name: "comment with tabs and spaces",
+			line: "    			# comment",
+			want: true,
+		},
+		{
+			name: "tabs only",
+			line: "				",
+			want: true,
+		},
+		{
+			name: "spaces only",
+			line: "        ",
+			want: true,
+		},
+		{
+			name: "spaces and tabs only",
+			line: "       					",
+			want: true,
+		},
+		{
+			name: "basic non-empty line",
+			line: "key: value",
+			want: false,
+		},
+		{
+			name: "non-empty line with tabs and spaces",
+			line: "    				key: value",
+			want: false,
+		},
+		{
+			name: "non-empty line with comments",
+			line: "    				key: value # comment",
+			want: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			isEmpty := IsLineEmpty(test.line)
+			assert.Equal(t, isEmpty, test.want)
+		})
+	}
+}
+
+func Test_getLineIndentation(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want string
+	}{
+		{
+			name: "basic empty line",
+			line: "",
+			want: "",
+		},
+		{
+			name: "indentation with spaces only",
+			line: "    key: value",
+			want: "    ",
+		},
+		{
+			name: "indentation with tabs only",
+			line: "			- key: value",
+			want: "			",
+		},
+		{
+			name: "indentation with tabs and spaces",
+			line: "    			- key: value",
+			want: "    			",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			indentation := GetLineIndentation(test.line)
+			assert.Equal(t, indentation, test.want)
+		})
+	}
+}

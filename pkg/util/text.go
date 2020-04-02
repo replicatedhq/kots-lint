@@ -52,13 +52,9 @@ func GetLineNumberFromMatch(content string, match string, docIndex int) (int, er
 
 	for index := docLineNum - 1; index < len(lines); index++ {
 		line := lines[index]
-
-		trimmedLine := strings.TrimLeft(line, "\t ")
-		isComment := strings.HasPrefix(trimmedLine, "#")
-		if trimmedLine == "" || isComment {
+		if IsLineEmpty(line) {
 			continue
 		}
-
 		unquotedLine := strings.Replace(line, "\"", "", -1)
 		unquotedLine = strings.Replace(unquotedLine, "'", "", -1)
 		if strings.Contains(line, match) || strings.Contains(unquotedLine, match) {
@@ -105,10 +101,7 @@ func GetLineNumberFromYamlPath(content string, path string, docIndex int) (int, 
 
 	for index := docLineNum - 1; index < len(lines); index++ {
 		line := lines[index]
-
-		trimmedLine := strings.TrimLeft(line, "\t ")
-		isComment := strings.HasPrefix(trimmedLine, "#")
-		if trimmedLine == "" || isComment {
+		if IsLineEmpty(line) {
 			continue
 		}
 
@@ -161,21 +154,12 @@ func GetLineNumberFromYamlPath(content string, path string, docIndex int) (int, 
 		}
 
 		// find next indentation starting from next line
-		indentation = ""
 		for i := index + 1; i < len(lines); i++ {
 			nextLine := lines[i]
-			trimmedLine := strings.TrimLeft(nextLine, "\t ")
-			isComment := strings.HasPrefix(trimmedLine, "#")
-			if trimmedLine == "" || isComment {
+			if IsLineEmpty(nextLine) {
 				continue
 			}
-			runes := []rune(nextLine)
-			for _, r := range runes {
-				if !unicode.IsSpace(r) {
-					break
-				}
-				indentation += string(r)
-			}
+			indentation = GetLineIndentation(nextLine)
 			break
 		}
 
@@ -200,9 +184,7 @@ func GetLineNumberForDoc(content string, docIndex int) (int, error) {
 	lines := strings.Split(content, "\n")
 
 	for index, line := range lines {
-		trimmedLine := strings.TrimLeft(line, "\t ")
-		isComment := strings.HasPrefix(trimmedLine, "#")
-		if trimmedLine == "" || isComment {
+		if IsLineEmpty(line) {
 			continue
 		}
 
@@ -223,4 +205,22 @@ func GetLineNumberForDoc(content string, docIndex int) (int, error) {
 	}
 
 	return -1, nil
+}
+
+func IsLineEmpty(line string) bool {
+	trimmedLine := strings.TrimLeft(line, "\t ")
+	isComment := strings.HasPrefix(trimmedLine, "#")
+	return trimmedLine == "" || isComment
+}
+
+func GetLineIndentation(line string) string {
+	indentation := ""
+	runes := []rune(line)
+	for _, r := range runes {
+		if !unicode.IsSpace(r) {
+			break
+		}
+		indentation += string(r)
+	}
+	return indentation
 }
