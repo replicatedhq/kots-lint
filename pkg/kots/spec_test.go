@@ -7,6 +7,65 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_fileHasContent(t *testing.T) {
+	tests := []struct {
+		name string
+		file SpecFile
+		want bool
+	}{
+		{
+			name: "basic empty file",
+			file: SpecFile{
+				Name:    "a.yaml",
+				Path:    "a.yaml",
+				Content: "",
+			},
+			want: false,
+		},
+		{
+			name: "basic with content",
+			file: SpecFile{
+				Name:    "a.yaml",
+				Path:    "a.yaml",
+				Content: "key: value",
+			},
+			want: true,
+		},
+		{
+			name: "only spaces and comments",
+			file: SpecFile{
+				Name: "a.yaml",
+				Path: "a.yaml",
+				Content: `# comment
+    
+# another comment`,
+			},
+			want: false,
+		},
+		{
+			name: "empty but multi doc",
+			file: SpecFile{
+				Name: "a.yaml",
+				Path: "a.yaml",
+				Content: `# comment
+    
+# another comment
+    
+---
+    
+# another comment`,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hasContent := tt.file.hasContent()
+			assert.Equal(t, hasContent, tt.want)
+		})
+	}
+}
+
 func Test_unnestSpecFiles(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -124,6 +183,31 @@ key1: value1
 ---
 key2: value2`,
 				},
+				{
+					Name:    "e.yaml",
+					Path:    "e.yaml",
+					Content: `---`,
+				},
+				{
+					Name: "f.yaml",
+					Path: "f.yaml",
+					Content: `# comment
+    
+---
+# another comment`,
+				},
+				{
+					Name: "g.yaml",
+					Path: "g.yaml",
+					Content: `# comment
+    
+# another comment`,
+				},
+				{
+					Name:    "h.yaml",
+					Path:    "h.yaml",
+					Content: "",
+				},
 			},
 			want: SpecFiles{
 				{
@@ -173,6 +257,32 @@ key2: value2`,
 					Path:     "d.yaml",
 					Content:  "key2: value2\n",
 					DocIndex: 2,
+				},
+				{
+					Name:     "e.yaml",
+					Path:     "e.yaml",
+					Content:  "null\n",
+					DocIndex: 0,
+				},
+				{
+					Name:     "f.yaml",
+					Path:     "f.yaml",
+					Content:  "null\n",
+					DocIndex: 0,
+				},
+				{
+					Name: "g.yaml",
+					Path: "g.yaml",
+					Content: `# comment
+    
+# another comment`,
+					DocIndex: 0,
+				},
+				{
+					Name:     "h.yaml",
+					Path:     "h.yaml",
+					Content:  "",
+					DocIndex: 0,
 				},
 			},
 		},

@@ -1,12 +1,14 @@
 package kots
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/replicatedhq/kots-lint/pkg/util"
 	goyaml "gopkg.in/yaml.v2"
 )
 
@@ -39,6 +41,17 @@ func (f SpecFile) isYAML() bool {
 	return strings.HasSuffix(f.Path, ".yaml") || strings.HasSuffix(f.Path, ".yml")
 }
 
+func (f SpecFile) hasContent() bool {
+	scanner := bufio.NewScanner(strings.NewReader(f.Content))
+	for scanner.Scan() {
+		if util.IsLineEmpty(scanner.Text()) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
 func (files SpecFiles) unnest() SpecFiles {
 	unnestedFiles := SpecFiles{}
 	for _, file := range files {
@@ -64,7 +77,7 @@ func (files SpecFiles) separate() (SpecFiles, error) {
 	separatedSpecFiles := SpecFiles{}
 
 	for _, file := range files {
-		if !file.isYAML() {
+		if !file.isYAML() || !file.hasContent() {
 			separatedSpecFiles = append(separatedSpecFiles, file)
 			continue
 		}
