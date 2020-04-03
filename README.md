@@ -10,8 +10,10 @@
 
 The project can be run locally with
 ```shell
-$ make dev
+$ skaffold dev
 ```
+
+Once skaffold runs successfully, the service can be reached at http://localhost:30082/v1/lint
 
 ## Run tests
 

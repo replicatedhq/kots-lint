@@ -1,0 +1,14 @@
+apiVersion: skaffold/v1beta11
+kind: Config
+build:
+  local:
+    useBuildkit: true
+  artifacts:
+    - image: kots-lint
+      docker:
+        dockerfile: Dockerfile.skaffold
+deploy:
+  kubectl:
+    manifests:
+      - dev/deployment.yaml
+      - dev/nodeport.yaml

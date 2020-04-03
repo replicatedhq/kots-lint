@@ -51,8 +51,3 @@ build:
 .PHONY: test
 test:
 	go test ./pkg/... -tags "$(BUILDTAGS)"
-
-.PHONY: dev
-dev:
-	docker build -f Dockerfile.dev -t ${PROJECT_NAME}-dev .
-	docker run -p 8082:8082 ${PROJECT_NAME}-dev
