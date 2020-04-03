@@ -15,6 +15,17 @@ $ skaffold dev
 
 Once skaffold runs successfully, the service can be reached at http://localhost:30082/v1/lint
 
+## Example
+
+To run the example, make sure skaffold is running first by
+```shell
+$ skaffold dev
+```
+Then run the example with
+```shell
+$ make example
+```
+
 ## Run tests
 
 Tests can be run manually with
