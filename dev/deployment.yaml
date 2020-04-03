@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kots-lint
+spec:
+  selector:
+    matchLabels:
+      app: kots-lint
+  template:
+    metadata:
+      labels:
+        app: kots-lint
+    spec:
+      containers:
+        - name: kots-lint
+          image: kots-lint
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: kots-lint
+              containerPort: 8082
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: kots-lint
+              scheme: HTTP
