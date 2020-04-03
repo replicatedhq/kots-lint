@@ -51,3 +51,7 @@ build:
 .PHONY: test
 test:
 	go test ./pkg/... -tags "$(BUILDTAGS)"
+
+.PHONY: example
+example:
+	go run -tags "$(BUILDTAGS)" ./example/main.go
