@@ -1,0 +1,20 @@
+# this is a comment
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: "faker"
+
+---
+# this is another comment
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: 2
+  namespace: example-namespace
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: "faker"
