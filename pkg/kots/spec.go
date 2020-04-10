@@ -1,6 +1,7 @@
 package kots
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -116,4 +117,41 @@ func (files SpecFiles) separate() (SpecFiles, error) {
 	}
 
 	return separatedSpecFiles, nil
+}
+
+func SpecFilesFromTarFile(tarFile []byte) (SpecFiles, error) {
+	specFiles := SpecFiles{}
+
+	strReader := bytes.NewReader(tarFile)
+	tr := tar.NewReader(strReader)
+
+	for {
+		header, err := tr.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		var data bytes.Buffer
+		_, err = io.Copy(&data, tr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get data for %s", header.Name)
+		}
+
+		specFile := SpecFile{
+			Name:    header.FileInfo().Name(),
+			Path:    header.Name,
+			Content: data.String(),
+		}
+
+		specFiles = append(specFiles, specFile)
+	}
+
+	return specFiles, nil
 }
