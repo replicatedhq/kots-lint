@@ -6,6 +6,16 @@
  - Validating with Kubeval
  - Utilizing [OPA](https://github.com/open-policy-agent/opa) to lint for best practices and some special errors and warnings
 
+## Using the production API
+
+```shell
+$ tar cvf - path/to/folder | curl -XPOST --data-binary @- https://lint.replicated.com/v1/lint
+```
+To lint our example
+```shell
+$ tar cvf - example/files-to-lint | curl -XPOST --data-binary @- https://lint.replicated.com/v1/lint
+```
+
 ## Development
 
 The project can be run locally with
@@ -14,17 +24,6 @@ $ skaffold dev
 ```
 
 Once skaffold runs successfully, the service can be reached at http://localhost:30082/v1/lint
-
-## Example
-
-To run the example, make sure skaffold is running first by
-```shell
-$ skaffold dev
-```
-Then run the example with
-```shell
-$ make example
-```
 
 ## Run tests
 
