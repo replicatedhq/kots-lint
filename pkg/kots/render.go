@@ -76,7 +76,7 @@ func fixUpYAML(inputContent []byte) ([]byte, error) {
 	return inputContent, nil
 }
 
-func findAndValidateConfig(files SpecFiles) (*kotsv1beta1.Config, string, error) {
+func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, error) {
 	var config *kotsv1beta1.Config
 	var path string
 

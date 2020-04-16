@@ -196,7 +196,7 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 	}
 
 	// check if config is valid
-	config, path, err := findAndValidateConfig(separatedSpecFiles)
+	config, path, err := separatedSpecFiles.findAndValidateConfig()
 	if err != nil {
 		lintExpression := LintExpression{
 			Rule:    "config-is-invalid",
