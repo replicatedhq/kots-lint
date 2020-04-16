@@ -53,9 +53,9 @@ func (f SpecFile) hasContent() bool {
 	return false
 }
 
-func (files SpecFiles) unnest() SpecFiles {
+func (fs SpecFiles) unnest() SpecFiles {
 	unnestedFiles := SpecFiles{}
-	for _, file := range files {
+	for _, file := range fs {
 		if len(file.Children) > 0 {
 			unnestedFiles = append(unnestedFiles, file.Children.unnest()...)
 		} else {
@@ -65,8 +65,8 @@ func (files SpecFiles) unnest() SpecFiles {
 	return unnestedFiles
 }
 
-func (files SpecFiles) getFile(path string) (*SpecFile, error) {
-	for _, file := range files {
+func (fs SpecFiles) getFile(path string) (*SpecFile, error) {
+	for _, file := range fs {
 		if file.Path == path {
 			return &file, nil
 		}
@@ -74,10 +74,10 @@ func (files SpecFiles) getFile(path string) (*SpecFile, error) {
 	return nil, fmt.Errorf("spec file not found for path %s", path)
 }
 
-func (files SpecFiles) separate() (SpecFiles, error) {
+func (fs SpecFiles) separate() (SpecFiles, error) {
 	separatedSpecFiles := SpecFiles{}
 
-	for _, file := range files {
+	for _, file := range fs {
 		if !file.isYAML() || !file.hasContent() {
 			separatedSpecFiles = append(separatedSpecFiles, file)
 			continue
