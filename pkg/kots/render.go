@@ -117,7 +117,7 @@ func parseRenderTemplateError(value string) RenderTemplateError {
 	}
 
 	lineAndMsg := parts[len(parts)-1]
-	lineAndMsgParts := strings.Split(lineAndMsg, ":")
+	lineAndMsgParts := strings.SplitN(lineAndMsg, ":", 2)
 
 	if len(lineAndMsgParts) == 1 {
 		return renderTemplateError
