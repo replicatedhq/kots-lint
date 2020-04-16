@@ -3,6 +3,7 @@ package kots
 import (
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -132,18 +133,18 @@ metadata:
   name: config-sample
 spec:
   groups:
-    - name: example_settings
-      title: My Example Config
-      description: Configuration to serve as an example for creating your own
-      items:
-        - name: a_templated_text
-          title: a text field with a value provided by a template function
-          type: text
-          value: a templated value
-        - name: try_to_template_me
-          title: try to template me
-          type: text
-          value: '{{repl ConfigOption "a_templated_text"}}'
+  - description: Configuration to serve as an example for creating your own
+    items:
+    - name: a_templated_text
+      title: a text field with a value provided by a template function
+      type: text
+      value: a templated value
+    - name: try_to_template_me
+      title: try to template me
+      type: text
+      value: 'a templated value'
+    name: example_settings
+    title: My Example Config
 `,
 				},
 				{
@@ -152,14 +153,14 @@ spec:
 					Content: `apiVersion: app.k8s.io/v1beta1
 kind: Application
 metadata:
-  name: "example-app"
   labels:
-    app.kubernetes.io/name: "example-app"
+    app.kubernetes.io/name: example-app
+  name: example-app
 spec:
   descriptor:
     links:
-      - description: '{{repl ConfigOption "a_templated_text"}}'
-        url: "http://example-nginx"
+    - description: 'a templated value'
+      url: http://example-nginx
 `,
 				},
 				{
@@ -170,11 +171,11 @@ kind: Application
 metadata:
   name: app-slug
 spec:
-  title: App Name
   icon: icon-url
+  releaseNotes: 'a templated value'
   statusInformers:
-    - deployment/example-nginx
-  releaseNotes: '{{repl ConfigOption "a_templated_text"}}'
+  - deployment/example-nginx
+  title: App Name
 `,
 				},
 				{
@@ -236,10 +237,85 @@ spec:
 			require.NoError(t, err)
 			assert.Equal(t, path, tt.configPath)
 
-			renderedFiles, err := tt.files.render(config)
+			renderedFiles := SpecFiles{}
+			for _, file := range tt.files {
+				renderedContent, err := file.renderContent(config)
+				require.NoError(t, err)
+				file.Content = string(renderedContent)
+				renderedFiles = append(renderedFiles, file)
+			}
 
 			require.NoError(t, err)
 			assert.ElementsMatch(t, renderedFiles, tt.want)
+		})
+	}
+}
+
+func Test_renderInvalidTemplate(t *testing.T) {
+	tests := []struct {
+		name string
+		file SpecFile
+		want RenderTemplateError
+	}{
+		{
+			name: "undefined function",
+			file: SpecFile{
+				Name: "undefined-function.yaml",
+				Path: "undefined-function.yaml",
+				Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: fake
+      title: Fake
+      items:
+        - name: hash_func
+          type: text
+          value: '{{repl print "whatever" | sha256 }}'
+`,
+			},
+			want: RenderTemplateError{
+				message: `function "sha256" not defined`,
+				line:    10,
+			},
+		},
+		{
+			name: "unterminated quotes",
+			file: SpecFile{
+				Name: "unterminated-quotes.yaml",
+				Path: "unterminated-quotes.yaml",
+				Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: fake
+      title: Fake
+      items:
+        - name: my_func
+          type: text
+          default: my default value
+          value: '{{repl print "whatever }}'
+`,
+			},
+			want: RenderTemplateError{
+				message: `unterminated quoted string`,
+				line:    11,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := tt.file.renderContent(nil)
+
+			renderTemplateError, ok := errors.Cause(err).(RenderTemplateError)
+			assert.True(t, ok)
+
+			assert.Equal(t, renderTemplateError.Error(), tt.want.Error())
+			assert.Equal(t, renderTemplateError.Line(), tt.want.Line())
 		})
 	}
 }

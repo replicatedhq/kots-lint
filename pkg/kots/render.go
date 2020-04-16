@@ -15,8 +15,8 @@ import (
 )
 
 type RenderTemplateError struct {
-	line    int
 	message string
+	line    int
 }
 
 func (r RenderTemplateError) Error() string {
