@@ -90,8 +90,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return opaLintExpressions, false, nil
 	}
 
-	// we don't use filteredFiles here because helm chart archives (tgz files) are required for rendering
-	kubevalLintExpressions, err := lintWithKubeval(unnestedFiles)
+	kubevalLintExpressions, err := lintWithKubeval(filteredFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
@@ -197,7 +196,7 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 	}
 
 	// check if config is valid
-	config, path, err := separatedSpecFiles.findAndValidateConfig()
+	config, path, err := findAndValidateConfig(separatedSpecFiles)
 	if err != nil {
 		lintExpression := LintExpression{
 			Rule:    "config-is-invalid",
@@ -209,9 +208,37 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 	}
 
 	// get the rendered version of the spec files before linting
-	renderedFiles, err := separatedSpecFiles.render(config)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to render spec files")
+	renderedFiles := SpecFiles{}
+	for _, file := range separatedSpecFiles {
+		renderedContent, err := file.renderContent(config)
+		if err == nil {
+			file.Content = string(renderedContent)
+			renderedFiles = append(renderedFiles, file)
+			continue
+		}
+		// check if the error is coming from kots RenderTemplate function
+		if err, ok := errors.Cause(err).(RenderTemplateError); ok {
+			lintExpression := LintExpression{
+				Rule:    "unable-to-render",
+				Type:    "error",
+				Path:    file.Path,
+				Message: err.Error(),
+			}
+
+			if err.Line() != -1 {
+				lintExpression.Positions = []LintExpressionItemPosition{
+					{
+						Start: LintExpressionItemLinePosition{
+							Line: err.Line(),
+						},
+					},
+				}
+			}
+
+			lintExpressions = append(lintExpressions, lintExpression)
+		} else {
+			return nil, errors.Wrap(err, "failed to render spec file content")
+		}
 	}
 
 	kubevalConfig := kubeval.Config{
@@ -220,10 +247,6 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 		KubernetesVersion: "1.17.0",
 	}
 	for _, renderedFile := range renderedFiles {
-		if !renderedFile.isYAML() {
-			continue
-		}
-
 		kubevalConfig.FileName = renderedFile.Path
 		results, err := kubeval.Validate([]byte(renderedFile.Content), &kubevalConfig)
 		if err != nil {

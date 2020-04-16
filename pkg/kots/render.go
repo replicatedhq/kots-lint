@@ -1,6 +1,9 @@
 package kots
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/replicatedhq/kots/pkg/util"
 	yaml "github.com/replicatedhq/yaml/v3"
 	goyaml "gopkg.in/yaml.v2"
@@ -11,38 +14,20 @@ import (
 	"github.com/replicatedhq/kots/pkg/template"
 )
 
-func (files SpecFiles) render(config *kotsv1beta1.Config) (SpecFiles, error) {
-	renderedFiles := SpecFiles{}
-
-	for _, file := range files {
-		if !file.isYAML() {
-			renderedFiles = append(renderedFiles, file)
-			continue
-		}
-
-		s, err := file.shouldBeRendered()
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to check if file should be rendered")
-		}
-		if !s {
-			renderedFiles = append(renderedFiles, file)
-			continue
-		}
-
-		renderedContent, err := file.render(config)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to render file %s", file.Path)
-		}
-
-		file.Content = string(renderedContent)
-
-		renderedFiles = append(renderedFiles, file)
-	}
-
-	return renderedFiles, nil
+type RenderTemplateError struct {
+	line    int
+	message string
 }
 
-func (f SpecFile) render(config *kotsv1beta1.Config) ([]byte, error) {
+func (r RenderTemplateError) Error() string {
+	return r.message
+}
+
+func (r RenderTemplateError) Line() int {
+	return r.line
+}
+
+func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 	if !f.isYAML() {
 		return nil, errors.New("not a yaml file")
 	}
@@ -67,7 +52,7 @@ func (f SpecFile) render(config *kotsv1beta1.Config) ([]byte, error) {
 
 	rendered, err := builder.RenderTemplate(string(fileContent), string(fileContent))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to render")
+		return nil, parseRenderTemplateError(err.Error())
 	}
 
 	return []byte(rendered), nil
@@ -91,7 +76,7 @@ func fixUpYAML(inputContent []byte) ([]byte, error) {
 	return inputContent, nil
 }
 
-func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, error) {
+func findAndValidateConfig(files SpecFiles) (*kotsv1beta1.Config, string, error) {
 	var config *kotsv1beta1.Config
 	var path string
 
@@ -120,23 +105,31 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 	return config, path, nil
 }
 
-func (f SpecFile) shouldBeRendered() (bool, error) {
-	document := &GVKDoc{}
-	if err := goyaml.Unmarshal([]byte(f.Content), document); err != nil {
-		return false, errors.Wrap(err, "failed to unmarshal file content")
+func parseRenderTemplateError(value string) RenderTemplateError {
+	renderTemplateError := RenderTemplateError{
+		line:    -1,
+		message: value,
 	}
 
-	if document.APIVersion == "kots.io/v1beta1" && document.Kind == "Config" {
-		return false, nil
+	parts := strings.Split(value, "\n:")
+	if len(parts) == 1 {
+		return renderTemplateError
 	}
 
-	if document.APIVersion == "kots.io/v1beta1" && document.Kind == "Application" {
-		return false, nil
+	lineAndMsg := parts[len(parts)-1]
+	lineAndMsgParts := strings.Split(lineAndMsg, ":")
+
+	if len(lineAndMsgParts) == 1 {
+		return renderTemplateError
 	}
 
-	if document.APIVersion == "app.k8s.io/v1beta1" && document.Kind == "Application" {
-		return false, nil
+	line, err := strconv.Atoi(lineAndMsgParts[0])
+	if err != nil {
+		return renderTemplateError
 	}
 
-	return true, nil
+	renderTemplateError.line = line
+	renderTemplateError.message = strings.TrimSpace(lineAndMsgParts[1])
+
+	return renderTemplateError
 }
