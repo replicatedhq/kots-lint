@@ -572,3 +572,40 @@ func Test_getLineIndentation(t *testing.T) {
 		})
 	}
 }
+
+func Test_getStringInBetween(t *testing.T) {
+	tests := []struct {
+		name  string
+		str   string
+		start string
+		end   string
+		want  string
+	}{
+		{
+			name:  "basic",
+			str:   "any random text",
+			start: "any",
+			end:   "text",
+			want:  " random ",
+		},
+		{
+			name: "multi line text",
+			str: `my
+:multi
+line
+text`,
+			start: "\n:",
+			end:   "text",
+			want: `multi
+line
+`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := GetStringInBetween(test.str, test.start, test.end)
+			assert.Equal(t, actual, test.want)
+		})
+	}
+}

@@ -1,10 +1,12 @@
 package kots
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/replicatedhq/kots/pkg/util"
+	"github.com/replicatedhq/kots-lint/pkg/util"
+	kotsutil "github.com/replicatedhq/kots/pkg/util"
 	yaml "github.com/replicatedhq/yaml/v3"
 	goyaml "gopkg.in/yaml.v2"
 
@@ -52,7 +54,7 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 
 	rendered, err := builder.RenderTemplate(string(fileContent), string(fileContent))
 	if err != nil {
-		return nil, parseRenderTemplateError(err.Error())
+		return nil, parseRenderTemplateError(f, err.Error())
 	}
 
 	return []byte(rendered), nil
@@ -68,7 +70,7 @@ func fixUpYAML(inputContent []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to unmarshal yaml")
 	}
 
-	inputContent, err = util.MarshalIndent(2, yamlObj)
+	inputContent, err = kotsutil.MarshalIndent(2, yamlObj)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal yaml")
 	}
@@ -105,7 +107,19 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 	return config, path, nil
 }
 
-func parseRenderTemplateError(value string) RenderTemplateError {
+func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
+	/*
+		** SAMPLE **
+		failed to get template: template: apiVersion: v1
+		data:
+			ENV_VAR_1: fake
+			ENV_VAR_2: '{{repl ConfigOptionEquals "test}}'
+		kind: ConfigMap
+		metadata:
+			name: example-config
+		:4: unterminated quoted string
+	*/
+
 	renderTemplateError := RenderTemplateError{
 		line:    -1,
 		message: value,
@@ -123,13 +137,55 @@ func parseRenderTemplateError(value string) RenderTemplateError {
 		return renderTemplateError
 	}
 
-	line, err := strconv.Atoi(lineAndMsgParts[0])
+	renderTemplateError.message = strings.TrimSpace(lineAndMsgParts[1])
+
+	lineNumber, err := strconv.Atoi(lineAndMsgParts[0])
 	if err != nil {
 		return renderTemplateError
 	}
 
-	renderTemplateError.line = line
-	renderTemplateError.message = strings.TrimSpace(lineAndMsgParts[1])
+	// try to find the data after it's been remarshalled (keys rearranged)
+	data := util.GetStringInBetween(value, ": template: ", "\n:")
+	if data == "" {
+		return renderTemplateError
+	}
+
+	// find error line from data
+	var errorLine interface{}
+	for index, line := range strings.Split(data, "\n") {
+		if index != lineNumber-1 {
+			continue
+		}
+		err := goyaml.Unmarshal([]byte(line), &errorLine)
+		if err != nil {
+			return renderTemplateError
+		}
+		break
+	}
+
+	if errorLine == nil {
+		return renderTemplateError
+	}
+
+	// find line number in original content
+	originalLineIndex := -1
+	for index, line := range strings.Split(file.Content, "\n") {
+		var unmarshalledLine interface{}
+		err := goyaml.Unmarshal([]byte(line), &unmarshalledLine)
+		if err != nil {
+			return renderTemplateError
+		}
+		if reflect.DeepEqual(unmarshalledLine, errorLine) {
+			originalLineIndex = index
+			break
+		}
+	}
+
+	if originalLineIndex == -1 {
+		return renderTemplateError
+	}
+
+	renderTemplateError.line = originalLineIndex + 1
 
 	return renderTemplateError
 }

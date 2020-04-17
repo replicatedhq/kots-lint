@@ -224,3 +224,17 @@ func GetLineIndentation(line string) string {
 	}
 	return indentation
 }
+
+// GetStringInBetween Returns empty string if no start/end string found
+func GetStringInBetween(str, start, end string) string {
+	s := strings.Index(str, start)
+	if s == -1 {
+		return ""
+	}
+	s += len(start)
+	e := strings.Index(str, end)
+	if e == -1 {
+		return ""
+	}
+	return str[s:e]
+}

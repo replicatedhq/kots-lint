@@ -278,7 +278,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `function "sha256" not defined`,
-				line:    10,
+				line:    12,
 			},
 		},
 		{
@@ -298,12 +298,36 @@ spec:
         - name: my_func
           type: text
           default: my default value
-          value: '{{repl print "whatever }}'
+          value: 'repl{{print "whatever }}'
 `,
 			},
 			want: RenderTemplateError{
 				message: `unterminated quoted string`,
-				line:    11,
+				line:    13,
+			},
+		},
+		{
+			name: "expected more arguemnts",
+			file: SpecFile{
+				Name: "more-arguments.yaml",
+				Path: "more-arguments.yaml",
+				Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: fake
+      items:
+        - name: my_func
+          type: text
+          default: my default value
+          value: 'repl{{ConfigOptionEquals "whatever" }}'
+`,
+			},
+			want: RenderTemplateError{
+				message: `19: executing "apiVersion: kots.io/v1beta1\nkind: Config\nmetadata:\n  name: config-sample\nspec:\n  groups:\n  - items:\n    - default: my default value\n      name: my_func\n      type: text\n      value: repl{{ConfigOptionEquals \"whatever\" }}\n    name: fake\n" at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
+				line:    12,
 			},
 		},
 	}
