@@ -146,6 +146,9 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 
 	// try to find the data after it's been remarshalled (keys rearranged)
 	data := util.GetStringInBetween(value, ": template: ", "\n:")
+	if data == "" {
+		return renderTemplateError
+	}
 
 	// find error line from data
 	var errorLine interface{}
