@@ -1,10 +1,12 @@
 package kots
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/replicatedhq/kots/pkg/util"
+	"github.com/replicatedhq/kots-lint/pkg/util"
+	kotsutil "github.com/replicatedhq/kots/pkg/util"
 	yaml "github.com/replicatedhq/yaml/v3"
 	goyaml "gopkg.in/yaml.v2"
 
@@ -68,7 +70,7 @@ func fixUpYAML(inputContent []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to unmarshal yaml")
 	}
 
-	inputContent, err = util.MarshalIndent(2, yamlObj)
+	inputContent, err = kotsutil.MarshalIndent(2, yamlObj)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal yaml")
 	}
@@ -135,7 +137,7 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 		return renderTemplateError
 	}
 
-	renderTemplateError.message = lineAndMsgParts[1]
+	renderTemplateError.message = strings.TrimSpace(lineAndMsgParts[1])
 
 	lineNumber, err := strconv.Atoi(lineAndMsgParts[0])
 	if err != nil {
@@ -143,15 +145,19 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 	}
 
 	// try to find the data after it's been remarshalled (keys rearranged)
-	data := strings.TrimRight(strings.TrimLeft(value, "\n:"), ": template: ")
+	data := util.GetStringInBetween(value, ": template: ", "\n:")
 
 	// find error line content from data
-	errorLine := ""
-	lines := strings.Split(data, "\n")
-	for index, line := range lines {
-		if index == lineNumber-1 {
-			errorLine = line
+	var errorLine interface{}
+	for index, line := range strings.Split(data, "\n") {
+		if index != lineNumber-1 {
+			continue
 		}
+		err := goyaml.Unmarshal([]byte(line), &errorLine)
+		if err != nil {
+			return renderTemplateError
+		}
+		break
 	}
 
 	if errorLine == "" {
@@ -160,10 +166,15 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 
 	// find line number in original content
 	originalLineIndex := -1
-	lines = strings.Split(file.Content, "\n")
-	for index, line := range lines {
-		if line == errorLine {
+	for index, line := range strings.Split(file.Content, "\n") {
+		var unmarshalledLine interface{}
+		err := goyaml.Unmarshal([]byte(line), &unmarshalledLine)
+		if err != nil {
+			return renderTemplateError
+		}
+		if reflect.DeepEqual(unmarshalledLine, errorLine) {
 			originalLineIndex = index
+			break
 		}
 	}
 
