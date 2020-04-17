@@ -52,7 +52,7 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 
 	rendered, err := builder.RenderTemplate(string(fileContent), string(fileContent))
 	if err != nil {
-		return nil, parseRenderTemplateError(err.Error())
+		return nil, parseRenderTemplateError(f, err.Error())
 	}
 
 	return []byte(rendered), nil
@@ -105,7 +105,19 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 	return config, path, nil
 }
 
-func parseRenderTemplateError(value string) RenderTemplateError {
+func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
+	/*
+		** SAMPLE **
+		failed to get template: template: apiVersion: v1
+		data:
+			ENV_VAR_1: fake
+			ENV_VAR_2: '{{repl ConfigOptionEquals "test}}'
+		kind: ConfigMap
+		metadata:
+			name: example-config
+		:4: unterminated quoted string
+	*/
+
 	renderTemplateError := RenderTemplateError{
 		line:    -1,
 		message: value,
@@ -123,13 +135,43 @@ func parseRenderTemplateError(value string) RenderTemplateError {
 		return renderTemplateError
 	}
 
-	line, err := strconv.Atoi(lineAndMsgParts[0])
+	renderTemplateError.message = lineAndMsgParts[1]
+
+	lineNumber, err := strconv.Atoi(lineAndMsgParts[0])
 	if err != nil {
 		return renderTemplateError
 	}
 
-	renderTemplateError.line = line
-	renderTemplateError.message = strings.TrimSpace(lineAndMsgParts[1])
+	// try to find the data after it's been remarshalled (keys rearranged)
+	data := strings.TrimRight(strings.TrimLeft(value, "\n:"), ": template: ")
+
+	// find error line content from data
+	errorLine := ""
+	lines := strings.Split(data, "\n")
+	for index, line := range lines {
+		if index == lineNumber-1 {
+			errorLine = line
+		}
+	}
+
+	if errorLine == "" {
+		return renderTemplateError
+	}
+
+	// find line number in original content
+	originalLineIndex := -1
+	lines = strings.Split(file.Content, "\n")
+	for index, line := range lines {
+		if line == errorLine {
+			originalLineIndex = index
+		}
+	}
+
+	if originalLineIndex == -1 {
+		return renderTemplateError
+	}
+
+	renderTemplateError.line = originalLineIndex + 1
 
 	return renderTemplateError
 }
