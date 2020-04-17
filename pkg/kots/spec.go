@@ -87,7 +87,7 @@ func (fs SpecFiles) separate() (SpecFiles, error) {
 		decoder := goyaml.NewDecoder(reader)
 
 		for docIndex := 0; ; docIndex++ {
-			var doc interface{}
+			var doc goyaml.MapSlice
 			err := decoder.Decode(&doc)
 
 			if err == io.EOF {

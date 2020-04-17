@@ -261,13 +261,13 @@ key2: value2`,
 				{
 					Name:     "e.yaml",
 					Path:     "e.yaml",
-					Content:  "null\n",
+					Content:  "{}\n",
 					DocIndex: 0,
 				},
 				{
 					Name:     "f.yaml",
 					Path:     "f.yaml",
-					Content:  "null\n",
+					Content:  "{}\n",
 					DocIndex: 0,
 				},
 				{
