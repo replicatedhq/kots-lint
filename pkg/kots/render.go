@@ -138,11 +138,11 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 	}
 
 	// in some cases, the message contains the whole file content which is noisy and difficult to read
-	msg := strings.TrimSpace(lineAndMsgParts[1])
+	msg := lineAndMsgParts[1]
 	if i := strings.Index(msg, `\n"`); i != -1 {
 		msg = msg[i+len(`\n"`):]
 	}
-	renderTemplateError.message = msg
+	renderTemplateError.message = strings.TrimSpace(msg)
 
 	// get the line number in the remarshalled (keys rearranged) data
 	lineNumber, err := strconv.Atoi(lineAndMsgParts[0])

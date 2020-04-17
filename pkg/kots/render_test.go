@@ -326,7 +326,7 @@ spec:
 `,
 			},
 			want: RenderTemplateError{
-				message: `19: executing "apiVersion: kots.io/v1beta1\nkind: Config\nmetadata:\n  name: config-sample\nspec:\n  groups:\n  - items:\n    - default: my default value\n      name: my_func\n      type: text\n      value: repl{{ConfigOptionEquals \"whatever\" }}\n    name: fake\n" at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
+				message: `at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
 				line:    12,
 			},
 		},
