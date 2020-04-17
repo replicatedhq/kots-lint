@@ -163,7 +163,7 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 		break
 	}
 
-	if errorLine == "" {
+	if errorLine == nil {
 		return renderTemplateError
 	}
 
