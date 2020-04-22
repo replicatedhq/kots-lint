@@ -236,9 +236,10 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 			}
 
 			lintExpressions = append(lintExpressions, lintExpression)
-		} else {
-			return nil, errors.Wrap(err, "failed to render spec file content")
+			continue
 		}
+		// error is not caused by kots RenderTemplate, something went wrong
+		return nil, errors.Wrap(err, "failed to render spec file content")
 	}
 
 	kubevalConfig := kubeval.Config{
@@ -333,6 +334,7 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 
 	reader := bytes.NewReader([]byte(file.Content))
 	decoder := goyaml.NewDecoder(reader)
+	decoder.SetStrict(true)
 
 	for {
 		var doc interface{}
