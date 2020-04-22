@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -91,7 +92,7 @@ func LintRelease(c *gin.Context) {
 
 	lintExpressions, isComplete, err := kots.LintSpecFiles(specFiles)
 	if err != nil {
-		log.Errorf("failed to lint app spec %v", err)
+		fmt.Printf("failed to lint app spec: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
