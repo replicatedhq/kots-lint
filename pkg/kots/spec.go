@@ -2,7 +2,6 @@ package kots
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/replicatedhq/kots-lint/pkg/util"
-	goyaml "gopkg.in/yaml.v2"
 )
 
 type SpecFiles []SpecFile
@@ -43,14 +41,7 @@ func (f SpecFile) isYAML() bool {
 }
 
 func (f SpecFile) hasContent() bool {
-	scanner := bufio.NewScanner(strings.NewReader(f.Content))
-	for scanner.Scan() {
-		if util.IsLineEmpty(scanner.Text()) {
-			continue
-		}
-		return true
-	}
-	return false
+	return util.CleanYaml(f.Content) != ""
 }
 
 func (fs SpecFiles) unnest() SpecFiles {
@@ -78,38 +69,28 @@ func (fs SpecFiles) separate() (SpecFiles, error) {
 	separatedSpecFiles := SpecFiles{}
 
 	for _, file := range fs {
-		if !file.isYAML() || !file.hasContent() {
+		if !file.isYAML() {
 			separatedSpecFiles = append(separatedSpecFiles, file)
 			continue
 		}
 
-		reader := bytes.NewReader([]byte(file.Content))
-		decoder := goyaml.NewDecoder(reader)
+		cleanedContent := util.CleanYaml(file.Content)
+		docs := strings.Split(cleanedContent, "\n---\n")
 
-		for docIndex := 0; ; docIndex++ {
-			var doc goyaml.MapSlice
-			err := decoder.Decode(&doc)
-
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return nil, errors.Wrap(err, "failed to decode spec file content")
+		for index, doc := range docs {
+			if strings.HasPrefix(doc, "---\n") {
+				doc = doc[4:]
 			}
 
-			var buf bytes.Buffer
-			encoder := goyaml.NewEncoder(&buf)
-			err = encoder.Encode(doc)
-
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to encode separated doc")
+			if len(doc) == 0 {
+				continue
 			}
 
-			encodedContent := buf.String()
 			separatedSpecFile := SpecFile{
 				Name:     file.Name,
 				Path:     file.Path, // keep original path to be able to link it back
-				Content:  encodedContent,
-				DocIndex: docIndex,
+				Content:  doc,
+				DocIndex: index,
 			}
 
 			separatedSpecFiles = append(separatedSpecFiles, separatedSpecFile)

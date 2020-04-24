@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bufio"
 	"regexp"
 	"strconv"
 	"strings"
@@ -223,6 +224,33 @@ func GetLineIndentation(line string) string {
 		indentation += string(r)
 	}
 	return indentation
+}
+
+// CleanYaml removes lines that only contains comments or are empty
+// also removes trailing comments after the "---" multi doc separator
+func CleanYaml(value string) string {
+	lines := []string{}
+	scanner := bufio.NewScanner(strings.NewReader(value))
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if IsLineEmpty(line) {
+			continue
+		}
+		if strings.HasPrefix(line, "---") {
+			// remove comments after separator for cleaner multi doc splitting
+			line = "---"
+		}
+		lines = append(lines, line)
+	}
+	cleanedValue := strings.Join(lines, "\n")
+
+	// ensure the file does not end with ---
+	if strings.HasSuffix(cleanedValue, "---") {
+		cleanedValue += "\n"
+	}
+
+	return cleanedValue
 }
 
 // GetStringInBetween Returns empty string if no start/end string found
