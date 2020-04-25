@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/replicatedhq/kots-lint/pkg/util"
-	kotsutil "github.com/replicatedhq/kots/pkg/util"
-	yaml "github.com/replicatedhq/yaml/v3"
 	goyaml "gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
@@ -34,11 +32,6 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		return nil, errors.New("not a yaml file")
 	}
 
-	fileContent, err := fixUpYAML([]byte(f.Content))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fix up yaml")
-	}
-
 	localRegistry := template.LocalRegistry{}
 	templateContextValues := make(map[string]template.ItemValue)
 
@@ -52,30 +45,12 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to create builder")
 	}
 
-	rendered, err := builder.RenderTemplate(string(fileContent), string(fileContent))
+	rendered, err := builder.RenderTemplate(f.Content, f.Content)
 	if err != nil {
 		return nil, parseRenderTemplateError(f, err.Error())
 	}
 
 	return []byte(rendered), nil
-}
-
-// fixUpYAML is a general purpose function that will ensure that YAML is copmatible with KOTS
-// This ensures that lines aren't wrapped at 80 chars which breaks template functions
-func fixUpYAML(inputContent []byte) ([]byte, error) {
-	yamlObj := map[string]interface{}{}
-
-	err := yaml.Unmarshal(inputContent, &yamlObj)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal yaml")
-	}
-
-	inputContent, err = kotsutil.MarshalIndent(2, yamlObj)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal yaml")
-	}
-
-	return inputContent, nil
 }
 
 func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, error) {

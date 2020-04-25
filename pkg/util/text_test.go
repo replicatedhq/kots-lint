@@ -609,3 +609,91 @@ line
 		})
 	}
 }
+
+func Test_cleanYaml(t *testing.T) {
+	tests := []struct {
+		name  string
+		str   string
+		start string
+		end   string
+		want  string
+	}{
+		{
+			name: "multi line empty",
+			str: `# this is a comment
+
+# this is another comment
+`,
+			want: "",
+		},
+		{
+			name: "add new line if ends with '---' 1",
+			str: `key0: value0
+---`,
+			want: `key0: value0
+---
+`,
+		},
+		{
+			name: "add new line if ends with '---' 2",
+			str: `key0: value0
+---
+key1: value1
+---`,
+			want: `key0: value0
+---
+key1: value1
+---
+`,
+		},
+		{
+			name: "multi line value with comments",
+			str: `key0: value0
+# comment
+key1: value1
+# another comment
+`,
+			want: `key0: value0
+key1: value1`,
+		},
+		{
+			name: "multi line value with comments and new lines",
+			str: `key0: value0
+
+# comment
+
+key1: value1
+
+# another comment
+`,
+			want: `key0: value0
+key1: value1`,
+		},
+		{
+			name: "comment after separator",
+			str: `key0: value0
+
+# comment
+--- # this is a comment after a separator
+
+key1: value1
+
+---# this is another comment after another separator
+
+key2: value2
+`,
+			want: `key0: value0
+---
+key1: value1
+---
+key2: value2`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := CleanYaml(test.str)
+			assert.Equal(t, actual, test.want)
+		})
+	}
+}
