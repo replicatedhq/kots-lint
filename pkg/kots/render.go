@@ -45,7 +45,9 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to create builder")
 	}
 
-	rendered, err := builder.RenderTemplate(f.Content, f.Content)
+	content := f.Content + "\n" // add new line so that parsing the render template error is easier (possible)
+
+	rendered, err := builder.RenderTemplate(content, content)
 	if err != nil {
 		return nil, parseRenderTemplateError(f, err.Error())
 	}
