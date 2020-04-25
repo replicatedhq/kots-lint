@@ -41,7 +41,7 @@ func (f SpecFile) isYAML() bool {
 }
 
 func (f SpecFile) hasContent() bool {
-	return util.CleanYaml(f.Content) != ""
+	return util.CleanUpYaml(f.Content) != ""
 }
 
 func (fs SpecFiles) unnest() SpecFiles {
@@ -74,7 +74,7 @@ func (fs SpecFiles) separate() (SpecFiles, error) {
 			continue
 		}
 
-		cleanedContent := util.CleanYaml(file.Content)
+		cleanedContent := util.CleanUpYaml(file.Content)
 		docs := strings.Split(cleanedContent, "\n---\n")
 
 		for index, doc := range docs {

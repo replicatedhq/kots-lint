@@ -226,9 +226,9 @@ func GetLineIndentation(line string) string {
 	return indentation
 }
 
-// CleanYaml removes lines that only contains comments or are empty
+// CleanUpYaml removes lines that only contains comments or are empty
 // also removes trailing comments after the "---" multi doc separator
-func CleanYaml(value string) string {
+func CleanUpYaml(value string) string {
 	lines := []string{}
 	scanner := bufio.NewScanner(strings.NewReader(value))
 
