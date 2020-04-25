@@ -1,6 +1,7 @@
 package kots
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -45,12 +46,16 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to create builder")
 	}
 
-	content := f.Content + "\n" // add new line so that parsing the render template error is easier (possible)
+	// add new line so that parsing the render template error is easier (possible)
+	content := f.Content + "\n"
 
 	rendered, err := builder.RenderTemplate(content, content)
 	if err != nil {
 		return nil, parseRenderTemplateError(f, err.Error())
 	}
+
+	// remove the new line that was added to make parsing template error easier (possible)
+	rendered = strings.TrimSuffix(rendered, "\n")
 
 	return []byte(rendered), nil
 }
@@ -85,6 +90,7 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 }
 
 func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
+	fmt.Println("value", value)
 	/*
 		** SAMPLE **
 		failed to get template: template: apiVersion: v1
