@@ -610,7 +610,7 @@ line
 	}
 }
 
-func Test_cleanYaml(t *testing.T) {
+func Test_cleanUpYaml(t *testing.T) {
 	tests := []struct {
 		name  string
 		str   string
@@ -692,7 +692,7 @@ key2: value2`,
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := CleanYaml(test.str)
+			actual := CleanUpYaml(test.str)
 			assert.Equal(t, actual, test.want)
 		})
 	}
