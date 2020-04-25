@@ -82,10 +82,10 @@ metadata:
   name: collector-sample
 spec:
   collectors:
-  - clusterInfo: {}
-  - clusterResources: {}
-  - secret:
-      key: '{{repl ConfigOption "a_templated_text"}}'
+    - clusterInfo: {}
+    - clusterResources: {}
+    - secret:
+        key: '{{repl ConfigOption "a_templated_text"}}'
 `,
 				},
 				{
@@ -133,18 +133,18 @@ metadata:
   name: config-sample
 spec:
   groups:
-  - description: Configuration to serve as an example for creating your own
-    items:
-    - name: a_templated_text
-      title: a text field with a value provided by a template function
-      type: text
-      value: a templated value
-    - name: try_to_template_me
-      title: try to template me
-      type: text
-      value: 'a templated value'
-    name: example_settings
-    title: My Example Config
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_text
+          title: a text field with a value provided by a template function
+          type: text
+          value: a templated value
+        - name: try_to_template_me
+          title: try to template me
+          type: text
+          value: 'a templated value'
 `,
 				},
 				{
@@ -153,14 +153,14 @@ spec:
 					Content: `apiVersion: app.k8s.io/v1beta1
 kind: Application
 metadata:
+  name: "example-app"
   labels:
-    app.kubernetes.io/name: example-app
-  name: example-app
+    app.kubernetes.io/name: "example-app"
 spec:
   descriptor:
     links:
-    - description: 'a templated value'
-      url: http://example-nginx
+      - description: 'a templated value'
+        url: "http://example-nginx"
 `,
 				},
 				{
@@ -171,11 +171,11 @@ kind: Application
 metadata:
   name: app-slug
 spec:
-  icon: icon-url
-  releaseNotes: 'a templated value'
-  statusInformers:
-  - deployment/example-nginx
   title: App Name
+  icon: icon-url
+  statusInformers:
+    - deployment/example-nginx
+  releaseNotes: 'a templated value'
 `,
 				},
 				{
@@ -187,10 +187,10 @@ metadata:
   name: collector-sample
 spec:
   collectors:
-  - clusterInfo: {}
-  - clusterResources: {}
-  - secret:
-      key: 'a templated value'
+    - clusterInfo: {}
+    - clusterResources: {}
+    - secret:
+        key: 'a templated value'
 `,
 				},
 				{
