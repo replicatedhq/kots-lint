@@ -1,7 +1,6 @@
 package kots
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -90,7 +89,6 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 }
 
 func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
-	fmt.Println("value", value)
 	/*
 		** SAMPLE **
 		failed to get template: template: apiVersion: v1
