@@ -322,8 +322,7 @@ spec:
         - name: my_func
           type: text
           default: my default value
-          value: 'repl{{ConfigOptionEquals "whatever" }}'
-`,
+          value: 'repl{{ConfigOptionEquals "whatever" }}'`,
 			},
 			want: RenderTemplateError{
 				message: `at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
