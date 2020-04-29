@@ -3,7 +3,7 @@
 ### Linting with this service includes:
 
  - Detecting YAML syntax errors
- - Validating with Kubeval
+ - Validating with [Kubeval](https://github.com/instrumenta/kubeval)
  - Utilizing [OPA](https://github.com/open-policy-agent/opa) to lint for best practices and some special errors and warnings
 
 ## Using the production API
