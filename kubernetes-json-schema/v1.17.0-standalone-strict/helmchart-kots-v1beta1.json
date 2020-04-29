@@ -22,9 +22,7 @@
       "properties": {
         "builder": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         },
         "chart": {
           "type": "object",
@@ -57,9 +55,7 @@
             "properties": {
               "values": {
                 "type": "object",
-                "additionalProperties": {
-                  "type": "object"
-                }
+                "additionalProperties": {}
               },
               "when": {
                 "type": "string"
@@ -69,9 +65,7 @@
         },
         "values": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object"
-          }
+          "additionalProperties": {}
         }
       }
     },
