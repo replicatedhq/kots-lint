@@ -77,7 +77,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 
 	// if there are yaml errors, end early there
 	yamlLintExpressions := lintIsValidYAML(filteredFiles)
-	if lintExpressionsHasErrors(yamlLintExpressions) {
+	if lintExpressionsHaveErrors(yamlLintExpressions) {
 		return yamlLintExpressions, false, nil
 	}
 
@@ -86,7 +86,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA")
 	}
 	// if there are opa errors, end early there
-	if lintExpressionsHasErrors(opaLintExpressions) {
+	if lintExpressionsHaveErrors(opaLintExpressions) {
 		return opaLintExpressions, false, nil
 	}
 
@@ -374,7 +374,7 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 	return lintExpressions
 }
 
-func lintExpressionsHasErrors(lintExpressions []LintExpression) bool {
+func lintExpressionsHaveErrors(lintExpressions []LintExpression) bool {
 	for _, lintExpression := range lintExpressions {
 		if lintExpression.Type == "error" {
 			return true
