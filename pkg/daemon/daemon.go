@@ -44,6 +44,7 @@ func Run(newrelicApp newrelic.Application) {
 	v1 := r.Group("/v1")
 
 	v1.POST("/lint", handlers.LintRelease)
+	v1.POST("/enterprise-lint", handlers.EnterpriseLintRelease)
 
 	// Listen and Server on 0.0.0.0:8082
 	err := r.Run(":8082")
