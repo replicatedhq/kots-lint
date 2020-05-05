@@ -10,7 +10,7 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 )
 
-// EnterpriseLintReleaseParameters contains parameters to lint a release for an app
+// EnterpriseLintReleaseParameters contains parameters to lint a release for an app against an enterprise's policies
 type EnterpriseLintReleaseParameters struct {
 	// Lint release parameters
 	// In: body
@@ -23,16 +23,13 @@ type EnterpriseLintReleaseParameters struct {
 	}
 }
 
-// EnterpriseLintReleaseResponse contains the release properties
+// EnterpriseLintReleaseResponse contains the lint expressions
 type EnterpriseLintReleaseResponse struct {
 	// JSON payload
 	// Required: true
 	// In: body
 	Body struct {
 		LintExpressions []kots.LintExpression `json:"lintExpressions"`
-	}
-	Error struct {
-		Message string `json:"message"`
 	}
 }
 

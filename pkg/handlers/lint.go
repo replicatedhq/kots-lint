@@ -23,7 +23,7 @@ type LintReleaseParameters struct {
 	}
 }
 
-// LintReleaseResponse contains the release properties
+// LintReleaseResponse contains the lint expressions
 type LintReleaseResponse struct {
 	// JSON payload
 	// Required: true
@@ -31,9 +31,6 @@ type LintReleaseResponse struct {
 	Body struct {
 		LintExpressions   []kots.LintExpression `json:"lintExpressions"`
 		IsLintingComplete bool                  `json:"isLintingComplete"`
-	}
-	Error struct {
-		Message string `json:"message"`
 	}
 }
 
