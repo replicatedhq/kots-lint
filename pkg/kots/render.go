@@ -32,6 +32,14 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		return nil, errors.New("not a yaml file")
 	}
 
+	s, err := f.shouldBeRendered()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to check if file should be rendered")
+	}
+	if !s {
+		return []byte(f.Content), nil
+	}
+
 	localRegistry := template.LocalRegistry{}
 	templateContextValues := make(map[string]template.ItemValue)
 
@@ -86,6 +94,19 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 	}
 
 	return config, path, nil
+}
+
+func (f SpecFile) shouldBeRendered() (bool, error) {
+	document := &GVKDoc{}
+	if err := goyaml.Unmarshal([]byte(f.Content), document); err != nil {
+		return false, errors.Wrap(err, "failed to unmarshal file content")
+	}
+
+	if document.APIVersion == "kots.io/v1beta1" && document.Kind == "Config" {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
