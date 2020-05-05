@@ -144,7 +144,7 @@ spec:
         - name: try_to_template_me
           title: try to template me
           type: text
-          value: 'a templated value'
+          value: '{{repl ConfigOption "a_templated_text"}}'
 `,
 				},
 				{
@@ -262,23 +262,21 @@ func Test_renderInvalidTemplate(t *testing.T) {
 			file: SpecFile{
 				Name: "undefined-function.yaml",
 				Path: "undefined-function.yaml",
-				Content: `apiVersion: kots.io/v1beta1
-kind: Config
+				Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
 metadata:
-  name: config-sample
+  name: collector-sample
 spec:
-  groups:
-    - name: fake
-      title: Fake
-      items:
-        - name: hash_func
-          type: text
-          value: '{{repl print "whatever" | sha256 }}'
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}
+    - secret:
+        key: '{{repl print "whatever" | sha256 }}'
 `,
 			},
 			want: RenderTemplateError{
 				message: `function "sha256" not defined`,
-				line:    12,
+				line:    10,
 			},
 		},
 		{
@@ -286,24 +284,21 @@ spec:
 			file: SpecFile{
 				Name: "unterminated-quotes.yaml",
 				Path: "unterminated-quotes.yaml",
-				Content: `apiVersion: kots.io/v1beta1
-kind: Config
+				Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
 metadata:
-  name: config-sample
+  name: collector-sample
 spec:
-  groups:
-    - name: fake
-      title: Fake
-      items:
-        - name: my_func
-          type: text
-          default: my default value
-          value: 'repl{{print "whatever }}'
+  collectors:
+    - clusterInfo: {}
+    - secret:
+        key: '{{repl print "whatever }}'
+    - clusterResources: {}
 `,
 			},
 			want: RenderTemplateError{
 				message: `unterminated quoted string`,
-				line:    13,
+				line:    9,
 			},
 		},
 		{
@@ -311,22 +306,21 @@ spec:
 			file: SpecFile{
 				Name: "more-arguments.yaml",
 				Path: "more-arguments.yaml",
-				Content: `apiVersion: kots.io/v1beta1
-kind: Config
+				Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
 metadata:
-  name: config-sample
+  name: collector-sample
 spec:
-  groups:
-    - name: fake
-      items:
-        - name: my_func
-          type: text
-          default: my default value
-          value: 'repl{{ConfigOptionEquals "whatever" }}'`,
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}
+    - secret:
+        key: 'repl{{ConfigOptionEquals "whatever" }}'
+`,
 			},
 			want: RenderTemplateError{
 				message: `at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
-				line:    12,
+				line:    10,
 			},
 		},
 	}
