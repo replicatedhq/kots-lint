@@ -37,7 +37,8 @@ type EnterpriseLintReleaseResponse struct {
 func EnterpriseLintRelease(c *gin.Context) {
 	var request EnterpriseLintReleaseParameters
 	if err := c.Bind(&request.Body); err != nil {
-		log.Infof("failed to bind to enterprise lint release parameters: %v", err)
+		log.Errorf("failed to bind to enterprise lint release parameters: %v", err)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 

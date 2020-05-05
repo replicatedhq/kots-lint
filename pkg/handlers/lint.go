@@ -39,7 +39,8 @@ func LintRelease(c *gin.Context) {
 	// read before binding to check if body is a tar stream
 	data, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		log.Infof("failed to read request body: %v", err)
+		log.Errorf("failed to read request body: %v", err)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -58,7 +59,8 @@ func LintRelease(c *gin.Context) {
 
 		var request LintReleaseParameters
 		if err := c.Bind(&request.Body); err != nil {
-			log.Infof("failed to bind to lint release parameters: %v", err)
+			log.Errorf("failed to bind to lint release parameters: %v", err)
+			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 
