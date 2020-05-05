@@ -72,6 +72,6 @@ jobs:
       - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions@1.0
         with:
-          args: "deploy"
+          args: "deploy --image-label $GITHUB_REF"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
