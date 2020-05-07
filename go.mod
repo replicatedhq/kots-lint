@@ -18,7 +18,7 @@ require (
 	github.com/open-policy-agent/opa v0.18.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20180719175845-249c0d6c71b2
-	github.com/replicatedhq/kots v1.13.7-0.20200312165214-7403b7e90931
+	github.com/replicatedhq/kots v1.15.2
 	github.com/stretchr/testify v1.5.1
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
