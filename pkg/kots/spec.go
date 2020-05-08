@@ -78,9 +78,8 @@ func (fs SpecFiles) separate() (SpecFiles, error) {
 		docs := strings.Split(cleanedContent, "\n---\n")
 
 		for index, doc := range docs {
-			if strings.HasPrefix(doc, "---\n") {
-				doc = doc[4:]
-			}
+			doc = strings.TrimPrefix(doc, "---")
+			doc = strings.TrimLeft(doc, "\n")
 
 			if len(doc) == 0 {
 				continue
