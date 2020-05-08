@@ -216,6 +216,15 @@ key2: value2`,
 # comment`,
 				},
 				{
+					Name: "j.yaml",
+					Path: "j.yaml",
+					Content: `---
+# comment
+    
+---
+# another comment`,
+				},
+				{
 					Name:    "preserve-quotes.yaml",
 					Path:    "preserve-quotes.yaml",
 					Content: `key: 'repl{{ConfigOption "my_config_option"}}'`,
