@@ -42,6 +42,9 @@
         "exclude": {
           "type": "string"
         },
+        "helmVersion": {
+          "type": "string"
+        },
         "namespace": {
           "type": "string"
         },

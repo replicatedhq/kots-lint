@@ -17,9 +17,22 @@
       "description": "ApplicationSpec defines the desired state of ApplicationSpec",
       "type": "object",
       "required": [
+        "requireMinimalRBACPrivileges",
         "title"
       ],
       "properties": {
+        "additionalImages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "additionalNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "allowRollback": {
           "type": "boolean"
         },
@@ -105,6 +118,9 @@
         },
         "releaseNotes": {
           "type": "string"
+        },
+        "requireMinimalRBACPrivileges": {
+          "type": "boolean"
         },
         "statusInformers": {
           "type": "array",
