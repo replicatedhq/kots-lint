@@ -147,6 +147,20 @@ data:
 				},
 			},
 		},
+		{
+			name: "proxy",
+			specFile: SpecFile{
+				Path: "file.yaml",
+				Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxy
+data:
+  HTTP_PROXY: "{{repl HTTPProxy }}"
+  NO_PROXY: "{{repl NoProxy }}"`,
+			},
+			expect: []LintExpression{},
+		},
 	}
 
 	for _, test := range tests {
