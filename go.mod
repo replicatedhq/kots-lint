@@ -18,12 +18,15 @@ require (
 	github.com/open-policy-agent/opa v0.18.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20180719175845-249c0d6c71b2
-	github.com/replicatedhq/kots v1.15.3-0.20200509033345-c1ada4b1910c
+	github.com/replicatedhq/kots v1.16.0
 	github.com/stretchr/testify v1.5.1
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
 	go.undefinedlabs.com/scopeagent v0.1.12
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v2 v2.2.8
+	k8s.io/apiserver v0.17.4 // indirect
 )
 
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n v1.10.1
