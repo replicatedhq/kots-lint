@@ -2,6 +2,7 @@
 
 package kots.spec
 
+## Secrets with template functions are excluded in the rule logic
 secrets_regular_expressions = [
   # connection strings with username and password
   # http://user:password@host:8888
@@ -18,10 +19,10 @@ secrets_regular_expressions = [
   "(?i)(name: [\"']{0,1}token[\"']{0,1})\n\\s*(value:)",
   "(?i)(name: [\"']{0,1}database[\"']{0,1})\n\\s*(value:)",
   "(?i)(name: [\"']{0,1}user[\"']{0,1})\n\\s*(value:)",
-  "password: ([^'\"]|'($|[^{]|{($|[^{]))|\"($|[^{]|{($|[^{])))",
-  "token: ([^'\"]|'($|[^{]|{($|[^{]))|\"($|[^{]|{($|[^{])))",
-  "database: ([^'\"]|'($|[^{]|{($|[^{]))|\"($|[^{]|{($|[^{])))",
-  "user: ([^'\"]|'($|[^{]|{($|[^{]))|\"($|[^{]|{($|[^{])))",
+  "(?i)password: .*",
+  "(?i)token: .*",
+  "(?i)database: .*",
+  "(?i)user: .*",
   # standard postgres and mysql connnection strings
   "(?i)(Data Source *= *)[^\\;]+(;)",
   "(?i)(location *= *)[^\\;]+(;)",
@@ -495,7 +496,7 @@ lint[output] {
   file := files[_]
   namespace := file.content.metadata.namespace
   is_string(namespace)
-  not startswith(namespace, "{{")
+  not re_match("^(repl{{|{{repl)", namespace)
   output := {
     "rule": "hardcoded-namespace",
     "type": "info",
@@ -513,6 +514,7 @@ lint[output] {
   expression_matches := regex.find_n(expression, file.content, -1)
   count(expression_matches) > 0
   match := expression_matches[_]
+  not re_match("repl{{|{{repl", match) # exclude if template function
   output := {
     "rule": "may-contain-secrets",
     "type": "info",
