@@ -46,7 +46,7 @@ func LintRelease(c *gin.Context) {
 
 	specFiles := kots.SpecFiles{}
 	if util.IsTarFile(data) {
-		f, err := kots.SpecFilesFromTarFile(data)
+		f, err := kots.SpecFilesFromTar(bytes.NewReader(data))
 		if err != nil {
 			log.Errorf("failed to get spec files from tar file: %v", err)
 			c.AbortWithError(http.StatusInternalServerError, err)
