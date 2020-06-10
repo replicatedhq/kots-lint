@@ -3,6 +3,7 @@ package kots
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -12,8 +13,17 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
 	"github.com/replicatedhq/kots-lint/pkg/util"
+	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
+	kotsscheme "github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
+	"gopkg.in/yaml.v2"
 	goyaml "gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/chart"
+	"k8s.io/client-go/kubernetes/scheme"
 )
+
+func init() {
+	kotsscheme.AddToScheme(scheme.Scheme)
+}
 
 type LintExpression struct {
 	Rule      string                       `json:"rule"`
@@ -79,6 +89,15 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	yamlLintExpressions := lintIsValidYAML(filteredFiles)
 	if lintExpressionsHaveErrors(yamlLintExpressions) {
 		return yamlLintExpressions, false, nil
+	}
+
+	// if helm charts are missing corresponding manifests or vise versa, end early there
+	helmChartsLintExpressions, err := lintHelmCharts(unnestedFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint helm charts")
+	}
+	if lintExpressionsHaveErrors(helmChartsLintExpressions) {
+		return helmChartsLintExpressions, false, nil
 	}
 
 	opaLintExpressions, err := lintWithOPA(filteredFiles)
@@ -314,6 +333,51 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 	return lintExpressions, nil
 }
 
+func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
+	lintExpressions := []LintExpression{}
+
+	// check if all helm charts have corresponding archives
+	allKotsHelmCharts := findAllKotsHelmCharts(specFiles)
+	for _, helmChart := range allKotsHelmCharts {
+		archiveExists, err := archiveForHelmChartExists(specFiles, helmChart)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to check if archive for helm chart exists")
+		}
+
+		if !archiveExists {
+			lintExpression := LintExpression{
+				Rule:    "helm-archive-missing",
+				Type:    "error",
+				Message: fmt.Sprintf("Could not find helm archive for chart '%s'", helmChart.Spec.Chart.Name),
+			}
+			lintExpressions = append(lintExpressions, lintExpression)
+		}
+	}
+
+	// check if all archives have corresponding helm chart manifests
+	for _, specFile := range specFiles {
+		if !specFile.isTarGz() {
+			continue
+		}
+
+		chartExists, err := helmChartForArchiveExists(allKotsHelmCharts, specFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to check if helm chart for archive exists")
+		}
+
+		if !chartExists {
+			lintExpression := LintExpression{
+				Rule:    "helm-chart-missing",
+				Type:    "error",
+				Message: fmt.Sprintf("Could not find helm chart manifest for archive '%s'", specFile.Path),
+			}
+			lintExpressions = append(lintExpressions, lintExpression)
+		}
+	}
+
+	return lintExpressions, nil
+}
+
 func lintIsValidYAML(specFiles SpecFiles) []LintExpression {
 	lintExpressions := []LintExpression{}
 
@@ -381,4 +445,97 @@ func lintExpressionsHaveErrors(lintExpressions []LintExpression) bool {
 		}
 	}
 	return false
+}
+
+// archiveForHelmChartExists iterates through all files, looking for a helm chart archive
+// that matches the chart name and version specified in the kotsHelmChart parameter
+func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart *kotsv1beta1.HelmChart) (bool, error) {
+	for _, specFile := range specFiles {
+		if !specFile.isTarGz() {
+			continue
+		}
+
+		// We treat all .tar.gz archives as helm charts
+		files, err := SpecFilesFromTarGz(specFile)
+		if err != nil {
+			return false, errors.Wrap(err, "failed to read chart archive")
+		}
+
+		for _, file := range files {
+			if file.Path == "Chart.yaml" {
+				chartManifest := new(chart.Metadata)
+				if err := yaml.Unmarshal([]byte(file.Content), chartManifest); err != nil {
+					return false, errors.Wrap(err, "failed to unmarshal chart yaml")
+				}
+
+				if chartManifest.Name == kotsHelmChart.Spec.Chart.Name {
+					if chartManifest.Version == kotsHelmChart.Spec.Chart.ChartVersion {
+						return true, nil
+					}
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
+// helmChartForArchiveExists iterates through all existing helm charts, looking for a helm chart manifest
+// that matches the chart name and version specified in the Chart.yaml file in the archive
+func helmChartForArchiveExists(allKotsHelmCharts []*kotsv1beta1.HelmChart, archive SpecFile) (bool, error) {
+	files, err := SpecFilesFromTarGz(archive)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to read chart archive")
+	}
+
+	for _, file := range files {
+		if file.Path != "Chart.yaml" {
+			continue
+		}
+
+		chartManifest := new(chart.Metadata)
+		if err := yaml.Unmarshal([]byte(file.Content), chartManifest); err != nil {
+			return false, errors.Wrap(err, "failed to unmarshal chart yaml")
+		}
+
+		for _, kotsHelmChart := range allKotsHelmCharts {
+			if chartManifest.Name == kotsHelmChart.Spec.Chart.Name {
+				if chartManifest.Version == kotsHelmChart.Spec.Chart.ChartVersion {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func findAllKotsHelmCharts(specFiles SpecFiles) []*kotsv1beta1.HelmChart {
+	kotsHelmCharts := []*kotsv1beta1.HelmChart{}
+	for _, specFile := range specFiles {
+		kotsHelmChart := tryParsingAsHelmChartGVK([]byte(specFile.Content))
+		if kotsHelmChart != nil {
+			kotsHelmCharts = append(kotsHelmCharts, kotsHelmChart)
+		}
+	}
+
+	return kotsHelmCharts
+}
+
+func tryParsingAsHelmChartGVK(content []byte) *kotsv1beta1.HelmChart {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	obj, gvk, err := decode(content, nil, nil)
+	if err != nil {
+		return nil
+	}
+
+	if gvk.Group == "kots.io" {
+		if gvk.Version == "v1beta1" {
+			if gvk.Kind == "HelmChart" {
+				return obj.(*kotsv1beta1.HelmChart)
+			}
+		}
+	}
+
+	return nil
 }

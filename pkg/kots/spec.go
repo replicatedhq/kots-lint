@@ -3,8 +3,12 @@ package kots
 import (
 	"archive/tar"
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -99,11 +103,10 @@ func (fs SpecFiles) separate() (SpecFiles, error) {
 	return separatedSpecFiles, nil
 }
 
-func SpecFilesFromTarFile(tarFile []byte) (SpecFiles, error) {
+func SpecFilesFromTar(reader io.Reader) (SpecFiles, error) {
 	specFiles := SpecFiles{}
 
-	strReader := bytes.NewReader(tarFile)
-	tr := tar.NewReader(strReader)
+	tr := tar.NewReader(reader)
 
 	for {
 		header, err := tr.Next()
@@ -134,4 +137,49 @@ func SpecFilesFromTarFile(tarFile []byte) (SpecFiles, error) {
 	}
 
 	return specFiles, nil
+}
+
+func SpecFilesFromTarGz(tarGz SpecFile) (SpecFiles, error) {
+	content, err := base64.StdEncoding.DecodeString(tarGz.Content)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to base64 decode targz content")
+	}
+
+	gzf, err := gzip.NewReader(bytes.NewReader(content))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create gzip reader")
+	}
+
+	files, err := SpecFilesFromTar(gzf)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read chart archive")
+	}
+
+	// remove any common prefix from all files
+	if len(files) > 0 {
+		firstFileDir, _ := path.Split(files[0].Path)
+		commonPrefix := strings.Split(firstFileDir, string(os.PathSeparator))
+
+		for _, file := range files {
+			d, _ := path.Split(file.Path)
+			dirs := strings.Split(d, string(os.PathSeparator))
+			commonPrefix = util.CommonSlicePrefix(commonPrefix, dirs)
+		}
+
+		cleanedFiles := SpecFiles{}
+		for _, file := range files {
+			d, f := path.Split(file.Path)
+			d2 := strings.Split(d, string(os.PathSeparator))
+
+			cleanedFile := file
+			d2 = d2[len(commonPrefix):]
+			cleanedFile.Path = path.Join(path.Join(d2...), f)
+
+			cleanedFiles = append(cleanedFiles, cleanedFile)
+		}
+
+		files = cleanedFiles
+	}
+
+	return files, nil
 }
