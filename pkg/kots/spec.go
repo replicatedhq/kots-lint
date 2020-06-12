@@ -142,7 +142,8 @@ func SpecFilesFromTar(reader io.Reader) (SpecFiles, error) {
 func SpecFilesFromTarGz(tarGz SpecFile) (SpecFiles, error) {
 	content, err := base64.StdEncoding.DecodeString(tarGz.Content)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to base64 decode targz content")
+		// tarGz content is not base64 encoded, read as bytes
+		content = []byte(tarGz.Content)
 	}
 
 	gzf, err := gzip.NewReader(bytes.NewReader(content))
