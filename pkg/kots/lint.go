@@ -336,10 +336,16 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
 	lintExpressions := []LintExpression{}
 
+	// separate multi docs because the manifest can be a part of a multi doc yaml file
+	separatedSpecFiles, err := specFiles.separate()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to separate multi docs")
+	}
+
 	// check if all helm charts have corresponding archives
-	allKotsHelmCharts := findAllKotsHelmCharts(specFiles)
+	allKotsHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
 	for _, helmChart := range allKotsHelmCharts {
-		archiveExists, err := archiveForHelmChartExists(specFiles, helmChart)
+		archiveExists, err := archiveForHelmChartExists(separatedSpecFiles, helmChart)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to check if archive for helm chart exists")
 		}
@@ -348,14 +354,14 @@ func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
 			lintExpression := LintExpression{
 				Rule:    "helm-archive-missing",
 				Type:    "error",
-				Message: fmt.Sprintf("Could not find helm archive for chart '%s'", helmChart.Spec.Chart.Name),
+				Message: fmt.Sprintf("Could not find helm archive for chart '%s' version '%s'", helmChart.Spec.Chart.Name, helmChart.Spec.Chart.ChartVersion),
 			}
 			lintExpressions = append(lintExpressions, lintExpression)
 		}
 	}
 
 	// check if all archives have corresponding helm chart manifests
-	for _, specFile := range specFiles {
+	for _, specFile := range separatedSpecFiles {
 		if !specFile.isTarGz() {
 			continue
 		}
