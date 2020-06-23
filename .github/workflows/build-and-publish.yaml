@@ -70,7 +70,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v2
-      - uses: superfly/flyctl-actions@1.0
+      - uses: superfly/flyctl-actions@1.1
         with:
           args: deploy --image-label ${GITHUB_REF:10}
         env:
