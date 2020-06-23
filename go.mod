@@ -22,6 +22,8 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
 	go.undefinedlabs.com/scopeagent v0.1.12
 	gopkg.in/yaml.v2 v2.2.8
+	helm.sh/helm/v3 v3.1.2
+	k8s.io/client-go v0.17.4
 )
 
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n v1.10.1
