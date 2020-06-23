@@ -26,10 +26,14 @@
                 "type": "object",
                 "required": [
                   "method",
+                  "redactUri",
                   "uri"
                 ],
                 "properties": {
                   "method": {
+                    "type": "string"
+                  },
+                  "redactUri": {
                     "type": "string"
                   },
                   "uri": {
@@ -41,10 +45,14 @@
                 "type": "object",
                 "required": [
                   "method",
+                  "redactUri",
                   "uri"
                 ],
                 "properties": {
                   "method": {
+                    "type": "string"
+                  },
+                  "redactUri": {
                     "type": "string"
                   },
                   "uri": {
