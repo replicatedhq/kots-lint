@@ -610,6 +610,14 @@ metadata:
   name: example-config
 data:
     ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "faker"
     ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
 				},
 			},
@@ -661,6 +669,14 @@ metadata:
   name: example-config
 data:
     ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "does_not_exist" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "faker"
     ENV_VAR_2: '{{repl ConfigOption "does_not_exist" }}'`,
 				},
 			},
@@ -689,6 +705,19 @@ data:
 						{
 							Start: LintExpressionItemLinePosition{
 								Line: 7,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "config-option-not-found",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Config option \"does_not_exist\" not found",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 15,
 							},
 						},
 					},
@@ -903,7 +932,15 @@ spec:
 				{
 					Name: "test.yaml",
 					Path: "test.yaml",
-					Content: `apiVersion: kots.io/v1beta1
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "does_not_exist" }}'
+---
+apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
   name: app-slug
@@ -930,7 +967,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 9,
+								Line: 17,
 							},
 						},
 					},
@@ -943,7 +980,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 10,
+								Line: 18,
 							},
 						},
 					},
