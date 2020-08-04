@@ -22,8 +22,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = kots.InitOPALinting("/rego/kots-spec-default.rego")
-	if err != nil {
+	if err := kots.InitOPALinting("/rego"); err != nil {
 		log.Errorf("failed to init opa linting: %v", err)
 		os.Exit(1)
 	}

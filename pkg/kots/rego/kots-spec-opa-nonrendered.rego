@@ -1,6 +1,8 @@
+## IMPORTANT ##
+# This file should only contain rules for linting NON-rendered spec files
 # Rego playground: https://play.openpolicyagent.org/
 
-package kots.spec
+package kots.spec.nonrendered
 
 ## Secrets with template functions are excluded in the rule logic
 secrets_regular_expressions = [

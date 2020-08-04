@@ -10,6 +10,235 @@ import (
 
 func Test_renderSpecFiles(t *testing.T) {
 	tests := []struct {
+		name  string
+		files SpecFiles
+		want  SpecFiles
+	}{
+		{
+			name: "basic",
+			files: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_text
+          title: a text field with a value provided by a template function
+          type: text
+          value: a templated value
+        - name: try_to_template_me
+          title: try to template me
+          type: text
+          value: '{{repl ConfigOption "a_templated_text"}}'
+`,
+				},
+				{
+					Name: "application.yaml",
+					Path: "application.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "example-app"
+  labels:
+    app.kubernetes.io/name: "example-app"
+spec:
+  descriptor:
+    links:
+      - description: '{{repl ConfigOption "a_templated_text"}}'
+        url: "http://example-nginx"
+`,
+				},
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: icon-url
+  statusInformers:
+    - deployment/example-nginx
+  releaseNotes: '{{repl ConfigOption "a_templated_text"}}'
+`,
+				},
+				{
+					Name: "support-bundle.yaml",
+					Path: "support-bundle.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
+metadata:
+  name: collector-sample
+spec:
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}
+    - secret:
+        key: '{{repl ConfigOption "a_templated_text"}}'
+`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Preflight
+metadata:
+  name: example-preflight-checks
+spec:
+  analyzers:
+  - clusterVersion:
+      outcomes:
+      - pass:
+          message: repl{{ConfigOption "a_templated_text"}}
+`,
+				},
+				{
+					Name: "service.yaml",
+					Path: "service.yaml",
+					Content: `apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: example
+    component: nginx
+  name: example-nginx
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: example
+    component: repl{{ConfigOption "a_templated_text"}}
+  type: LoadBalancer
+`,
+				},
+			},
+			want: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_text
+          title: a text field with a value provided by a template function
+          type: text
+          value: a templated value
+        - name: try_to_template_me
+          title: try to template me
+          type: text
+          value: '{{repl ConfigOption "a_templated_text"}}'
+`,
+				},
+				{
+					Name: "application.yaml",
+					Path: "application.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "example-app"
+  labels:
+    app.kubernetes.io/name: "example-app"
+spec:
+  descriptor:
+    links:
+      - description: 'a templated value'
+        url: "http://example-nginx"
+`,
+				},
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: icon-url
+  statusInformers:
+    - deployment/example-nginx
+  releaseNotes: 'a templated value'
+`,
+				},
+				{
+					Name: "support-bundle.yaml",
+					Path: "support-bundle.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
+metadata:
+  name: collector-sample
+spec:
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}
+    - secret:
+        key: 'a templated value'
+`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Preflight
+metadata:
+  name: example-preflight-checks
+spec:
+  analyzers:
+  - clusterVersion:
+      outcomes:
+      - pass:
+          message: a templated value
+`,
+				},
+				{
+					Name: "service.yaml",
+					Path: "service.yaml",
+					Content: `apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: example
+    component: nginx
+  name: example-nginx
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: example
+    component: a templated value
+  type: LoadBalancer
+`,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			renderedFiles, err := tt.files.render()
+			require.NoError(t, err)
+			assert.ElementsMatch(t, renderedFiles, tt.want)
+		})
+	}
+}
+
+func Test_renderContent(t *testing.T) {
+	tests := []struct {
 		name       string
 		configPath string
 		files      SpecFiles
@@ -276,7 +505,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `function "sha256" not defined`,
-				line:    10,
+				match:   `        key: '{{repl print "whatever" | sha256 }}'`,
 			},
 		},
 		{
@@ -298,7 +527,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `unterminated quoted string`,
-				line:    9,
+				match:   `        key: '{{repl print "whatever }}'`,
 			},
 		},
 		{
@@ -320,7 +549,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
-				line:    10,
+				match:   `        key: 'repl{{ConfigOptionEquals "whatever" }}'`,
 			},
 		},
 	}
@@ -332,7 +561,7 @@ spec:
 			assert.True(t, ok)
 
 			assert.Equal(t, renderTemplateError.Error(), tt.want.Error())
-			assert.Equal(t, renderTemplateError.Line(), tt.want.Line())
+			assert.Equal(t, renderTemplateError.Match(), tt.want.Match())
 		})
 	}
 }

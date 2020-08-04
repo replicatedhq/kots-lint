@@ -376,7 +376,7 @@ metadata:
 spec:
   groups:
     - name: example_settings
-      title: My Example Confi
+      title: My Example Config
       description: Configuration to serve as an example for creating your own
       items:
         - name: a_templated_value
@@ -498,7 +498,7 @@ metadata:
 spec:
   groups:
     - name: example_settings
-      title: My Example Confi
+      title: My Example Config
       description: Configuration to serve as an example for creating your own
       items:
         - name: a_templated_value
@@ -574,7 +574,264 @@ metadata:
 	}
 }
 
-func Test_lintWithOPA(t *testing.T) {
+func Test_lintRenderContent(t *testing.T) {
+	tests := []struct {
+		name      string
+		specFiles SpecFiles
+		expect    []LintExpression
+	}{
+		{
+			name: "basic with no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: my value
+          type: text
+          value: value`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "invalid config",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: 2
+          type: text
+          value: "6"`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-is-invalid",
+					Type:    "error",
+					Path:    "config.yaml",
+					Message: `failed to decode config content: v1beta1.Config.Spec: v1beta1.ConfigSpec.Groups: []v1beta1.ConfigGroup: v1beta1.ConfigGroup.Items: []v1beta1.ConfigItem: v1beta1.ConfigItem.Value: Type: Title: ReadString: expects " or n, but found 2, error found in #10 byte of ...|,"title":2,"type":"t|..., bigger context ...|wn","items":[{"name":"a_templated_value","title":2,"type":"text","value":"6"}],"name":"example_setti|...`,
+				},
+			},
+		},
+		{
+			name: "unable to render different errors",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: title
+          type: text
+          value: "6"`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+
+    ENV_VAR_2: '{{repl print "whatever" | sha256 }}'
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+# this is a comment
+    ENV_VAR_2: '{{repl print "whatever }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: `function "sha256" not defined`,
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "unterminated quoted string",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 18,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unable to render same error but different docs",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: title
+          type: text
+          value: "6"`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+
+    ENV_VAR_2: '{{repl print "whatever" | sha256 }}'
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+# this is a comment
+
+    ENV_VAR_2: '{{repl print "whatever" | sha256 }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: `function "sha256" not defined`,
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: `function "sha256" not defined`,
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 19,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := lintRenderContent(test.specFiles)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, actual, test.expect)
+		})
+	}
+}
+
+func Test_lintWithOPANonRendered(t *testing.T) {
 	tests := []struct {
 		name      string
 		specFiles SpecFiles
@@ -593,7 +850,7 @@ metadata:
 spec:
   groups:
     - name: example_settings
-      title: My Example Confi
+      title: My Example Config
       description: Configuration to serve as an example for creating your own
       items:
         - name: a_templated_value
@@ -610,6 +867,14 @@ metadata:
   name: example-config
 data:
     ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "faker"
     ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
 				},
 			},
@@ -644,7 +909,7 @@ metadata:
 spec:
   groups:
     - name: example_settings
-      title: My Example Confi
+      title: My Example Config
       description: Configuration to serve as an example for creating your own
       items:
         - name: a_templated_value
@@ -661,6 +926,14 @@ metadata:
   name: example-config
 data:
     ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "does_not_exist" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "faker"
     ENV_VAR_2: '{{repl ConfigOption "does_not_exist" }}'`,
 				},
 			},
@@ -693,15 +966,456 @@ data:
 						},
 					},
 				},
+				{
+					Rule:    "config-option-not-found",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Config option \"does_not_exist\" not found",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 15,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
 
-	InitOPALinting("./rego/kots-spec-default.rego")
+	InitOPALinting("./rego")
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintWithOPA(test.specFiles)
+			actual, err := lintWithOPANonRendered(test.specFiles)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, actual, test.expect)
+		})
+	}
+}
+
+func Test_lintWithOPARendered(t *testing.T) {
+	tests := []struct {
+		name      string
+		specFiles SpecFiles
+		expect    []LintExpression
+	}{
+		{
+			name: "type/name no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-nginx
+  labels:
+    app: example
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: example
+        component: nginx
+    spec:
+      containers:
+        - image: nginx
+          envFrom:
+          - configMapRe:
+              name: example-config
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - deployment/example-nginx
+  ports:
+    - serviceName: "example-nginx"
+      servicePort: 80
+      localPort: 8888
+      applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "type/name with errors",
+			specFiles: SpecFiles{
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-nginx
+  labels:
+    app: example
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: example
+        component: nginx
+    spec:
+      containers:
+        - image: nginx
+          envFrom:
+          - configMapRe:
+              name: example-config
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - deployment-example-nginx
+    - service/example-nginx
+  ports:
+    - serviceName: "example-nginx"
+      servicePort: 80
+      localPort: 8888
+      applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "invalid-status-informer-format",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Invalid status informer format",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 9,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "nonexistent-status-informer-object",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Status informer points to a nonexistent kubernetes object",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "namespace/type/name does not exist",
+			specFiles: SpecFiles{
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-nginx
+  namespace: test
+  labels:
+    app: example
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: example
+        component: nginx
+    spec:
+      containers:
+        - image: nginx
+          envFrom:
+          - configMapRe:
+              name: example-config
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - test/deployment/example-nginx
+    - test/service/example-nginx
+  ports:
+    - serviceName: "example-nginx"
+      servicePort: 80
+      localPort: 8888
+      applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "nonexistent-status-informer-object",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Status informer points to a nonexistent kubernetes object",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "render namespace/type/name 1",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: My Example Description
+      items:
+        - name: db_type
+          type: select_one
+          default: embedded
+          items:
+            - name: external
+              title: External
+            - name: embedded
+              title: Embedded DB`,
+				},
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-nginx
+  namespace: test
+  labels:
+    app: example
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: example
+        component: nginx
+    spec:
+      containers:
+        - image: nginx
+          envFrom:
+          - configMapRe:
+              name: example-config
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "does_not_exist" }}'
+---
+apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - service-example-nginx
+    - '{{repl if ConfigOptionEquals "db_type" "embedded"}}test/service/example-nginx{{repl else}}{{repl end}}'
+    - '{{repl if ConfigOptionEquals "db_type" "external"}}test/service/example-nginx{{repl else}}{{repl end}}'
+  ports:
+    - serviceName: "example-nginx"
+      servicePort: 80
+      localPort: 8888
+      applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "invalid-status-informer-format",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Invalid status informer format",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 17,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "nonexistent-status-informer-object",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Status informer points to a nonexistent kubernetes object",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 18,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "render namespace/type/name 2",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: My Example Description
+      items:
+        - name: db_type
+          type: select_one
+          default: embedded
+          items:
+            - name: external
+              title: External
+            - name: embedded
+              title: Embedded DB`,
+				},
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-nginx
+  namespace: test
+  labels:
+    app: example
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: example
+        component: nginx
+    spec:
+      containers:
+        - image: nginx
+          envFrom:
+          - configMapRe:
+              name: example-config
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - test/deployment/example-nginx
+    - '{{repl if ConfigOptionEquals "db_type" "embedded"}}test/deployment/example-nginx{{repl else}}{{repl end}}'
+    - '{{repl if ConfigOptionEquals "db_type" "external"}}test/service/example-nginx{{repl else}}{{repl end}}'
+  ports:
+    - serviceName: "example-nginx"
+      servicePort: 80
+      localPort: 8888
+      applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+	}
+
+	InitOPALinting("./rego")
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := lintWithOPARendered(test.specFiles)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
