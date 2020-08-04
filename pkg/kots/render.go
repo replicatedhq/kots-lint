@@ -1,7 +1,6 @@
 package kots
 
 import (
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -16,15 +15,15 @@ import (
 
 type RenderTemplateError struct {
 	message string
-	line    int
+	match   string
 }
 
 func (r RenderTemplateError) Error() string {
 	return r.message
 }
 
-func (r RenderTemplateError) Line() int {
-	return r.line
+func (r RenderTemplateError) Match() string {
+	return r.match
 }
 
 func (files SpecFiles) render() (SpecFiles, error) {
@@ -142,7 +141,7 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 	*/
 
 	renderTemplateError := RenderTemplateError{
-		line:    -1,
+		match:   "",
 		message: value,
 	}
 
@@ -178,41 +177,14 @@ func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
 	}
 
 	// find error line from data
-	var errorLine interface{}
+	match := ""
 	for index, line := range strings.Split(data, "\n") {
-		if index != lineNumber-1 {
-			continue
-		}
-		err := goyaml.Unmarshal([]byte(line), &errorLine)
-		if err != nil {
-			return renderTemplateError
-		}
-		break
-	}
-
-	if errorLine == nil {
-		return renderTemplateError
-	}
-
-	// find line number in original content
-	originalLineIndex := -1
-	for index, line := range strings.Split(file.Content, "\n") {
-		var unmarshalledLine interface{}
-		err := goyaml.Unmarshal([]byte(line), &unmarshalledLine)
-		if err != nil {
-			return renderTemplateError
-		}
-		if reflect.DeepEqual(unmarshalledLine, errorLine) {
-			originalLineIndex = index
+		if index == lineNumber-1 {
+			match = line
 			break
 		}
 	}
-
-	if originalLineIndex == -1 {
-		return renderTemplateError
-	}
-
-	renderTemplateError.line = originalLineIndex + 1
+	renderTemplateError.match = match
 
 	return renderTemplateError
 }

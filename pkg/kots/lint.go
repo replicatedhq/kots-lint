@@ -375,19 +375,31 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, error) {
 			continue
 		}
 		// check if the error is coming from kots RenderTemplate function
-		if err, ok := errors.Cause(err).(RenderTemplateError); ok {
+		if renderErr, ok := errors.Cause(err).(RenderTemplateError); ok {
 			lintExpression := LintExpression{
 				Rule:    "unable-to-render",
 				Type:    "error",
 				Path:    file.Path,
-				Message: err.Error(),
+				Message: renderErr.Error(),
 			}
 
-			if err.Line() != -1 {
+			if renderErr.Match() != "" {
+				// we need to get the line number for the original file content not the separated document
+				foundSpecFile, err := specFiles.getFile(file.Path)
+				if err != nil {
+					lintExpressions = append(lintExpressions, lintExpression)
+					continue
+				}
+
+				line, err := util.GetLineNumberFromMatch(foundSpecFile.Content, renderErr.Match(), file.DocIndex)
+				if err != nil || line == -1 {
+					lintExpressions = append(lintExpressions, lintExpression)
+					continue
+				}
 				lintExpression.Positions = []LintExpressionItemPosition{
 					{
 						Start: LintExpressionItemLinePosition{
-							Line: err.Line(),
+							Line: line,
 						},
 					},
 				}

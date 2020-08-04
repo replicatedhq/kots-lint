@@ -574,6 +574,263 @@ metadata:
 	}
 }
 
+func Test_lintRenderContent(t *testing.T) {
+	tests := []struct {
+		name      string
+		specFiles SpecFiles
+		expect    []LintExpression
+	}{
+		{
+			name: "basic with no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: my value
+          type: text
+          value: value`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "invalid config",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: 2
+          type: text
+          value: "6"`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-is-invalid",
+					Type:    "error",
+					Path:    "config.yaml",
+					Message: `failed to decode config content: v1beta1.Config.Spec: v1beta1.ConfigSpec.Groups: []v1beta1.ConfigGroup: v1beta1.ConfigGroup.Items: []v1beta1.ConfigItem: v1beta1.ConfigItem.Value: Type: Title: ReadString: expects " or n, but found 2, error found in #10 byte of ...|,"title":2,"type":"t|..., bigger context ...|wn","items":[{"name":"a_templated_value","title":2,"type":"text","value":"6"}],"name":"example_setti|...`,
+				},
+			},
+		},
+		{
+			name: "unable to render different errors",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: title
+          type: text
+          value: "6"`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+
+    ENV_VAR_2: '{{repl print "whatever" | sha256 }}'
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+# this is a comment
+    ENV_VAR_2: '{{repl print "whatever }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: `function "sha256" not defined`,
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "unterminated quoted string",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 18,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unable to render same error but different docs",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: title
+          type: text
+          value: "6"`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+
+    ENV_VAR_2: '{{repl print "whatever" | sha256 }}'
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+# this is a comment
+
+    ENV_VAR_2: '{{repl print "whatever" | sha256 }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: `function "sha256" not defined`,
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: `function "sha256" not defined`,
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 19,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := lintRenderContent(test.specFiles)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, actual, test.expect)
+		})
+	}
+}
+
 func Test_lintWithOPANonRendered(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -505,7 +505,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `function "sha256" not defined`,
-				line:    10,
+				match:   `        key: '{{repl print "whatever" | sha256 }}'`,
 			},
 		},
 		{
@@ -527,7 +527,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `unterminated quoted string`,
-				line:    9,
+				match:   `        key: '{{repl print "whatever }}'`,
 			},
 		},
 		{
@@ -549,7 +549,7 @@ spec:
 			},
 			want: RenderTemplateError{
 				message: `at <ConfigOptionEquals>: wrong number of args for ConfigOptionEquals: want 2 got 1`,
-				line:    10,
+				match:   `        key: 'repl{{ConfigOptionEquals "whatever" }}'`,
 			},
 		},
 	}
@@ -561,7 +561,7 @@ spec:
 			assert.True(t, ok)
 
 			assert.Equal(t, renderTemplateError.Error(), tt.want.Error())
-			assert.Equal(t, renderTemplateError.Line(), tt.want.Line())
+			assert.Equal(t, renderTemplateError.Match(), tt.want.Match())
 		})
 	}
 }

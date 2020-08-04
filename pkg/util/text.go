@@ -226,7 +226,7 @@ func GetLineIndentation(line string) string {
 	return indentation
 }
 
-// CleanUpYaml removes lines that only contains comments or are empty
+// CleanUpYaml removes lines that only contain comments or are empty
 // also removes trailing comments after the "---" multi doc separator
 func CleanUpYaml(value string) string {
 	lines := []string{}
