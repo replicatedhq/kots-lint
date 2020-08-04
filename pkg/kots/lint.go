@@ -67,7 +67,7 @@ func InitOPALinting(regoPath string) error {
 	}
 
 	nonRenderedQuery, err := rego.New(
-		rego.Query("data.kots.spec.lint"),
+		rego.Query("data.kots.spec.nonrendered.lint"),
 		rego.Module("kots-spec-opa-nonrendered.rego", string(nonRenderedRegoContent)),
 	).PrepareForEval(ctx)
 
