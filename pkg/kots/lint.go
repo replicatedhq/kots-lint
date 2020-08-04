@@ -51,26 +51,48 @@ type LintExpressionItemLinePosition struct {
 	Line int `json:"line"`
 }
 
-var regoQuery *rego.PreparedEvalQuery
+// a prepared rego query for linting NON-rendered files
+var nonRenderedRegoQuery *rego.PreparedEvalQuery
+
+// a prepared rego query for linting RENDERED files
+var renderedRegoQuery *rego.PreparedEvalQuery
 
 func InitOPALinting(regoPath string) error {
-	regoContent, err := ioutil.ReadFile(regoPath)
-	if err != nil {
-		return errors.Wrap(err, "failed to read rego file")
-	}
-
 	ctx := context.Background()
 
-	query, err := rego.New(
+	// prepare rego query for linting non-rendered files
+	nonRenderedRegoContent, err := ioutil.ReadFile(fmt.Sprintf("%s/kots-spec-opa-nonrendered.rego", regoPath))
+	if err != nil {
+		return errors.Wrap(err, "failed to read non-rendered rego file")
+	}
+
+	nonRenderedQuery, err := rego.New(
 		rego.Query("data.kots.spec.lint"),
-		rego.Module("kots-spec-default.rego", string(regoContent)),
+		rego.Module("kots-spec-opa-nonrendered.rego", string(nonRenderedRegoContent)),
 	).PrepareForEval(ctx)
 
 	if err != nil {
-		errors.Wrap(err, "failed to prepare query for eval")
+		errors.Wrap(err, "failed to prepare non-rendered query for eval")
 	}
 
-	regoQuery = &query
+	nonRenderedRegoQuery = &nonRenderedQuery
+
+	// prepare rego query for linting rendered files
+	renderedRegoContent, err := ioutil.ReadFile(fmt.Sprintf("%s/kots-spec-opa-rendered.rego", regoPath))
+	if err != nil {
+		return errors.Wrap(err, "failed to read rendered rego file")
+	}
+
+	renderedQuery, err := rego.New(
+		rego.Query("data.kots.spec.rendered.lint"),
+		rego.Module("kots-spec-opa-rendered.rego", string(renderedRegoContent)),
+	).PrepareForEval(ctx)
+
+	if err != nil {
+		errors.Wrap(err, "failed to prepare rendered query for eval")
+	}
+
+	renderedRegoQuery = &renderedQuery
 
 	return nil
 }
@@ -100,13 +122,31 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return helmChartsLintExpressions, false, nil
 	}
 
-	opaLintExpressions, err := lintWithOPA(filteredFiles)
+	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(filteredFiles)
 	if err != nil {
-		return nil, false, errors.Wrap(err, "failed to lint with OPA")
+		return nil, false, errors.Wrap(err, "failed to lint with OPA non-rendered")
 	}
-	// if there are opa errors, end early there
-	if lintExpressionsHaveErrors(opaLintExpressions) {
-		return opaLintExpressions, false, nil
+	// if there are opa NON-rendered errors, end early there
+	if lintExpressionsHaveErrors(opaNonRenderedLintExpressions) {
+		return opaNonRenderedLintExpressions, false, nil
+	}
+
+	renderContentLintExpressions, err := lintRenderContent(filteredFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint render content")
+	}
+	// if there are render content errors, end early there
+	if lintExpressionsHaveErrors(renderContentLintExpressions) {
+		return renderContentLintExpressions, false, nil
+	}
+
+	opaRenderedLintExpressions, err := lintWithOPARendered(filteredFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint with OPA rendered")
+	}
+	// if there are opa RENDERED errors, end early there
+	if lintExpressionsHaveErrors(opaRenderedLintExpressions) {
+		return opaRenderedLintExpressions, false, nil
 	}
 
 	kubevalLintExpressions, err := lintWithKubeval(filteredFiles)
@@ -116,15 +156,27 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 
 	allLintExpressions := []LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
-	allLintExpressions = append(allLintExpressions, opaLintExpressions...)
+	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
+	allLintExpressions = append(allLintExpressions, opaRenderedLintExpressions...)
+	allLintExpressions = append(allLintExpressions, renderContentLintExpressions...)
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
 
 	return allLintExpressions, true, nil
 }
 
-// InitOPALinting needs to be called first with a rego policy
-// in order for this function to run successfully
-func lintWithOPA(specFiles SpecFiles) ([]LintExpression, error) {
+// InitOPALinting needs to be called first in order for this function to run successfully
+// This function will lint using the prepared query for NON-rendered files
+func lintWithOPANonRendered(specFiles SpecFiles) ([]LintExpression, error) {
+	return lintWithOPA(specFiles, nonRenderedRegoQuery, false)
+}
+
+// InitOPALinting needs to be called first in order for this function to run successfully
+// This function will lint using the prepared query for RENDERED files
+func lintWithOPARendered(specFiles SpecFiles) ([]LintExpression, error) {
+	return lintWithOPA(specFiles, renderedRegoQuery, true)
+}
+
+func lintWithOPA(specFiles SpecFiles, regoQuery *rego.PreparedEvalQuery, renderFiles bool) ([]LintExpression, error) {
 	lintExpressions := []LintExpression{}
 
 	separatedSpecFiles, err := specFiles.separate()
@@ -132,8 +184,14 @@ func lintWithOPA(specFiles SpecFiles) ([]LintExpression, error) {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	ctx := context.Background()
+	if renderFiles {
+		separatedSpecFiles, err = separatedSpecFiles.render()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to render spec files")
+		}
+	}
 
+	ctx := context.Background()
 	results, err := regoQuery.Eval(ctx, rego.EvalInput(separatedSpecFiles))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to evaluate query")
@@ -214,51 +272,9 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	// check if config is valid
-	config, path, err := separatedSpecFiles.findAndValidateConfig()
+	renderedFiles, err := separatedSpecFiles.render()
 	if err != nil {
-		lintExpression := LintExpression{
-			Rule:    "config-is-invalid",
-			Type:    "error",
-			Path:    path, // TODO maybe add line number?
-			Message: err.Error(),
-		}
-		lintExpressions = append(lintExpressions, lintExpression)
-	}
-
-	// get the rendered version of the spec files before linting
-	renderedFiles := SpecFiles{}
-	for _, file := range separatedSpecFiles {
-		renderedContent, err := file.renderContent(config)
-		if err == nil {
-			file.Content = string(renderedContent)
-			renderedFiles = append(renderedFiles, file)
-			continue
-		}
-		// check if the error is coming from kots RenderTemplate function
-		if err, ok := errors.Cause(err).(RenderTemplateError); ok {
-			lintExpression := LintExpression{
-				Rule:    "unable-to-render",
-				Type:    "error",
-				Path:    file.Path,
-				Message: err.Error(),
-			}
-
-			if err.Line() != -1 {
-				lintExpression.Positions = []LintExpressionItemPosition{
-					{
-						Start: LintExpressionItemLinePosition{
-							Line: err.Line(),
-						},
-					},
-				}
-			}
-
-			lintExpressions = append(lintExpressions, lintExpression)
-			continue
-		}
-		// error is not caused by kots RenderTemplate, something went wrong
-		return nil, errors.Wrap(err, "failed to render spec file content")
+		return nil, errors.Wrap(err, "failed to render spec files")
 	}
 
 	kubevalConfig := kubeval.Config{
@@ -328,6 +344,60 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 				lintExpressions = append(lintExpressions, lintExpression)
 			}
 		}
+	}
+
+	return lintExpressions, nil
+}
+
+func lintRenderContent(specFiles SpecFiles) ([]LintExpression, error) {
+	lintExpressions := []LintExpression{}
+
+	separatedSpecFiles, err := specFiles.separate()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to separate multi docs")
+	}
+
+	// check if config is valid
+	config, path, err := separatedSpecFiles.findAndValidateConfig()
+	if err != nil {
+		lintExpression := LintExpression{
+			Rule:    "config-is-invalid",
+			Type:    "error",
+			Path:    path,
+			Message: err.Error(),
+		}
+		lintExpressions = append(lintExpressions, lintExpression)
+	}
+
+	for _, file := range separatedSpecFiles {
+		_, err := file.renderContent(config)
+		if err == nil {
+			continue
+		}
+		// check if the error is coming from kots RenderTemplate function
+		if err, ok := errors.Cause(err).(RenderTemplateError); ok {
+			lintExpression := LintExpression{
+				Rule:    "unable-to-render",
+				Type:    "error",
+				Path:    file.Path,
+				Message: err.Error(),
+			}
+
+			if err.Line() != -1 {
+				lintExpression.Positions = []LintExpressionItemPosition{
+					{
+						Start: LintExpressionItemLinePosition{
+							Line: err.Line(),
+						},
+					},
+				}
+			}
+
+			lintExpressions = append(lintExpressions, lintExpression)
+			continue
+		}
+		// error is not caused by kots RenderTemplate, something went wrong
+		return nil, errors.Wrapf(err, "failed to render spec file %s", file.Path)
 	}
 
 	return lintExpressions, nil

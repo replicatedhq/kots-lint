@@ -27,6 +27,25 @@ func (r RenderTemplateError) Line() int {
 	return r.line
 }
 
+func (files SpecFiles) render() (SpecFiles, error) {
+	config, _, err := files.findAndValidateConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find and validate config")
+	}
+
+	renderedFiles := SpecFiles{}
+	for _, file := range files {
+		renderedContent, err := file.renderContent(config)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to render spec file %s", file.Path)
+		}
+		file.Content = string(renderedContent)
+		renderedFiles = append(renderedFiles, file)
+	}
+
+	return renderedFiles, nil
+}
+
 func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 	if !f.isYAML() {
 		return nil, errors.New("not a yaml file")
