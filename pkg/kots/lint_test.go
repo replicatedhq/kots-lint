@@ -1057,7 +1057,91 @@ spec:
 			expect: []LintExpression{},
 		},
 		{
-			name: "namespace/type/name",
+			name: "type/name with errors",
+			specFiles: SpecFiles{
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-nginx
+  labels:
+    app: example
+    component: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+      component: nginx
+  template:
+    metadata:
+      labels:
+        app: example
+        component: nginx
+    spec:
+      containers:
+        - image: nginx
+          envFrom:
+          - configMapRe:
+              name: example-config
+          resources:
+            limits:
+              memory: '256Mi'
+              cpu: '500m'`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - deployment-example-nginx
+    - service/example-nginx
+  ports:
+    - serviceName: "example-nginx"
+      servicePort: 80
+      localPort: 8888
+      applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "invalid-status-informer-format",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Invalid status informer format",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 9,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "nonexistent-status-informer-object",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Status informer points to a nonexistent kubernetes object",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "namespace/type/name does not exist",
 			specFiles: SpecFiles{
 				{
 					Name: "deployment.yaml",
@@ -1114,10 +1198,10 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "invalid-status-informer",
+					Rule:    "nonexistent-status-informer-object",
 					Type:    "warn",
 					Path:    "test.yaml",
-					Message: "Invalid status informer",
+					Message: "Status informer points to a nonexistent kubernetes object",
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
@@ -1205,7 +1289,7 @@ spec:
   title: App Name
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   statusInformers:
-    - service/example-nginx
+    - service-example-nginx
     - '{{repl if ConfigOptionEquals "db_type" "embedded"}}test/service/example-nginx{{repl else}}{{repl end}}'
     - '{{repl if ConfigOptionEquals "db_type" "external"}}test/service/example-nginx{{repl else}}{{repl end}}'
   ports:
@@ -1217,10 +1301,10 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "invalid-status-informer",
+					Rule:    "invalid-status-informer-format",
 					Type:    "warn",
 					Path:    "test.yaml",
-					Message: "Invalid status informer",
+					Message: "Invalid status informer format",
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
@@ -1230,10 +1314,10 @@ spec:
 					},
 				},
 				{
-					Rule:    "invalid-status-informer",
+					Rule:    "nonexistent-status-informer-object",
 					Type:    "warn",
 					Path:    "test.yaml",
-					Message: "Invalid status informer",
+					Message: "Status informer points to a nonexistent kubernetes object",
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{

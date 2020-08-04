@@ -15,8 +15,42 @@ files[output] {
   }
 }
 
-# Check if any "status informer" is invalid (check format & if points to a non-existent object)
-is_informer_valid(informer) {
+# Check if any "status informer" has invalid format
+is_informer_format_valid(informer) {
+  is_string(informer)
+  expression := "^(?:([^\/]+)\/)?([^\/]+)\/([^\/]+)$"
+  matches := regex.find_all_string_submatch_n(expression, informer, -1)
+  count(matches) > 0
+
+  capture_groups := matches[0]
+  count(capture_groups) == 4
+} else {
+  informer == ""
+}
+lint[output] {
+  file := files[_]
+  file.content.apiVersion == "kots.io/v1beta1"
+  file.content.kind == "Application"
+
+  status_informers := file.content.spec.statusInformers
+  count(status_informers) > 0
+
+  informer := status_informers[i]
+  not is_informer_format_valid(informer)
+
+  field := sprintf("spec.statusInformers.%d", [i])
+  output := {
+    "rule": "invalid-status-informer-format",
+    "type": "warn",
+    "message": "Invalid status informer format",
+    "path": file.path,
+    "field": field,
+    "docIndex": file.docIndex
+  }
+}
+
+# Check if any "status informer" points to a non-existent object
+informer_object_exists(informer) {
   is_string(informer)
   expression := "^(?:([^\/]+)\/)?([^\/]+)\/([^\/]+)$"
   matches := regex.find_all_string_submatch_n(expression, informer, -1)
@@ -48,13 +82,14 @@ lint[output] {
   count(status_informers) > 0
 
   informer := status_informers[i]
-  not is_informer_valid(informer)
+  is_informer_format_valid(informer)
+  not informer_object_exists(informer)
 
   field := sprintf("spec.statusInformers.%d", [i])
   output := {
-    "rule": "invalid-status-informer",
+    "rule": "nonexistent-status-informer-object",
     "type": "warn",
-    "message": "Invalid status informer",
+    "message": "Status informer points to a nonexistent kubernetes object",
     "path": file.path,
     "field": field,
     "docIndex": file.docIndex
