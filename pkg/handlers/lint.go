@@ -36,6 +36,8 @@ type LintReleaseResponse struct {
 
 // LintRelease http handler for linting a release
 func LintRelease(c *gin.Context) {
+	log.Infof("Received lint request with content-length=%s, content-type=%s, client-ip=%s", c.GetHeader("content-length"), c.ContentType(), c.ClientIP())
+
 	// read before binding to check if body is a tar stream
 	data, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
