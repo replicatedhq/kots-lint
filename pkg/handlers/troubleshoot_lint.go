@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
+	log "github.com/sirupsen/logrus"
 )
 
 // TroubleshootLintSpecParameters contains parameters to lint a troubleshoot spec
