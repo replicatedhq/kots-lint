@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/newrelic/go-agent/_integrations/nrgin/v1"
-	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
+	log "github.com/sirupsen/logrus"
 	cors "github.com/tommy351/gin-cors"
 )
 
@@ -19,6 +19,12 @@ func Run(newrelicApp newrelic.Application) {
 	}
 
 	r := gin.New()
+	r.Use(
+		gin.LoggerWithConfig(gin.LoggerConfig{
+			SkipPaths: []string{"/livez"},
+		}),
+		gin.Recovery(),
+	)
 
 	if newrelicApp != nil {
 		r.Use(nrgin.Middleware(newrelicApp))
@@ -32,11 +38,6 @@ func Run(newrelicApp newrelic.Application) {
 			AllowHeaders:  []string{"Origin", "Accept", "Content-Type"},
 			ExposeHeaders: []string{"Content-Length"},
 		}),
-		log.GinLoggerWithWriter(
-			gin.DefaultWriter,
-			"/livez",
-		),
-		gin.Recovery(),
 	)
 
 	r.GET("/livez", handlers.GetLivez)

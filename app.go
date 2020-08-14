@@ -7,10 +7,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/daemon"
 	"github.com/replicatedhq/kots-lint/pkg/instrument"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {

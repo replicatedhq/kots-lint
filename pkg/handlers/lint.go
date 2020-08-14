@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	"github.com/replicatedhq/kots-lint/pkg/util"
+	log "github.com/sirupsen/logrus"
 )
 
 // LintReleaseParameters contains parameters to lint a release for an app

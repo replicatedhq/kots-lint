@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/replicatedcom/saaskit/log"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
+	log "github.com/sirupsen/logrus"
 )
 
 // EnterpriseLintReleaseParameters contains parameters to lint a release for an app against an enterprise's policies
