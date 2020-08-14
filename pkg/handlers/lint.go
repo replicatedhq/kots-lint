@@ -38,6 +38,7 @@ type LintReleaseResponse struct {
 func LintRelease(c *gin.Context) {
 	// read before binding to check if body is a tar stream
 	data, err := ioutil.ReadAll(c.Request.Body)
+	c.Request.Body.Close()
 	if err != nil {
 		log.Errorf("failed to read request body: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
