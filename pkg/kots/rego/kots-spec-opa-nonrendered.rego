@@ -189,13 +189,19 @@ lint[output] {
 }
 
 # Check if Preflight spec exists
-preflight_spec_exists {
+v1beta1_preflight_spec_exists {
   file := files[_]
   file.content.kind == "Preflight"
   file.content.apiVersion == "troubleshoot.replicated.com/v1beta1"
 }
+v1beta2_preflight_spec_exists {
+  file := files[_]
+  file.content.kind == "Preflight"
+  file.content.apiVersion == "troubleshoot.sh/v1beta2"
+}
 lint[output] {
-  not preflight_spec_exists
+  not v1beta1_preflight_spec_exists
+  not v1beta2_preflight_spec_exists
   output := {
     "rule": "preflight-spec",
     "type": "warn",
@@ -219,13 +225,19 @@ lint[output] {
 }
 
 # Check if Troubleshoot spec exists
-troubleshoot_spec_exists {
+v1beta1_troubleshoot_spec_exists {
   file := files[_]
   file.content.kind == "Collector"
   file.content.apiVersion == "troubleshoot.replicated.com/v1beta1"
 }
+v1beta2_troubleshoot_spec_exists {
+  file := files[_]
+  file.content.kind == "Collector"
+  file.content.apiVersion == "troubleshoot.sh/v1beta2"
+}
 lint[output] {
-  not troubleshoot_spec_exists
+  not v1beta1_troubleshoot_spec_exists
+  not v1beta2_troubleshoot_spec_exists
   output := {
     "rule": "troubleshoot-spec",
     "type": "warn",
