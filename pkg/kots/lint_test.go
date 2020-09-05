@@ -981,6 +981,36 @@ data:
 				},
 			},
 		},
+		{
+			name: "support bundle is troubelshoot spec",
+			specFiles: SpecFiles{
+				{
+					Name: "supportbundle.yaml",
+					Path: "supportbundle.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: support-bundle`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+			},
+		},
 	}
 
 	InitOPALinting("./rego")

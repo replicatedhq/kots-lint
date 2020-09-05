@@ -235,9 +235,21 @@ v1beta2_troubleshoot_spec_exists {
   file.content.kind == "Collector"
   file.content.apiVersion == "troubleshoot.sh/v1beta2"
 }
+v1beta1_supportbundle_spec_exists {
+  file := files[_]
+  file.content.kind == "SupportBundle"
+  file.content.apiVersion == "troubleshoot.replicated.com/v1beta1"
+}
+v1beta2_supportbundle_spec_exists {
+  file := files[_]
+  file.content.kind == "SupportBundle"
+  file.content.apiVersion == "troubleshoot.sh/v1beta2"
+}
 lint[output] {
   not v1beta1_troubleshoot_spec_exists
   not v1beta2_troubleshoot_spec_exists
+  not v1beta1_supportbundle_spec_exists
+  not v1beta2_supportbundle_spec_exists
   output := {
     "rule": "troubleshoot-spec",
     "type": "warn",
