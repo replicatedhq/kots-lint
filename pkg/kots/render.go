@@ -66,7 +66,7 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		configGroups = config.Spec.Groups
 	}
 
-	builder, _, err := template.NewBuilder(configGroups, templateContextValues, localRegistry, nil, nil)
+	builder, _, err := template.NewBuilder(configGroups, templateContextValues, localRegistry, nil, nil, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create builder")
 	}
