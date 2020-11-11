@@ -3,19 +3,18 @@ module github.com/replicatedhq/kots-lint
 go 1.14
 
 require (
-	github.com/gin-gonic/gin v1.6.1
-	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
+	github.com/gin-gonic/gin v1.6.3
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.2.2
 	github.com/newrelic/go-agent v2.13.0+incompatible
 	github.com/open-policy-agent/opa v0.18.0
 	github.com/pkg/errors v0.9.1
-	github.com/replicatedhq/kots v1.19.0-beta.0.0.20200911201032-65e935b8c6fe
+	github.com/replicatedhq/kots v1.22.1-0.20201110235854-8125a4bb609b
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
-	go.undefinedlabs.com/scopeagent v0.1.12
+	go.undefinedlabs.com/scopeagent v0.1.15
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.2.4
 	k8s.io/client-go v0.18.4
