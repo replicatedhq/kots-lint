@@ -863,8 +863,8 @@ github.com/quobyte/api v0.1.2/go.mod h1:jL7lIHrmqQ7yh05OJ+eEEdHr0u/kmT1Ff9iHd+4H
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a h1:9ZKAASQSHhDYGoxY8uLVpewe1GDZ2vu2Tr/vTdVAkFQ=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
-github.com/replicatedhq/kots v1.22.1-0.20201110235854-8125a4bb609b h1:Ikdq+d/nnR47SzxeYm962pmN47gecu+RNkkRbQaKdOM=
-github.com/replicatedhq/kots v1.22.1-0.20201110235854-8125a4bb609b/go.mod h1:bnHXDzKJF5QupNC/sjytfuOfL1kym/nn8z6oqeGZtiA=
+github.com/replicatedhq/kots v1.22.1-0.20201111012022-b9fcc612d827 h1:V/pY3YOUpLcgQ40ddF5p9Y2jzriCVvhwt3O2fm1CqRo=
+github.com/replicatedhq/kots v1.22.1-0.20201111012022-b9fcc612d827/go.mod h1:bnHXDzKJF5QupNC/sjytfuOfL1kym/nn8z6oqeGZtiA=
 github.com/replicatedhq/kots/kotsadm/operator v0.0.0-20201029043215-1048f9f7a79f/go.mod h1:VZ3dESaJszv7RzLld+c4qh/QsOPHk9c+fL5pUcNzcTE=
 github.com/replicatedhq/kurl/kurlkinds v0.0.0-20200617224429-55f493a72baf h1:QPJidrFEmB3ej7ugwss3iYnVM+k6uyL1AJ85xdcpDgg=
 github.com/replicatedhq/kurl/kurlkinds v0.0.0-20200617224429-55f493a72baf/go.mod h1:ZSyX/rt3a2f6r6TgCARPUlbZ1IUAxNIUrUxR9vzEUKQ=
