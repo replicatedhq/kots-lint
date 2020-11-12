@@ -9,7 +9,7 @@ require (
 	github.com/newrelic/go-agent v2.13.0+incompatible
 	github.com/open-policy-agent/opa v0.18.0
 	github.com/pkg/errors v0.9.1
-	github.com/replicatedhq/kots v1.22.1-0.20201111012022-b9fcc612d827
+	github.com/replicatedhq/kots v1.22.1-0.20201112192709-56038be306a1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
