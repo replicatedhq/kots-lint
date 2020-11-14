@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	"github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
+	kotsconfig "github.com/replicatedhq/kots/pkg/config"
 	"github.com/replicatedhq/kots/pkg/template"
 )
 
@@ -111,6 +112,14 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 		}
 	}
 
+	if config != nil {
+		// if config was found, validate that it renders successfully
+		configCopy := *config // copy config as to not modify current object when rendering
+		if _, err := renderConfig(&configCopy); err != nil {
+			return config, path, errors.Wrap(err, "failed to render config")
+		}
+	}
+
 	return config, path, nil
 }
 
@@ -125,6 +134,23 @@ func (f SpecFile) shouldBeRendered() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
+	localRegistry := template.LocalRegistry{}
+	configValues := map[string]template.ItemValue{}
+
+	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, localRegistry, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to template config objects")
+	}
+
+	b, err := goyaml.Marshal(renderedConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal rendered config")
+	}
+
+	return b, nil
 }
 
 func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
