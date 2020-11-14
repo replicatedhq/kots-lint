@@ -114,8 +114,8 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 
 	if config != nil {
 		// if config was found, validate that it renders successfully
-		configCopy := *config // copy config as to not modify current object when rendering
-		if _, err := renderConfig(&configCopy); err != nil {
+		configCopy := config.DeepCopy()
+		if _, err := renderConfig(configCopy); err != nil {
 			return config, path, errors.Wrap(err, "failed to render config")
 		}
 	}
