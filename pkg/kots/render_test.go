@@ -1,6 +1,7 @@
 package kots
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -476,6 +477,55 @@ spec:
 
 			require.NoError(t, err)
 			assert.ElementsMatch(t, renderedFiles, tt.want)
+		})
+	}
+}
+
+func Test_findAndValidateConfig(t *testing.T) {
+	tests := []struct {
+		name       string
+		configPath string
+		wantErr    string
+		files      SpecFiles
+	}{
+		{
+			name:       "invalid config",
+			configPath: "config.yaml",
+			wantErr:    "failed to render config: failed to template config objects: failed to template config: failed to render config template: failed to get template: template: config:20: bad character U+0022 '\"'",
+			files: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_text
+          title: a text field with a value provided by a template function
+          type: text
+          value: a templated value
+        - name: try_to_template_me
+          title: try to template me
+          type: text
+          when: '{{repl ConfigOption a_templated_text"}}'
+`,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config, path, err := tt.files.findAndValidateConfig()
+			fmt.Println("ERROR", err)
+			assert.Equal(t, err.Error(), tt.wantErr)
+			assert.Equal(t, path, tt.configPath)
+			assert.NotNil(t, config)
 		})
 	}
 }
