@@ -1074,6 +1074,7 @@ metadata:
   name: app-slug
 spec:
   title: App Name
+  kustomizeVersion: "3.5.4"
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   statusInformers:
     - deployment/example-nginx
@@ -1130,6 +1131,7 @@ metadata:
   name: app-slug
 spec:
   title: App Name
+  kustomizeVersion: "latest"
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   statusInformers:
     - deployment-example-nginx
@@ -1150,7 +1152,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 9,
+								Line: 10,
 							},
 						},
 					},
@@ -1163,7 +1165,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 10,
+								Line: 11,
 							},
 						},
 					},
@@ -1438,6 +1440,36 @@ spec:
 				},
 			},
 			expect: []LintExpression{},
+		},
+		{
+			name: "unsupported kustomize version",
+			specFiles: SpecFiles{
+				{
+					Name: "kots-app.yaml",
+					Path: "kots-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  kustomizeVersion: "2.0.0"`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "kustomize-version",
+					Type:    "warn",
+					Path:    "kots-app.yaml",
+					Message: "Unsupported kustomize version, 3.5.4 will be used instead",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 6,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
