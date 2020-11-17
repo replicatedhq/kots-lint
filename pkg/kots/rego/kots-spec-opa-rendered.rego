@@ -4,6 +4,12 @@
 
 package kots.spec.rendered
 
+kustomize_versions = {
+  "",
+  "latest",
+  "3.5.4",
+}
+
 # Files set with the contents of each file as json
 files[output] {
   file := input[_]
@@ -45,6 +51,22 @@ lint[output] {
     "message": "Invalid status informer format",
     "path": file.path,
     "field": field,
+    "docIndex": file.docIndex
+  }
+}
+
+# Check if kustomize version is supported
+lint[output] {
+  file := files[_]
+  file.content.kind == "Application"
+  file.content.apiVersion == "kots.io/v1beta1"
+  not kustomize_versions[file.content.spec.kustomizeVersion]
+  output := {
+    "rule": "kustomize-version",
+    "type": "warn",
+    "message": "Unsupported kustomize version, 3.5.4 will be used instead",
+    "path": file.path,
+    "field": "spec.kustomizeVersion",
     "docIndex": file.docIndex
   }
 }
