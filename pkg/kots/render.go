@@ -67,7 +67,12 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 		configGroups = config.Spec.Groups
 	}
 
-	builder, _, err := template.NewBuilder(configGroups, templateContextValues, localRegistry, nil, nil, nil)
+	opts := template.BuilderOptions{
+		ConfigGroups:   configGroups,
+		ExistingValues: templateContextValues,
+		LocalRegistry:  localRegistry,
+	}
+	builder, _, err := template.NewBuilder(opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create builder")
 	}
@@ -140,7 +145,7 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	localRegistry := template.LocalRegistry{}
 	configValues := map[string]template.ItemValue{}
 
-	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, localRegistry, nil)
+	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, localRegistry, nil, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to template config objects")
 	}
