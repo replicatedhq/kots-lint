@@ -567,7 +567,13 @@ metadata:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintWithKubevalSchema(test.specFiles, "file://../../kubernetes-json-schema")
+			separatedSpecFiles, err := test.specFiles.separate()
+			require.NoError(t, err)
+
+			renderedFiles, err := separatedSpecFiles.render()
+			require.NoError(t, err)
+
+			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, "file://../../kubernetes-json-schema")
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
@@ -576,9 +582,10 @@ metadata:
 
 func Test_lintRenderContent(t *testing.T) {
 	tests := []struct {
-		name      string
-		specFiles SpecFiles
-		expect    []LintExpression
+		name          string
+		specFiles     SpecFiles
+		renderedFiles SpecFiles
+		expect        []LintExpression
 	}{
 		{
 			name: "basic with no errors",
@@ -619,6 +626,51 @@ metadata:
 data:
     ENV_VAR_1: "fake"
     ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
+				},
+			},
+			renderedFiles: SpecFiles{
+				{
+					Name:     "config.yaml",
+					Path:     "config.yaml",
+					DocIndex: 0,
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: my value
+          type: text
+          value: value`,
+				},
+				{
+					Name:     "test.yaml",
+					Path:     "test.yaml",
+					DocIndex: 0,
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: 'value'`,
+				},
+				{
+					Name:     "test.yaml",
+					Path:     "test.yaml",
+					DocIndex: 1,
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: 'value'`,
 				},
 			},
 			expect: []LintExpression{},
@@ -662,6 +714,51 @@ metadata:
 data:
     ENV_VAR_1: "fake"
     ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
+				},
+			},
+			renderedFiles: SpecFiles{
+				{
+					Name:     "config.yaml",
+					Path:     "config.yaml",
+					DocIndex: 0,
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: 2
+          type: text
+          value: "6"`,
+				},
+				{
+					Name:     "test.yaml",
+					Path:     "test.yaml",
+					DocIndex: 0,
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: ''`,
+				},
+				{
+					Name:     "test.yaml",
+					Path:     "test.yaml",
+					DocIndex: 1,
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: ''`,
 				},
 			},
 			expect: []LintExpression{
@@ -715,6 +812,26 @@ data:
     ENV_VAR_1: "fake"
 # this is a comment
     ENV_VAR_2: '{{repl print "whatever }}'`,
+				},
+			},
+			renderedFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: title
+          type: text
+          value: "6"`,
 				},
 			},
 			expect: []LintExpression{
@@ -791,6 +908,26 @@ data:
     ENV_VAR_2: '{{repl print "whatever" | sha256 }}'`,
 				},
 			},
+			renderedFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: a_templated_value
+          title: title
+          type: text
+          value: "6"`,
+				},
+			},
 			expect: []LintExpression{
 				{
 					Rule:    "unable-to-render",
@@ -824,9 +961,10 @@ data:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintRenderContent(test.specFiles)
+			actual, renderedFiles, err := lintRenderContent(test.specFiles)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
+			assert.ElementsMatch(t, renderedFiles, test.renderedFiles)
 		})
 	}
 }
@@ -1477,7 +1615,13 @@ spec:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintWithOPARendered(test.specFiles)
+			separatedSpecFiles, err := test.specFiles.separate()
+			require.NoError(t, err)
+
+			renderedFiles, err := separatedSpecFiles.render()
+			require.NoError(t, err)
+
+			actual, err := lintWithOPARendered(renderedFiles, test.specFiles)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})

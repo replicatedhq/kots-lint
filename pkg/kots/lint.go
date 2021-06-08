@@ -131,7 +131,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return opaNonRenderedLintExpressions, false, nil
 	}
 
-	renderContentLintExpressions, err := lintRenderContent(filteredFiles)
+	renderContentLintExpressions, renderedFiles, err := lintRenderContent(filteredFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint render content")
 	}
@@ -140,7 +140,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return renderContentLintExpressions, false, nil
 	}
 
-	opaRenderedLintExpressions, err := lintWithOPARendered(filteredFiles)
+	opaRenderedLintExpressions, err := lintWithOPARendered(renderedFiles, filteredFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA rendered")
 	}
@@ -149,7 +149,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return opaRenderedLintExpressions, false, nil
 	}
 
-	kubevalLintExpressions, err := lintWithKubeval(filteredFiles)
+	kubevalLintExpressions, err := lintWithKubeval(renderedFiles, filteredFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
@@ -167,35 +167,36 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 // InitOPALinting needs to be called first in order for this function to run successfully
 // This function will lint using the prepared query for NON-rendered files
 func lintWithOPANonRendered(specFiles SpecFiles) ([]LintExpression, error) {
-	return lintWithOPA(specFiles, nonRenderedRegoQuery, false)
-}
-
-// InitOPALinting needs to be called first in order for this function to run successfully
-// This function will lint using the prepared query for RENDERED files
-func lintWithOPARendered(specFiles SpecFiles) ([]LintExpression, error) {
-	return lintWithOPA(specFiles, renderedRegoQuery, true)
-}
-
-func lintWithOPA(specFiles SpecFiles, regoQuery *rego.PreparedEvalQuery, renderFiles bool) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
-
 	separatedSpecFiles, err := specFiles.separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	if renderFiles {
-		separatedSpecFiles, err = separatedSpecFiles.render()
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to render spec files")
-		}
-	}
-
 	ctx := context.Background()
-	results, err := regoQuery.Eval(ctx, rego.EvalInput(separatedSpecFiles))
+	results, err := nonRenderedRegoQuery.Eval(ctx, rego.EvalInput(separatedSpecFiles))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to evaluate query")
 	}
+
+	return opaResultsToLintExpressions(results, specFiles)
+}
+
+// InitOPALinting needs to be called first in order for this function to run successfully
+// This function will lint using the prepared query for RENDERED files
+// renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
+// originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
+func lintWithOPARendered(renderedFiles SpecFiles, originalFiles SpecFiles) ([]LintExpression, error) {
+	ctx := context.Background()
+	results, err := renderedRegoQuery.Eval(ctx, rego.EvalInput(renderedFiles))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to evaluate query")
+	}
+	return opaResultsToLintExpressions(results, originalFiles)
+}
+
+func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([]LintExpression, error) {
+	lintExpressions := []LintExpression{}
+
 	if len(results) == 0 {
 		return lintExpressions, nil
 	}
@@ -225,7 +226,7 @@ func lintWithOPA(specFiles SpecFiles, regoQuery *rego.PreparedEvalQuery, renderF
 
 		lintExpression.Path = opaLintExpression.Path
 
-		// we need to get the line number for the original file content not the separated document
+		// we need to get the line number for the original file content not the separated document nor the rendered one
 		foundSpecFile, err := specFiles.getFile(opaLintExpression.Path)
 		if err != nil {
 			lintExpressions = append(lintExpressions, lintExpression)
@@ -260,22 +261,16 @@ func lintWithOPA(specFiles SpecFiles, regoQuery *rego.PreparedEvalQuery, renderF
 	return lintExpressions, nil
 }
 
-func lintWithKubeval(specFiles SpecFiles) ([]LintExpression, error) {
-	return lintWithKubevalSchema(specFiles, "file://kubernetes-json-schema")
+// renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
+// originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
+func lintWithKubeval(renderedFiles SpecFiles, originalFiles SpecFiles) ([]LintExpression, error) {
+	return lintWithKubevalSchema(renderedFiles, originalFiles, "file://kubernetes-json-schema")
 }
 
-func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintExpression, error) {
+// renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
+// originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
+func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, schemaLocation string) ([]LintExpression, error) {
 	lintExpressions := []LintExpression{}
-
-	separatedSpecFiles, err := specFiles.separate()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to separate multi docs")
-	}
-
-	renderedFiles, err := separatedSpecFiles.render()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to render spec files")
-	}
 
 	kubevalConfig := kubeval.Config{
 		SchemaLocation:    schemaLocation,
@@ -321,7 +316,7 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 				// we need to get the line number for the original file content
 				// not the rendered version of it, and not the separated document
 				yamlPath := validationError.Field()
-				foundSpecFile, err := specFiles.getFile(renderedFile.Path)
+				foundSpecFile, err := originalFiles.getFile(renderedFile.Path)
 				if err != nil {
 					lintExpressions = append(lintExpressions, lintExpression)
 					continue
@@ -349,12 +344,12 @@ func lintWithKubevalSchema(specFiles SpecFiles, schemaLocation string) ([]LintEx
 	return lintExpressions, nil
 }
 
-func lintRenderContent(specFiles SpecFiles) ([]LintExpression, error) {
+func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error) {
 	lintExpressions := []LintExpression{}
 
 	separatedSpecFiles, err := specFiles.separate()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to separate multi docs")
+		return nil, nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
 	// check if config is valid
@@ -369,9 +364,15 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, error) {
 		lintExpressions = append(lintExpressions, lintExpression)
 	}
 
+	// rendering files is an expensive process, store and return the rendered files
+	// from this function so that they can be used later instead of rendering again on the fly
+	renderedFiles := SpecFiles{}
+
 	for _, file := range separatedSpecFiles {
-		_, err := file.renderContent(config)
+		renderedContent, err := file.renderContent(config)
 		if err == nil {
+			file.Content = string(renderedContent)
+			renderedFiles = append(renderedFiles, file)
 			continue
 		}
 		// check if the error is coming from kots RenderTemplate function
@@ -409,10 +410,10 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, error) {
 			continue
 		}
 		// error is not caused by kots RenderTemplate, something went wrong
-		return nil, errors.Wrapf(err, "failed to render spec file %s", file.Path)
+		return nil, nil, errors.Wrapf(err, "failed to render spec file %s", file.Path)
 	}
 
-	return lintExpressions, nil
+	return lintExpressions, renderedFiles, nil
 }
 
 func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
