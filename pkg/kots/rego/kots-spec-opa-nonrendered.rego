@@ -91,11 +91,6 @@ specs[output] {
   }
 }
 
-# A set containing the "Kind" field for each file
-kinds[output] {
-  output := files[_].content.kind
-}
-
 # A rule that returns the config file path
 config_file_path = file.path {
   file := files[_]
@@ -151,15 +146,9 @@ config_option_exists(option_name) {
 }
 
 # Check if any files are missing "kind"
-missing_kind[output] {
-  file := files[_]
-  not file.content.kind
-  output := concat("-", [file.path, string(file.docIndex)])
-}
 lint[output] {
   file := files[_]
-  path_doc_index := concat("-", [file.path, string(file.docIndex)])
-  missing_kind[path_doc_index]
+  not file.content.kind
   output := {
     "rule": "missing-kind-field",
     "type": "error",
@@ -170,15 +159,9 @@ lint[output] {
 }
 
 # Check if any files are missing "apiVersion"
-missing_api_version[output] {
-  file := files[_]
-  not file.content.apiVersion
-  output := concat("-", [file.path, string(file.docIndex)])
-}
 lint[output] {
   file := files[_]
-  path_doc_index := concat("-", [file.path, string(file.docIndex)])
-  missing_api_version[path_doc_index]
+  not file.content.apiVersion
   output := {
     "rule": "missing-api-version-field",
     "type": "error",
