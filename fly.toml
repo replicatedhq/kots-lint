@@ -20,3 +20,4 @@ app = "kots-lint"
   [[services.tcp_checks]]
     interval = 10000
     timeout = 2000
+    grace_period = "15s"
