@@ -576,11 +576,11 @@ lint[output] {
 lint[output] {
   file := input[_]
 
-  expression := "(ConfigOption|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?([\\w\\d_-]+)"
+  expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)?([\\w\\d_-]+)"
   expression_matches := regex.find_all_string_submatch_n(expression, file.content, -1)
 
   capture_groups := expression_matches[_]
-  option_name := capture_groups[2]
+  option_name := capture_groups[3]
   not config_option_exists(option_name)
 
   message := sprintf("Config option \"%s\" not found", [option_name])
@@ -604,11 +604,11 @@ lint[output] {
 
   marshalled_value := yaml.marshal(value)
 
-  expression := "(ConfigOption|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?([\\w\\d_-]+)"
+  expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)?([\\w\\d_-]+)"
   expression_matches := regex.find_all_string_submatch_n(expression, marshalled_value, -1)
 
   capture_groups := expression_matches[_]
-  option_name := capture_groups[2]
+  option_name := capture_groups[3]
   item.name == option_name
 
   field := concat(".", [config_option.field, string(key)])
