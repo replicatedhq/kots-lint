@@ -1333,7 +1333,7 @@ spec:
 					},
 				},
 				{
-					Rule:    "repeat-config-option-missing-template",
+					Rule:    "repeat-config-option-missing-template-entry",
 					Type:    "error",
 					Path:    "config.yaml",
 					Message: "Repeatable Config option \"template_with_no_entry\" is missing a template target",

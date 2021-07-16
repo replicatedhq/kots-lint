@@ -593,7 +593,7 @@ lint[output] {
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" is missing a template target", [string(item.name)])
   output := {
-    "rule": "repeat-config-option-missing-template",
+    "rule": "repeat-config-option-missing-template-entry",
     "type": "error",
     "message": message,
     "path": config_file_path,
