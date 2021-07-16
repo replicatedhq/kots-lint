@@ -573,27 +573,9 @@ lint[output] {
   item.repeatable
   not item.template
   field := concat(".", [config_option.field, "type"])
-  message := sprintf("Repeatable Config option \"%s\" is missing the template field", [string(item.name)])
+  message := sprintf("Repeatable Config option \"%s\" has an incomplete template target", [string(item.name)])
   output := {
     "rule": "repeat-config-option-missing-template",
-    "type": "error",
-    "message": message,
-    "path": config_file_path,
-    "field": field,
-    "docIndex": config_data.docIndex
-  }
-}
-
-# Check if repeatable ConfigOption has at least one template
-lint[output] {
-  config_option := config_options[_]
-  item := config_option.item
-  item.repeatable
-  item.template == null
-  field := concat(".", [config_option.field, "type"])
-  message := sprintf("Repeatable Config option \"%s\" is missing a template target", [string(item.name)])
-  output := {
-    "rule": "repeat-config-option-missing-template-entry",
     "type": "error",
     "message": message,
     "path": config_file_path,
@@ -609,48 +591,9 @@ lint[output] {
   item.repeatable
   not item.valuesByGroup
   field := concat(".", [config_option.field, "type"])
-  message := sprintf("Repeatable Config option \"%s\" is missing the valuesByGroup field", [string(item.name)])
+  message := sprintf("Repeatable Config option \"%s\" has an incomplete valuesByGroup", [string(item.name)])
   output := {
     "rule": "repeat-config-option-missing-valuesByGroup",
-    "type": "error",
-    "message": message,
-    "path": config_file_path,
-    "field": field,
-    "docIndex": config_data.docIndex
-  }
-}
-
-# Check if repeatable ConfigOption has at least one group in valuesByGroup
-lint[output] {
-  config_option := config_options[_]
-  item := config_option.item
-  item.repeatable
-  item.valuesByGroup
-  item.valuesByGroup == null
-  field := concat(".", [config_option.field, "type"])
-  message := sprintf("Repeatable Config option \"%s\" is missing a valuesByGroup group", [string(item.name)])
-  output := {
-    "rule": "repeat-config-option-missing-valuesByGroup-group",
-    "type": "error",
-    "message": message,
-    "path": config_file_path,
-    "field": field,
-    "docIndex": config_data.docIndex
-  }
-}
-
-# Check if repeatable ConfigOption has at least one value in each valuesByGroup
-lint[output] {
-  config_option := config_options[_]
-  item := config_option.item
-  item.repeatable
-  item.valuesByGroup
-  valueGroup := item.valuesByGroup[_]
-  valueGroup == null
-  field := concat(".", [config_option.field, "type"])
-  message := sprintf("Repeatable Config option \"%s\" is missing a value for group", [string(item.name)])
-  output := {
-    "rule": "repeat-config-option-missing-valuesByGroup-value",
     "type": "error",
     "message": message,
     "path": config_file_path,

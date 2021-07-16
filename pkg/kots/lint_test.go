@@ -1260,37 +1260,12 @@ spec:
           valuesByGroup:
             example_settings:
               key: value
-        - name: template_with_no_entry
-          title: a text field with a value provided by a template function
-          type: text
-          repeatable: true
-          template:
-          valuesByGroup:
-            example_settings:
-              key: value
         - name: missing_valuesByGroup
           title: a text field with a value provided by a template function
           type: text
           repeatable: true
           template:
             name: example-config
-        - name: valuesByGroup_with_no_group
-          title: a text field with a value provided by a template function
-          type: text
-          repeatable: true
-          template:
-          - name: example-config
-          valuesByGroup:
-        - name: valuesByGroup_with_no_value
-          title: a text field with a value provided by a template function
-          type: text
-          repeatable: true
-          template:
-          - name: example-config
-          valuesByGroup:
-            groupWithEntry:
-              key: value
-            groupWithoutEntry:
         - name: bad_yamlPath
           title: a text field with a value provided by a template function
           type: text
@@ -1323,7 +1298,7 @@ spec:
 					Rule:    "repeat-config-option-missing-template",
 					Type:    "error",
 					Path:    "config.yaml",
-					Message: "Repeatable Config option \"missing_template\" is missing the template field",
+					Message: "Repeatable Config option \"missing_template\" has an incomplete template target",
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
@@ -1333,53 +1308,14 @@ spec:
 					},
 				},
 				{
-					Rule:    "repeat-config-option-missing-template-entry",
+					Rule:    "repeat-config-option-missing-valuesByGroup",
 					Type:    "error",
 					Path:    "config.yaml",
-					Message: "Repeatable Config option \"template_with_no_entry\" is missing a template target",
+					Message: "Repeatable Config option \"missing_valuesByGroup\" has an incomplete valuesByGroup",
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
 								Line: 30,
-							},
-						},
-					},
-				},
-				{
-					Rule:    "repeat-config-option-missing-valuesByGroup",
-					Type:    "error",
-					Path:    "config.yaml",
-					Message: "Repeatable Config option \"missing_valuesByGroup\" is missing the valuesByGroup field",
-					Positions: []LintExpressionItemPosition{
-						{
-							Start: LintExpressionItemLinePosition{
-								Line: 38,
-							},
-						},
-					},
-				},
-				{
-					Rule:    "repeat-config-option-missing-valuesByGroup-group",
-					Type:    "error",
-					Path:    "config.yaml",
-					Message: "Repeatable Config option \"valuesByGroup_with_no_group\" is missing a valuesByGroup group",
-					Positions: []LintExpressionItemPosition{
-						{
-							Start: LintExpressionItemLinePosition{
-								Line: 44,
-							},
-						},
-					},
-				},
-				{
-					Rule:    "repeat-config-option-missing-valuesByGroup-value",
-					Type:    "error",
-					Path:    "config.yaml",
-					Message: "Repeatable Config option \"valuesByGroup_with_no_value\" is missing a value for group",
-					Positions: []LintExpressionItemPosition{
-						{
-							Start: LintExpressionItemLinePosition{
-								Line: 51,
 							},
 						},
 					},
@@ -1392,7 +1328,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 61,
+								Line: 36,
 							},
 						},
 					},
