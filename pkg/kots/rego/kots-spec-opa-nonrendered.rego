@@ -152,10 +152,6 @@ config_option_is_repeatable(option_name) {
   option.repeatable
 }
 
-valuesByGroup_has_value(valueGroup) {
-  valueGroup != null; count(valueGroup) > 0
-}
-
 template_yamlPath_ends_with_array(template) {
   not template.yamlPath == ""
   expression := "(.*)\\[[0-9]\\]$"
@@ -593,7 +589,7 @@ lint[output] {
   config_option := config_options[_]
   item := config_option.item
   item.repeatable
-  item.template; count(item.template) == 0
+  item.template == null
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" is missing a template target", [string(item.name)])
   output := {
@@ -624,6 +620,25 @@ lint[output] {
   }
 }
 
+# Check if repeatable ConfigOption has at least one group in valuesByGroup
+lint[output] {
+  config_option := config_options[_]
+  item := config_option.item
+  item.repeatable
+  item.valuesByGroup
+  item.valuesByGroup == null
+  field := concat(".", [config_option.field, "type"])
+  message := sprintf("Repeatable Config option \"%s\" is missing a valuesByGroup group", [string(item.name)])
+  output := {
+    "rule": "repeat-config-option-missing-valuesByGroup-group",
+    "type": "error",
+    "message": message,
+    "path": config_file_path,
+    "field": field,
+    "docIndex": config_data.docIndex
+  }
+}
+
 # Check if repeatable ConfigOption has at least one value in each valuesByGroup
 lint[output] {
   config_option := config_options[_]
@@ -631,11 +646,11 @@ lint[output] {
   item.repeatable
   item.valuesByGroup
   valueGroup := item.valuesByGroup[_]
-  not valuesByGroup_has_value(valueGroup)
+  valueGroup == null
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" is missing a value for group", [string(item.name)])
   output := {
-    "rule": "repeat-config-option-missing-valuesByGroup",
+    "rule": "repeat-config-option-missing-valuesByGroup-value",
     "type": "error",
     "message": message,
     "path": config_file_path,
