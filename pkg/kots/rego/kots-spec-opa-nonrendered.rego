@@ -575,7 +575,7 @@ lint[output] {
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" has an incomplete template target", [string(item.name)])
   output := {
-    "rule": "repeat-config-option-missing-template",
+    "rule": "repeat-option-missing-template",
     "type": "error",
     "message": message,
     "path": config_file_path,
@@ -593,7 +593,7 @@ lint[output] {
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" has an incomplete valuesByGroup", [string(item.name)])
   output := {
-    "rule": "repeat-config-option-missing-valuesByGroup",
+    "rule": "repeat-option-missing-valuesByGroup",
     "type": "error",
     "message": message,
     "path": config_file_path,
@@ -613,7 +613,7 @@ lint[output] {
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" yamlPath does not end with an array", [string(item.name)])
   output := {
-    "rule": "repeat-config-option-malformed-yamlpath",
+    "rule": "repeat-option-malformed-yamlpath",
     "type": "error",
     "message": message,
     "path": config_file_path,
