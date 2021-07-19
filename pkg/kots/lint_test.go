@@ -1295,7 +1295,7 @@ spec:
 					Message: "Missing application spec",
 				},
 				{
-					Rule:    "repeat-config-option-missing-template",
+					Rule:    "repeat-option-missing-template",
 					Type:    "error",
 					Path:    "config.yaml",
 					Message: "Repeatable Config option \"missing_template\" has an incomplete template target",
@@ -1308,7 +1308,7 @@ spec:
 					},
 				},
 				{
-					Rule:    "repeat-config-option-missing-valuesByGroup",
+					Rule:    "repeat-option-missing-valuesByGroup",
 					Type:    "error",
 					Path:    "config.yaml",
 					Message: "Repeatable Config option \"missing_valuesByGroup\" has an incomplete valuesByGroup",
@@ -1321,7 +1321,7 @@ spec:
 					},
 				},
 				{
-					Rule:    "repeat-config-option-malformed-yamlpath",
+					Rule:    "repeat-option-malformed-yamlpath",
 					Type:    "error",
 					Path:    "config.yaml",
 					Message: "Repeatable Config option \"bad_yamlPath\" yamlPath does not end with an array",
