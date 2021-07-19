@@ -1139,7 +1139,7 @@ spec:
           title: a text field with a value provided by a template function
           type: text
           repeatable: true
-          template:
+          templates:
           - name: example-config
           valuesByGroup:
             example_settings:
@@ -1247,7 +1247,7 @@ spec:
           title: a text field with a value provided by a template function
           type: text
           repeatable: true
-          template:
+          templates:
           - name: example-config
             yamlPath: this.is.fine[0]
           valuesByGroup:
@@ -1264,13 +1264,13 @@ spec:
           title: a text field with a value provided by a template function
           type: text
           repeatable: true
-          template:
+          templates:
             name: example-config
         - name: bad_yamlPath
           title: a text field with a value provided by a template function
           type: text
           repeatable: true
-          template:
+          templates:
           - name: example-config
             yamlPath: this.is[0].missing[1].ending.array
           valuesByGroup:

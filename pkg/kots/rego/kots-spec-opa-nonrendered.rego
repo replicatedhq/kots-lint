@@ -571,7 +571,7 @@ lint[output] {
   config_option := config_options[_]
   item := config_option.item
   item.repeatable
-  not item.template
+  not item.templates
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Repeatable Config option \"%s\" has an incomplete template target", [string(item.name)])
   output := {
@@ -607,7 +607,7 @@ lint[output] {
   config_option := config_options[_]
   item := config_option.item
   item.repeatable
-  template := item.template[_]
+  template := item.templates[_]
   template.yamlPath
   not template_yamlPath_ends_with_array(template)
   field := concat(".", [config_option.field, "type"])
