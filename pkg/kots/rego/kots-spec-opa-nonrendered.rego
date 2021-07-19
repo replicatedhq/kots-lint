@@ -145,6 +145,19 @@ config_option_exists(option_name) {
   option.name == option_name
 }
 
+# A function that checks if a config option is repeatable
+config_option_is_repeatable(option_name) {
+  option := config_options[_].item
+  option.name == option_name
+  option.repeatable
+}
+
+template_yamlPath_ends_with_array(template) {
+  not template.yamlPath == ""
+  expression := "(.*)\\[[0-9]\\]$"
+  re_match(expression, template.yamlPath)
+}
+
 # Check if any files are missing "kind"
 lint[output] {
   file := files[_]
@@ -553,6 +566,62 @@ lint[output] {
   }
 }
 
+# Check if repeatable ConfigOption has a template field defined
+lint[output] {
+  config_option := config_options[_]
+  item := config_option.item
+  item.repeatable
+  not item.template
+  field := concat(".", [config_option.field, "type"])
+  message := sprintf("Repeatable Config option \"%s\" has an incomplete template target", [string(item.name)])
+  output := {
+    "rule": "repeat-option-missing-template",
+    "type": "error",
+    "message": message,
+    "path": config_file_path,
+    "field": field,
+    "docIndex": config_data.docIndex
+  }
+}
+
+# Check if repeatable ConfigOption has a valuesByGroup field
+lint[output] {
+  config_option := config_options[_]
+  item := config_option.item
+  item.repeatable
+  not item.valuesByGroup
+  field := concat(".", [config_option.field, "type"])
+  message := sprintf("Repeatable Config option \"%s\" has an incomplete valuesByGroup", [string(item.name)])
+  output := {
+    "rule": "repeat-option-missing-valuesByGroup",
+    "type": "error",
+    "message": message,
+    "path": config_file_path,
+    "field": field,
+    "docIndex": config_data.docIndex
+  }
+}
+
+# Check if repeatable ConfigOption template ends in array
+lint[output] {
+  config_option := config_options[_]
+  item := config_option.item
+  item.repeatable
+  template := item.template[_]
+  template.yamlPath
+  not template_yamlPath_ends_with_array(template)
+  field := concat(".", [config_option.field, "type"])
+  message := sprintf("Repeatable Config option \"%s\" yamlPath does not end with an array", [string(item.name)])
+  output := {
+    "rule": "repeat-option-malformed-yamlpath",
+    "type": "error",
+    "message": message,
+    "path": config_file_path,
+    "field": field,
+    "docIndex": config_data.docIndex
+  }
+}
+
 # Check if ConfigOption should have a "password" type
 lint[output] {
   config_option := config_options[_]
@@ -576,11 +645,11 @@ lint[output] {
 lint[output] {
   file := input[_]
 
-  expression := "(ConfigOption|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?([\\w\\d_-]+)"
+  expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)?([\\w\\d_-]+)"
   expression_matches := regex.find_all_string_submatch_n(expression, file.content, -1)
 
   capture_groups := expression_matches[_]
-  option_name := capture_groups[2]
+  option_name := capture_groups[3]
   not config_option_exists(option_name)
 
   message := sprintf("Config option \"%s\" not found", [option_name])
@@ -604,11 +673,11 @@ lint[output] {
 
   marshalled_value := yaml.marshal(value)
 
-  expression := "(ConfigOption|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?([\\w\\d_-]+)"
+  expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)?([\\w\\d_-]+)"
   expression_matches := regex.find_all_string_submatch_n(expression, marshalled_value, -1)
 
   capture_groups := expression_matches[_]
-  option_name := capture_groups[2]
+  option_name := capture_groups[3]
   item.name == option_name
 
   field := concat(".", [config_option.field, string(key)])
@@ -621,6 +690,28 @@ lint[output] {
     "path": config_file_path,
     "field": field,
     "docIndex": config_data.docIndex
+  }
+}
+
+# Check if sub-templated ConfigOptions are repeatable
+lint[output] {
+  file := input[_]
+
+  expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)([\\w\\d_-]+)"
+  expression_matches := regex.find_all_string_submatch_n(expression, file.content, -1)
+
+  capture_groups := expression_matches[_]
+  option_name := capture_groups[3]
+  not config_option_is_repeatable(option_name)
+
+  message := sprintf("Config option \"%s\" not repeatable", [option_name])
+  output := {
+    "rule": "config-option-not-repeatable",
+    "type": "error",
+    "message": message,
+    "path": file.path,
+    "docIndex": object.get(file, "docIndex", 0),
+    "match": capture_groups[0]
   }
 }
 

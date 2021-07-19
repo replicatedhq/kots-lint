@@ -1120,6 +1120,222 @@ data:
 			},
 		},
 		{
+			name: "repeatable config options",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: repeatable_value
+          title: a text field with a value provided by a template function
+          type: text
+          repeatable: true
+          template:
+          - name: example-config
+          valuesByGroup:
+            example_settings:
+              key: value
+        - name: non_repeatable_value
+          title: a text field with a value provided by a template function
+          type: text
+          value: hello
+          default: goodbye`,
+				},
+				{
+					Name: "test.yaml",
+					Path: "test.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config
+data:
+    ENV_VAR_1: "fake"
+    ENV_VAR_2: '{{repl ConfigOption "[[repl .repeatable_value ]]" }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-config-2
+data:
+    ENV_VAR_1: '{{repl ConfigOption "[[repl .non_existing_item ]]" }}'
+    ENV_VAR_2: '{{repl ConfigOption "[[repl .non_repeatable_value ]]" }}'`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "config-option-not-repeatable",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Config option \"non_repeatable_value\" not repeatable",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 15,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "config-option-not-repeatable",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Config option \"non_existing_item\" not repeatable",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 14,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "config-option-not-found",
+					Type:    "warn",
+					Path:    "test.yaml",
+					Message: "Config option \"non_existing_item\" not found",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 14,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "repeatable config spec",
+			specFiles: SpecFiles{
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+    - name: example_settings
+      title: My Example Config
+      description: Configuration to serve as an example for creating your own
+      items:
+        - name: good_repeatable_entry
+          title: a text field with a value provided by a template function
+          type: text
+          repeatable: true
+          template:
+          - name: example-config
+            yamlPath: this.is.fine[0]
+          valuesByGroup:
+            example_settings:
+              key: value
+        - name: missing_template
+          title: a text field with a value provided by a template function
+          type: text
+          repeatable: true
+          valuesByGroup:
+            example_settings:
+              key: value
+        - name: missing_valuesByGroup
+          title: a text field with a value provided by a template function
+          type: text
+          repeatable: true
+          template:
+            name: example-config
+        - name: bad_yamlPath
+          title: a text field with a value provided by a template function
+          type: text
+          repeatable: true
+          template:
+          - name: example-config
+            yamlPath: this.is[0].missing[1].ending.array
+          valuesByGroup:
+            example_settings:
+              key: value`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "repeat-option-missing-template",
+					Type:    "error",
+					Path:    "config.yaml",
+					Message: "Repeatable Config option \"missing_template\" has an incomplete template target",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 23,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "repeat-option-missing-valuesByGroup",
+					Type:    "error",
+					Path:    "config.yaml",
+					Message: "Repeatable Config option \"missing_valuesByGroup\" has an incomplete valuesByGroup",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 30,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "repeat-option-malformed-yamlpath",
+					Type:    "error",
+					Path:    "config.yaml",
+					Message: "Repeatable Config option \"bad_yamlPath\" yamlPath does not end with an array",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 36,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "support bundle is troubelshoot spec",
 			specFiles: SpecFiles{
 				{
