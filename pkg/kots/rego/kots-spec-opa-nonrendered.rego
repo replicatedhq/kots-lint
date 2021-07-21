@@ -522,7 +522,7 @@ lint[output] {
   output := {
     "rule": "hardcoded-namespace",
     "type": "info",
-    "message": "Found a hardcoded namepsace",
+    "message": "Found a hardcoded namespace",
     "path": file.path,
     "field": "metadata.namespace",
     "docIndex": file.docIndex
