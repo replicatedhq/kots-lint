@@ -4,26 +4,27 @@ go 1.16
 
 require (
 	github.com/gin-gonic/gin v1.6.3
+	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
-	github.com/mitchellh/mapstructure v1.2.2
+	github.com/mitchellh/mapstructure v1.4.1
 	github.com/newrelic/go-agent v2.13.0+incompatible
 	github.com/open-policy-agent/opa v0.24.0
 	github.com/pkg/errors v0.9.1
-	github.com/replicatedhq/kots v1.47.0
-	github.com/sirupsen/logrus v1.7.0
+	github.com/replicatedhq/kots v1.56.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
 	go.undefinedlabs.com/scopeagent v0.1.15
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.5.3
-	k8s.io/client-go v0.21.0
+	helm.sh/helm/v3 v3.7.1
+	k8s.io/client-go v0.22.2
 )
 
 replace (
-	github.com/longhorn/longhorn-manager => github.com/replicatedhq/longhorn-manager v1.1.2-0.20210622201804-05b01947b99d
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20170817175659-5f6282db7d65
 	github.com/docker/docker => github.com/docker/docker v0.0.0-20180522102801-da99009bbb11
+	github.com/longhorn/longhorn-manager => github.com/replicatedhq/longhorn-manager v1.1.2-0.20210622201804-05b01947b99d
 	github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n v1.10.1
 	github.com/vmware-tanzu/velero => github.com/laverya/velero v1.4.1-0.20200618194205-ba7f18d4a7d8 // only until https://github.com/vmware-tanzu/velero/pull/2651 is merged
 	k8s.io/api => k8s.io/api v0.20.5
@@ -50,6 +51,7 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.20.5
 	k8s.io/mount-utils => k8s.io/mount-utils v0.20.5
 	k8s.io/node-api => k8s.io/node-api v0.20.5
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.1
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.20.5
 	k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.20.5
 	k8s.io/sample-controller => k8s.io/sample-controller v0.20.5
