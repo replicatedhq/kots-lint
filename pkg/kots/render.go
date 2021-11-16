@@ -156,9 +156,10 @@ func getTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {
 	}
 
 	opts := template.BuilderOptions{
-		ConfigGroups:   configGroups,
-		ExistingValues: templateContextValues,
-		LocalRegistry:  localRegistry,
+		ConfigGroups:    configGroups,
+		ExistingValues:  templateContextValues,
+		LocalRegistry:   localRegistry,
+		ApplicationInfo: &template.ApplicationInfo{}, // Kots 1.56.0 calls ApplicationInfo.Slug, this is required
 	}
 	builder, _, err := template.NewBuilder(opts)
 	if err != nil {
