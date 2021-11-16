@@ -467,9 +467,12 @@ spec:
 			require.NoError(t, err)
 			assert.Equal(t, path, tt.configPath)
 
+			builder, err := getTemplateBuilder(config)
+			require.NoError(t, err)
+
 			renderedFiles := SpecFiles{}
 			for _, file := range tt.files {
-				renderedContent, err := file.renderContent(config)
+				renderedContent, err := file.renderContent(builder)
 				require.NoError(t, err)
 				file.Content = string(renderedContent)
 				renderedFiles = append(renderedFiles, file)
