@@ -467,9 +467,12 @@ spec:
 			require.NoError(t, err)
 			assert.Equal(t, path, tt.configPath)
 
+			builder, err := getTemplateBuilder(config)
+			require.NoError(t, err)
+
 			renderedFiles := SpecFiles{}
 			for _, file := range tt.files {
-				renderedContent, err := file.renderContent(config)
+				renderedContent, err := file.renderContent(builder)
 				require.NoError(t, err)
 				file.Content = string(renderedContent)
 				renderedFiles = append(renderedFiles, file)
@@ -605,7 +608,10 @@ spec:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := tt.file.renderContent(nil)
+			builder, err := getTemplateBuilder(nil)
+			require.NoError(t, err)
+
+			_, err = tt.file.renderContent(builder)
 
 			renderTemplateError, ok := errors.Cause(err).(RenderTemplateError)
 			assert.True(t, ok)

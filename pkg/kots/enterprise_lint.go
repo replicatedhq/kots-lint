@@ -34,10 +34,15 @@ func EnterpriseLintSpecFiles(specFiles SpecFiles, policies []EnterprisePolicy) (
 		return nil, errors.Wrap(err, "failed to find config")
 	}
 
+	builder, err := getTemplateBuilder(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get template builder")
+	}
+
 	// get the rendered version of the spec files before linting
 	renderedFiles := SpecFiles{}
 	for _, file := range separatedSpecFiles {
-		renderedContent, err := file.renderContent(config)
+		renderedContent, err := file.renderContent(builder)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to render spec file content")
 		}

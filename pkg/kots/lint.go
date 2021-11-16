@@ -364,12 +364,17 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 		lintExpressions = append(lintExpressions, lintExpression)
 	}
 
+	builder, err := getTemplateBuilder(config)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to get template builder")
+	}
+
 	// rendering files is an expensive process, store and return the rendered files
 	// from this function so that they can be used later instead of rendering again on the fly
 	renderedFiles := SpecFiles{}
 
 	for _, file := range separatedSpecFiles {
-		renderedContent, err := file.renderContent(config)
+		renderedContent, err := file.renderContent(builder)
 		if err == nil {
 			file.Content = string(renderedContent)
 			renderedFiles = append(renderedFiles, file)

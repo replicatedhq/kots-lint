@@ -33,9 +33,14 @@ func (files SpecFiles) render() (SpecFiles, error) {
 		return nil, errors.Wrap(err, "failed to find and validate config")
 	}
 
+	builder, err := getTemplateBuilder(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get template builder")
+	}
+
 	renderedFiles := SpecFiles{}
 	for _, file := range files {
-		renderedContent, err := file.renderContent(config)
+		renderedContent, err := file.renderContent(builder)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to render spec file %s", file.Path)
 		}
@@ -46,7 +51,7 @@ func (files SpecFiles) render() (SpecFiles, error) {
 	return renderedFiles, nil
 }
 
-func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
+func (f SpecFile) renderContent(builder *template.Builder) ([]byte, error) {
 	if !f.isYAML() {
 		return nil, errors.New("not a yaml file")
 	}
@@ -57,25 +62,6 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 	}
 	if !s {
 		return []byte(f.Content), nil
-	}
-
-	localRegistry := template.LocalRegistry{}
-	templateContextValues := make(map[string]template.ItemValue)
-
-	configGroups := []kotsv1beta1.ConfigGroup{}
-	if config != nil && config.Spec.Groups != nil {
-		configGroups = config.Spec.Groups
-	}
-
-	opts := template.BuilderOptions{
-		ConfigGroups:    configGroups,
-		ExistingValues:  templateContextValues,
-		LocalRegistry:   localRegistry,
-		ApplicationInfo: &template.ApplicationInfo{}, // Kots 1.56.0 calls ApplicationInfo.Slug, this is required
-	}
-	builder, _, err := template.NewBuilder(opts)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create builder")
 	}
 
 	// add new line so that parsing the render template error is easier (possible)
@@ -158,6 +144,29 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	}
 
 	return b, nil
+}
+
+func getTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {
+	localRegistry := template.LocalRegistry{}
+	templateContextValues := make(map[string]template.ItemValue)
+
+	configGroups := []kotsv1beta1.ConfigGroup{}
+	if config != nil && config.Spec.Groups != nil {
+		configGroups = config.Spec.Groups
+	}
+
+	opts := template.BuilderOptions{
+		ConfigGroups:    configGroups,
+		ExistingValues:  templateContextValues,
+		LocalRegistry:   localRegistry,
+		ApplicationInfo: &template.ApplicationInfo{}, // Kots 1.56.0 calls ApplicationInfo.Slug, this is required
+	}
+	builder, _, err := template.NewBuilder(opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create builder")
+	}
+
+	return &builder, nil
 }
 
 func parseRenderTemplateError(file SpecFile, value string) RenderTemplateError {
