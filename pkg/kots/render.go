@@ -68,9 +68,10 @@ func (f SpecFile) renderContent(config *kotsv1beta1.Config) ([]byte, error) {
 	}
 
 	opts := template.BuilderOptions{
-		ConfigGroups:   configGroups,
-		ExistingValues: templateContextValues,
-		LocalRegistry:  localRegistry,
+		ConfigGroups:    configGroups,
+		ExistingValues:  templateContextValues,
+		LocalRegistry:   localRegistry,
+		ApplicationInfo: &template.ApplicationInfo{}, // Kots 1.56.0 calls ApplicationInfo.Slug, this is required
 	}
 	builder, _, err := template.NewBuilder(opts)
 	if err != nil {
@@ -143,9 +144,10 @@ func (f SpecFile) shouldBeRendered() (bool, error) {
 
 func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	localRegistry := template.LocalRegistry{}
+	appInfo := template.ApplicationInfo{}
 	configValues := map[string]template.ItemValue{}
 
-	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, localRegistry, nil, nil, "")
+	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, nil, localRegistry, nil, &appInfo, nil, "")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to template config objects")
 	}
