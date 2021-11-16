@@ -608,7 +608,10 @@ spec:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := tt.file.renderContent(nil)
+			builder, err := getTemplateBuilder(nil)
+			require.NoError(t, err)
+
+			_, err = tt.file.renderContent(builder)
 
 			renderTemplateError, ok := errors.Cause(err).(RenderTemplateError)
 			assert.True(t, ok)
