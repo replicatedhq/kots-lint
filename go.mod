@@ -3,7 +3,7 @@ module github.com/replicatedhq/kots-lint
 go 1.16
 
 require (
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.0
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.4.1
@@ -19,6 +19,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.1
 	k8s.io/client-go v0.22.2
+	k8s.io/kubernetes v1.22.2 // indirect
 )
 
 replace (
