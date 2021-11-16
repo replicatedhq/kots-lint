@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/replicatedhq/kots-lint
 RUN make build
 
 
-FROM debian:stretch-slim
+FROM debian:buster-slim
 
 RUN apt-get update -y && \
     apt-get install -y ca-certificates && \
