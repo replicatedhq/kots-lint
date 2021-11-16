@@ -366,7 +366,7 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 
 	builder, err := getTemplateBuilder(config)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to get  builder")
+		return nil, nil, errors.Wrap(err, "failed to get template builder")
 	}
 
 	// rendering files is an expensive process, store and return the rendered files
