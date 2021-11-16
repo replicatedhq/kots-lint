@@ -145,7 +145,7 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	localRegistry := template.LocalRegistry{}
 	configValues := map[string]template.ItemValue{}
 
-	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, localRegistry, nil, nil, "")
+	renderedConfig, err := kotsconfig.TemplateConfigObjects(config, configValues, nil, nil, localRegistry, nil, nil, nil, "")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to template config objects")
 	}
