@@ -8,7 +8,7 @@ require (
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/newrelic/go-agent v2.13.0+incompatible
-	github.com/open-policy-agent/opa v0.24.0
+	github.com/open-policy-agent/opa v0.34.2
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedhq/kots v1.56.0
 	github.com/sirupsen/logrus v1.8.1
