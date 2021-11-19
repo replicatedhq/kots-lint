@@ -72,7 +72,7 @@ func InitOPALinting(regoPath string) error {
 	).PrepareForEval(ctx)
 
 	if err != nil {
-		errors.Wrap(err, "failed to prepare non-rendered query for eval")
+		return errors.Wrap(err, "failed to prepare non-rendered query for eval")
 	}
 
 	nonRenderedRegoQuery = &nonRenderedQuery
@@ -89,7 +89,7 @@ func InitOPALinting(regoPath string) error {
 	).PrepareForEval(ctx)
 
 	if err != nil {
-		errors.Wrap(err, "failed to prepare rendered query for eval")
+		return errors.Wrap(err, "failed to prepare rendered query for eval")
 	}
 
 	renderedRegoQuery = &renderedQuery
