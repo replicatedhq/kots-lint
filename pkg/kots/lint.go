@@ -275,8 +275,7 @@ func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, sch
 	kubevalConfig := kubeval.Config{
 		SchemaLocation:    schemaLocation,
 		Strict:            true,
-		KubernetesVersion: "1.22.5",
-		DefaultNamespace:  "default",
+		KubernetesVersion: "1.17.0",
 	}
 	for _, renderedFile := range renderedFiles {
 		kubevalConfig.FileName = renderedFile.Path

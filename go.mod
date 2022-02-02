@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/gin-gonic/gin v1.7.0
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
-	github.com/instrumenta/kubeval v0.16.1
+	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/newrelic/go-agent v2.13.0+incompatible
 	github.com/open-policy-agent/opa v0.34.2
