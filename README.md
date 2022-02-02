@@ -25,6 +25,36 @@ $ skaffold dev
 
 Once skaffold runs successfully, the service can be reached at http://localhost:30082/v1/lint
 
+### Adding new Kubernetes Versions
+
+When adding new Kubernetes versions, the following non-standard schemas (anneed to be added to any new version folder:
+* airgap-kots-v1beta1.json
+* application-app-v1beta1.json
+* application-kgrid-v1alpha1.json
+* application-kots-v1beta1.json
+* analyzer-troubleshoot-v1beta1.json
+* analyzer-troubleshoot-v1beta2.json
+* backup-velero-v1.json
+* collector-troubleshoot-v1beta1.json
+* collector-troubleshoot-v1beta2.json
+* config-kots-v1beta1.json
+* configvalues-kots-v1beta1.json
+* grid-kgrid-v1alpha1.json
+* identity-kots-v1beta1.json
+* helmchart-kots-v1beta1.json
+* installation-kots-v1beta1.json
+* license-kots-v1beta1.json
+* preflight-troubleshoot-v1beta1.json
+* preflight-troubleshoot-v1beta1.json
+* preflight-troubleshoot-v1beta2.json
+* redactor-troubleshoot-v1beta1.json
+* redactor-troubleshoot-v1beta2.json
+* supportbundle-troubleshoot-v1beta1.json
+* supportbundle-troubleshoot-v1beta2.json
+* version-kgrid-v1alpha1.json
+
+You can diff the schema folders with previous versions to verify the above list.
+
 ## Run tests
 
 Tests can be run manually with
