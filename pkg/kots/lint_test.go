@@ -766,7 +766,7 @@ data:
 					Rule:    "config-is-invalid",
 					Type:    "error",
 					Path:    "config.yaml",
-					Message: `failed to decode config content: v1beta1.Config.Spec: v1beta1.ConfigSpec.Groups: []v1beta1.ConfigGroup: v1beta1.ConfigGroup.Items: []v1beta1.ConfigItem: v1beta1.ConfigItem.Value: Type: Title: ReadString: expects " or n, but found 2, error found in #10 byte of ...|,"title":2,"type":"t|..., bigger context ...|wn","items":[{"name":"a_templated_value","title":2,"type":"text","value":"6"}],"name":"example_setti|...`,
+					Message: `failed to decode config content: json: cannot unmarshal number into Go struct field ConfigItem.spec.groups.items.title of type string`,
 				},
 			},
 		},
@@ -1362,6 +1362,90 @@ metadata:
 					Rule:    "config-spec",
 					Type:    "warn",
 					Message: "Missing config spec",
+				},
+			},
+		},
+		{
+			name: "leading v is valid in target/min kots versions",
+			specFiles: SpecFiles{
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  minKotsVersion: v1.50.0
+  targetKotsVersion: v1.60.0
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+			},
+		},
+		{
+			name: "target kots version must be a valid semver",
+			specFiles: SpecFiles{
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  targetKotsVersion: vv1.50.0
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "invalid-target-kots-version",
+					Type:    "error",
+					Message: "Target KOTS version must be a valid semver",
+					Path:    "replicated-app.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
 				},
 			},
 		},

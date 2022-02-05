@@ -40,7 +40,7 @@
           }
         },
         "exclude": {
-          "type": "string"
+          "oneOf": [{"type": "string"},{"type": "boolean"}]
         },
         "helmVersion": {
           "type": "string"
@@ -53,9 +53,13 @@
           "items": {
             "type": "object",
             "required": [
+              "recursiveMerge",
               "when"
             ],
             "properties": {
+              "recursiveMerge": {
+                "type": "boolean"
+              },
               "values": {
                 "type": "object",
                 "additionalProperties": {}
@@ -65,6 +69,9 @@
               }
             }
           }
+        },
+        "useHelmInstall": {
+          "type": "boolean"
         },
         "values": {
           "type": "object",

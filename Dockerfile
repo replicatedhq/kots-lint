@@ -1,4 +1,4 @@
-FROM golang:1.16 AS builder
+FROM golang:1.17 AS builder
 
 ADD . /go/src/github.com/replicatedhq/kots-lint
 WORKDIR /go/src/github.com/replicatedhq/kots-lint
