@@ -25,6 +25,9 @@
         "appSlug": {
           "type": "string"
         },
+        "channelID": {
+          "type": "string"
+        },
         "channelName": {
           "type": "string"
         },
@@ -60,10 +63,25 @@
         "isAirgapSupported": {
           "type": "boolean"
         },
+        "isGeoaxisSupported": {
+          "type": "boolean"
+        },
         "isGitOpsSupported": {
           "type": "boolean"
         },
+        "isIdentityServiceSupported": {
+          "type": "boolean"
+        },
+        "isNewKotsUiEnabled": {
+          "type": "boolean"
+        },
+        "isSemverRequired": {
+          "type": "boolean"
+        },
         "isSnapshotSupported": {
+          "type": "boolean"
+        },
+        "isSupportBundleUploadSupported": {
           "type": "boolean"
         },
         "licenseID": {

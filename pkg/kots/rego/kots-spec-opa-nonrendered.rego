@@ -284,6 +284,40 @@ lint[output] {
   }
 }
 
+# Check if targetKotsVersion in the Application spec is a valid semver
+lint[output] {
+  file := files[_]
+  file.content.kind == "Application"
+  file.content.apiVersion == "kots.io/v1beta1"
+  file.content.spec.targetKotsVersion
+  not semver.is_valid(trim_prefix(file.content.spec.targetKotsVersion, "v"))
+  output := {
+    "rule": "invalid-target-kots-version",
+    "type": "error",
+    "message": "Target KOTS version must be a valid semver",
+    "path": file.path,
+    "field": "spec.targetKotsVersion",
+    "docIndex": file.docIndex
+  }
+}
+
+# Check if minKotsVersion in the Application spec is a valid semver
+lint[output] {
+  file := files[_]
+  file.content.kind == "Application"
+  file.content.apiVersion == "kots.io/v1beta1"
+  file.content.spec.minKotsVersion
+  not semver.is_valid(trim_prefix(file.content.spec.minKotsVersion, "v"))
+  output := {
+    "rule": "invalid-min-kots-version",
+    "type": "error",
+    "message": "Minimum KOTS version must be a valid semver",
+    "path": file.path,
+    "field": "spec.minKotsVersion",
+    "docIndex": file.docIndex
+  }
+}
+
 # Check if any spec has "replicas" set to 1
 lint[output] {
   spec := specs[_]
