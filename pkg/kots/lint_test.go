@@ -1449,6 +1449,54 @@ spec:
 				},
 			},
 		},
+		{
+			name: "min kots version must be a valid semver",
+			specFiles: SpecFiles{
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  title: App Name
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  minKotsVersion: vv1.4s0.0
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "invalid-min-kots-version",
+					Type:    "error",
+					Message: "Minimum KOTS version must be a valid semver",
+					Path:    "replicated-app.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	InitOPALinting("./rego")
