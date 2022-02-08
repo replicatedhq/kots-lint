@@ -7,8 +7,9 @@ build:
     - image: kots-lint
       docker:
         dockerfile: Dockerfile.skaffold
-deploy:
-  kubectl:
-    manifests:
-      - dev/deployment.yaml
-      - dev/nodeport.yaml
+
+profiles:
+  - name: dev
+    deploy:
+      kustomize:
+        path: kustomize/overlays/local
