@@ -4,12 +4,13 @@ metadata:
   name: kots-lint
   labels:
     app: kots-lint
+  annotations:
+    dev.okteto.com/auto-ingress: "true"       
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - name: kots-lint
     port: 8082
     targetPort: kots-lint
-    nodePort: 30082
   selector:
     app: kots-lint

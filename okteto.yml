@@ -1,0 +1,12 @@
+name: id
+command: bash
+workdir: /go/src/github.com/replicatedhq/kots-lint
+sync:
+  - .:/go/src/github.com/replicatedhq/kots-lint
+resources:
+  limits:
+    cpu: "2"
+    memory: 4Gi
+forward:
+  - 2354:2345
+

@@ -1,4 +1,4 @@
-apiVersion: skaffold/v1beta11
+apiVersion: skaffold/v2beta2
 kind: Config
 build:
   local:
@@ -6,9 +6,9 @@ build:
   artifacts:
     - image: kots-lint
       docker:
-        dockerfile: Dockerfile.skaffold
+        dockerfile: skaffold.Dockerfile
+
 deploy:
-  kubectl:
-    manifests:
-      - dev/deployment.yaml
-      - dev/nodeport.yaml
+  kustomize:
+    paths:
+      - "./kustomize/overlays/skaffold"
