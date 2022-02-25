@@ -7,8 +7,6 @@ resources:
   limits:
     cpu: "2"
     memory: 4Gi
-externalVolumes:
-  - dev-cache:yarn-cache:/cache/.yarn
 forward:
-  - 2352:2345
+  - 2354:2345
 

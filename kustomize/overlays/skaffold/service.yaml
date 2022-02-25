@@ -5,10 +5,11 @@ metadata:
   labels:
     app: kots-lint
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
-  - name: kots-lint
-    port: 8082
-    targetPort: kots-lint
+    - name: kots-lint
+      port: 8082
+      targetPort: kots-lint
+      nodePort: 30082
   selector:
     app: kots-lint
