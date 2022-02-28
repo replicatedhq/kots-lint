@@ -18,7 +18,16 @@ $ tar cvf - example/files-to-lint | curl -XPOST --data-binary @- https://lint.re
 
 ## Development
 
-The project can be run locally with
+Development for the applications in this project is done through [Okteto](https://replicated.okteto.dev).
+
+## Setup
+
+1. Install the Okteto CLI (`brew install okteto`)
+2. Setup Okteto CLI (`okteto context create https://replicated.okteto.dev`)
+3. Setup Okteto context in kubectl (`okteto context update-kubeconfig`)
+4. Deploy your current branch. (from the Vandoor root directory: `okteto pipeline deploy`)
+
+The project can also be run with Skaffold for local development and testing.
 ```shell
 $ skaffold dev
 ```

@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/instrumenta/kubeval/kubeval"
 	"github.com/mitchellh/mapstructure"
@@ -15,14 +18,19 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	kotsscheme "github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	goyaml "gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
+var kotsVersions map[string]bool
+var rwMutex sync.RWMutex
+
 func init() {
 	kotsscheme.AddToScheme(scheme.Scheme)
+	kotsVersions = make(map[string]bool)
 }
 
 type LintExpression struct {
@@ -138,6 +146,15 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	// if there are render content errors, end early there
 	if lintExpressionsHaveErrors(renderContentLintExpressions) {
 		return renderContentLintExpressions, false, nil
+	}
+
+	targetMinLintExpressions, err := lintTargetMinKotsVersions(filteredFiles)
+	if err != nil {
+		log.Warn(errors.Wrap(err, "failed to lint target and min KOTS versions").Error())
+	}
+	// if there are target/min content errors, end early there
+	if lintExpressionsHaveErrors(targetMinLintExpressions) {
+		return targetMinLintExpressions, false, nil
 	}
 
 	opaRenderedLintExpressions, err := lintWithOPARendered(renderedFiles, filteredFiles)
@@ -337,6 +354,104 @@ func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, sch
 				}
 
 				lintExpressions = append(lintExpressions, lintExpression)
+			}
+		}
+	}
+
+	return lintExpressions, nil
+}
+
+func checkIfKotsVersionExists(version string) (bool, error) {
+	url := "http://api.github.com/repos/replicatedhq/kots/releases/tags/%s"
+	token := os.Getenv("GITHUB_API_TOKEN")
+	var bearer = "Bearer " + token
+
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
+	}
+
+	rwMutex.RLock()
+	verIsCached := kotsVersions[version]
+	rwMutex.RUnlock()
+
+	if !verIsCached {
+		req, err := http.NewRequest("GET", fmt.Sprintf(url, version), nil)
+		if err != nil {
+			return false, errors.Wrap(err, "failed to create new request")
+		}
+		req.Header.Set("Authorization", bearer)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if resp.StatusCode == 404 {
+			return false, nil
+		} else if resp.StatusCode == 200 {
+			rwMutex.Lock()
+			kotsVersions[version] = true
+			rwMutex.Unlock()
+		} else {
+			return false, errors.New(fmt.Sprintf("received non 200 status code (%d) from GitHub API request", resp.StatusCode))
+		}
+	}
+
+	return true, nil
+}
+
+func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
+	lintExpressions := []LintExpression{}
+	// separate multi docs because the manifest can be a part of a multi doc yaml file
+	separatedSpecFiles, err := specFiles.separate()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to separate multi docs")
+	}
+
+	for _, spec := range separatedSpecFiles {
+		var tv, mv string
+		var tvExists, mvExists bool
+		doc := map[string]interface{}{}
+		if err := goyaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal spec content")
+		}
+		if doc["apiVersion"] == "kots.io/v1beta1" && doc["kind"] == "Application" {
+			if spec, ok := doc["spec"].(map[interface{}]interface{}); ok {
+				tv, tvExists = spec["targetKotsVersion"].(string)
+				mv, mvExists = spec["minKotsVersion"].(string)
+			}
+		}
+
+		// if no min nor target kots version exists, continue to next file
+		if !mvExists && !tvExists {
+			continue
+		}
+
+		if tvExists {
+			exists, err := checkIfKotsVersionExists(tv)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if kots version exists")
+			}
+			if !exists {
+				targetVersionlintExpression := LintExpression{
+					Rule:    "non-existent-target-kots-version",
+					Type:    "error",
+					Path:    spec.Path,
+					Message: "Target KOTS version not found",
+				}
+				lintExpressions = append(lintExpressions, targetVersionlintExpression)
+			}
+		}
+
+		if mvExists {
+			exists, err := checkIfKotsVersionExists(mv)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if kots version exists")
+			}
+			if !exists {
+				minVersionlintExpression := LintExpression{
+					Rule:    "non-existent-min-kots-version",
+					Type:    "error",
+					Path:    spec.Path,
+					Message: "Minimum KOTS version not found",
+				}
+				lintExpressions = append(lintExpressions, minVersionlintExpression)
 			}
 		}
 	}

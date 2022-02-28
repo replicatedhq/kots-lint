@@ -171,6 +171,153 @@ data:
 	}
 }
 
+func Test_lintTargetMinKotsVersions(t *testing.T) {
+
+	tests := []struct {
+		name      string
+		specFiles SpecFiles
+		expect    []LintExpression
+	}{
+		{
+			name: "valid target and min version with 'v' prefix",
+			specFiles: SpecFiles{
+				{
+					Path: "",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: validVersions
+spec:
+  targetKotsVersion: "v1.64.0"
+  minKotsVersion: "v1.59.0"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "valid target and min version without 'v' prefix",
+			specFiles: SpecFiles{
+				{
+					Path: "",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: validVersions
+spec:
+  targetKotsVersion: "1.64.0"
+  minKotsVersion: "1.59.0"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "valid spec without target nor min versions defined",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+name: app-slug
+spec:
+title: App Name
+kustomizeVersion: "3.5.4"
+icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+statusInformers:
+- deployment/example-nginx
+ports:
+- serviceName: "example-nginx"
+servicePort: 80
+localPort: 8888
+applicationUrl: "http://example-nginx"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "invalid target version",
+			specFiles: SpecFiles{
+				{
+					Path: "",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: invalidTargetVersion
+spec:
+  targetKotsVersion: "1000.0.0"
+  minKotsVersion: "1.60.0"
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "non-existent-target-kots-version",
+					Type:    "error",
+					Message: "Target KOTS version not found",
+				},
+			},
+		},
+		{
+			name: "invalid min version",
+			specFiles: SpecFiles{
+				{
+					Path: "",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: invalidTargetVersion
+spec:
+  targetKotsVersion: "1.64.0"
+  minKotsVersion: "1000.0.0"
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "non-existent-min-kots-version",
+					Type:    "error",
+					Message: "Minimum KOTS version not found",
+				},
+			},
+		},
+		{
+			name: "invalid target and min version",
+			specFiles: SpecFiles{
+				{
+					Path: "",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: invalidTargetVersion
+spec:
+  targetKotsVersion: "1000.0.0"
+  minKotsVersion: "1000.0.0"
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "non-existent-target-kots-version",
+					Type:    "error",
+					Message: "Target KOTS version not found",
+				}, {
+					Rule:    "non-existent-min-kots-version",
+					Type:    "error",
+					Message: "Minimum KOTS version not found",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := lintTargetMinKotsVersions(test.specFiles)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, actual, test.expect)
+		})
+	}
+}
+
 func Test_lintHelmCharts(t *testing.T) {
 	tests := []struct {
 		name      string
