@@ -1,3 +1,5 @@
-resources:
+bases:
   - ../../base
+
+resources:
   - ./service.yaml
