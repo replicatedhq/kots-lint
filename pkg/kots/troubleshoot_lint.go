@@ -40,7 +40,7 @@ func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpres
 	kubevalConfig := kubeval.Config{
 		SchemaLocation:    schemaLocation,
 		Strict:            true,
-		KubernetesVersion: "1.17.0",
+		KubernetesVersion: "1.23.6",
 	}
 
 	results, err := kubeval.Validate([]byte(spec), &kubevalConfig)

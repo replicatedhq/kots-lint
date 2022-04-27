@@ -710,6 +710,541 @@ metadata:
 				},
 			},
 		},
+		{
+			name: "kubeval basic k8s kinds no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80`,
+				},
+				{
+					Name: "service.yaml",
+					Path: "service.yaml",
+					Content: `apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - name: nginx-port
+    protocol: TCP
+    port: 80
+    targetPort: 80`,
+				},
+				{
+					Name: "statefulset.yaml",
+					Path: "statefulset.yaml",
+					Content: `apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx # has to match .spec.template.metadata.labels
+  serviceName: "nginx"
+  replicas: 3 # by default is 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: nginx # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: nginx
+        image: k8s.gcr.io/nginx-slim:0.8
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "my-storage-class"
+      resources:
+        requests:
+          storage: 1Gi`,
+				},
+				{
+					Name: "job.yaml",
+					Path: "job.yaml",
+					Content: `apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: perl
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never
+  backoffLimit: 4`,
+				},
+				{
+					Name: "cronjob.yaml",
+					Path: "cronjob.yaml",
+					Content: `apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+  labels:
+    app: example
+    component: cronjob
+spec:
+  schedule: "* */1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello
+          restartPolicy: OnFailure`,
+				},
+				{
+					Name: "serviceaccount.yaml",
+					Path: "serviceaccount.yaml",
+					Content: `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qakots-backup
+  annotations:
+    key: val
+  labels:
+    app.kubernetes.io/name: qakots-backup`,
+				},
+				{
+					Name: "role.yaml",
+					Path: "role.yaml",
+					Content: `apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: qakots-backup
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["create", "update", "patch", "get", "list", "watch"]`,
+				},
+				{
+					Name: "rolebinding.yaml",
+					Path: "rolebinding.yaml",
+					Content: `apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: qakots-backup-binding
+subjects:
+- kind: ServiceAccount
+  name: qakots-backup
+roleRef:
+  kind: Role
+  name: qakots-backup
+  apiGroup: rbac.authorization.k8s.io`,
+				},
+				{
+					Name: "namespace.yaml",
+					Path: "namespace.yaml",
+					Content: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+spec: {}`,
+				},
+				{
+					Name: "daemonset.yaml",
+					Path: "daemonset.yaml",
+					Content: `apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-elasticsearch
+  namespace: kube-system
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata:
+      labels:
+        name: fluentd-elasticsearch
+    spec:
+      tolerations:
+      # this toleration is to have the daemonset runnable on master nodes
+      # remove it if your masters can't run pods
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: fluentd-elasticsearch
+        image: quay.io/fluentd_elasticsearch/fluentd:v2.5.2
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers`,
+				},
+				{
+					Name: "pvc.yaml",
+					Path: "pvc.yaml",
+					Content: `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc
+  labels:
+    app: pvc
+spec:
+  accessModes:
+    - "ReadWriteOnce"
+  resources:
+    requests:
+      storage: "100Gi"`,
+				},
+				{
+					Name: "configmap.yaml",
+					Path: "configmap.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  labels:
+    app: config
+data:
+  hello: world`,
+				},
+				{
+					Name: "secret.yaml",
+					Path: "secret.yaml",
+					Content: `apiVersion: v1
+kind: Secret
+metadata:
+  name: secret
+  labels:
+    app: secret
+type: Opaque
+data:
+  sentry-secret: secret123
+  smtp-password: password_secret
+  user-password: password123`,
+				},
+				{
+					Name: "ingress-extensions-v1beta1.yaml",
+					Path: "ingress-extensions-v1beta1.yaml",
+					Content: `apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            serviceName: example-nginx
+            servicePort: 80`,
+				},
+				{
+					Name: "ingress-networking-v1beta1.yaml",
+					Path: "ingress-networking-v1beta1.yaml",
+					Content: `apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            serviceName: example-nginx
+            servicePort: 80`,
+				},
+				{
+					Name: "ingress-networking-v1.yaml",
+					Path: "ingress-networking-v1.yaml",
+					Content: `apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: example-nginx
+              port:
+                number: 80`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "kubeval basic replicated kinds no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: my-application
+spec:
+  title: "My Application"
+  icon: https://support.io/img/logo.png
+  releaseNotes: These are our release notes
+  allowRollback: false
+  kubectlVersion: latest
+  kustomizeVersion: latest
+  targetKotsVersion: "1.60.0"
+  minKotsVersion: "1.40.0"
+  requireMinimalRBACPrivileges: false
+  additionalImages:
+    - jenkins/jenkins:lts
+  additionalNamespaces:
+    - "*"
+  ports:
+    - serviceName: web
+      servicePort: 9000
+      localPort: 9000
+      applicationUrl: "http://web"
+  statusInformers:
+    - deployment/my-web-svc
+    - deployment/my-worker
+  graphs:
+    - title: User Signups
+      query: 'sum(user_signup_events_total)'`,
+				},
+				{
+					Name: "application.yaml",
+					Path: "application.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "my-app"
+  labels:
+    app.kubernetes.io/name: "my-app"
+    app.kubernetes.io/version: "9.1.1"
+spec:
+  selector:
+    matchLabels:
+     app.kubernetes.io/name: "my-app"
+  componentKinds: []
+  descriptor:
+    version: "9.1.1"
+    description: "Open-source error tracking with full stacktraces & asynchronous context."
+    icons:
+      - src: "https://sentry-brand.storage.googleapis.com/sentry-glyph-black.png"
+        type: "image/png"
+    type: "sentry"
+    links:
+      - description: Open Sentry Enterprise
+        url: "http://sentry"`,
+				},
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: my-config
+spec:
+  groups:
+  - name: authentication
+    title: Authentication
+    description: Configure application authentication below.
+    items:
+    - name: email-address
+      title: Email Address
+      type: text
+    - name: password_text
+      title: Password Text
+      type: password
+      value: "{{repl RandomString 10}}"`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Preflight
+metadata:
+  name: preflight
+spec:
+  analyzers:
+    - imagePullSecret:
+        checkName: Access to index.docker.io
+        registryName: index.docker.io
+        outcomes:
+          - fail:
+              message: Could not find index.docker.io imagePullSecret
+          - pass:
+              message: Found credentials to pull private images from index.docker.io
+`,
+				},
+				{
+					Name: "redactor.yaml",
+					Path: "redactor.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Redactor
+metadata:
+  name: my-redactor-name
+spec:
+  redactors:
+  - name: replace password # names are not used internally, but are useful for recordkeeping
+    fileSelector:
+      file: data/my-password-dump # this targets a single file
+    removals:
+      values:
+      - abc123 # this value is my password, and should never appear in a support bundle
+  - name: all files # as no file is specified, this redactor will run against all files
+    removals:
+      regex:
+      - redactor: (another)(?P<mask>.*)(here)
+      - selector: 'S3_ENDPOINT' # remove the value in lines following those that contain the string S3_ENDPOINT
+        redactor: '("value": ").*(")'
+      yamlPath:
+      - "abc.xyz.*" # redact all items in the array at key xyz within key abc in yaml documents`,
+				},
+				{
+					Name: "supportbundle.yaml",
+					Path: "supportbundle.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: support-bundle
+spec:
+  collectors:
+    - secret:
+        name: myapp-postgres
+        key: uri
+        includeValue: false
+  analyzers:
+    - imagePullSecret:
+        checkName: Access to index.docker.io
+        registryName: index.docker.io
+        outcomes:
+          - fail:
+              message: Could not find index.docker.io imagePullSecret
+          - pass:
+              message: Found credentials to pull private images from index.docker.io
+`,
+				},
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: samplechart
+spec:
+  chart:
+    name: samplechart
+    chartVersion: 3.1.7
+  exclude: "false"
+  helmVersion: v2
+  useHelmInstall: true
+  values:
+    postgresql:
+      enabled: true
+  namespace: samplechart-namespace
+  builder:
+    postgresql:
+      enabled: true`,
+				},
+				{
+					Name: "backup.yaml",
+					Path: "backup.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: backup
+spec: {}`,
+				},
+				{
+					Name: "identity.yaml",
+					Path: "identity.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Identity
+metadata:
+  name: my-application
+spec:
+    identityIssuerURL: https://{{repl ConfigOption "ingress_hostname"}}/dex
+    oidcRedirectUris:
+      - https://{{repl ConfigOption "ingress_hostname"}}/oidc/login/callback
+    supportedProviders: [ oidc ]
+    requireIdentityProvider: true
+    roles:
+      - id: member
+        name: Member
+        description: Can see every member and non-secret team in the organization.
+      - id: owner
+        name: Owner
+        description: Has full administrative access to the entire organization.
+    oauth2AlwaysShowLoginScreen: false
+    signingKeysExpiration: 6h
+    idTokensExpiration: 24h
+    webConfig:
+      title: My App
+      theme:
+        logoUrl: data:image/png;base64,<encoded_base64_stream>
+        logoBase64: <base64 encoded png file>
+        styleCssBase64: <base64 encoded [styles.css](https://github.com/dexidp/dex/blob/v2.27.0/web/themes/coreos/styles.css) file>
+        faviconBase64: <base64 encoded png file>
+`,
+				},
+			},
+			expect: []LintExpression{},
+		},
 	}
 
 	for _, test := range tests {
