@@ -811,6 +811,79 @@ spec:
   backoffLimit: 4`,
 				},
 				{
+					Name: "cronjob.yaml",
+					Path: "cronjob.yaml",
+					Content: `apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+  labels:
+    app: example
+    component: cronjob
+spec:
+  schedule: "* */1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello
+          restartPolicy: OnFailure`,
+				},
+				{
+					Name: "serviceaccount.yaml",
+					Path: "serviceaccount.yaml",
+					Content: `apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qakots-backup
+  annotations:
+    key: val
+  labels:
+    app.kubernetes.io/name: qakots-backup`,
+				},
+				{
+					Name: "role.yaml",
+					Path: "role.yaml",
+					Content: `apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: qakots-backup
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["create", "update", "patch", "get", "list", "watch"]`,
+				},
+				{
+					Name: "rolebinding.yaml",
+					Path: "rolebinding.yaml",
+					Content: `apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: qakots-backup-binding
+subjects:
+- kind: ServiceAccount
+  name: qakots-backup
+roleRef:
+  kind: Role
+  name: qakots-backup
+  apiGroup: rbac.authorization.k8s.io`,
+				},
+				{
+					Name: "namespace.yaml",
+					Path: "namespace.yaml",
+					Content: `apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+spec: {}`,
+				},
+				{
 					Name: "daemonset.yaml",
 					Path: "daemonset.yaml",
 					Content: `apiVersion: apps/v1
@@ -960,8 +1033,8 @@ spec:
 			name: "kubeval basic replicated kinds no errors",
 			specFiles: SpecFiles{
 				{
-					Name: "application.yaml",
-					Path: "application.yaml",
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
 					Content: `apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
@@ -991,6 +1064,32 @@ spec:
   graphs:
     - title: User Signups
       query: 'sum(user_signup_events_total)'`,
+				},
+				{
+					Name: "application.yaml",
+					Path: "application.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "my-app"
+  labels:
+    app.kubernetes.io/name: "my-app"
+    app.kubernetes.io/version: "9.1.1"
+spec:
+  selector:
+    matchLabels:
+     app.kubernetes.io/name: "my-app"
+  componentKinds: []
+  descriptor:
+    version: "9.1.1"
+    description: "Open-source error tracking with full stacktraces & asynchronous context."
+    icons:
+      - src: "https://sentry-brand.storage.googleapis.com/sentry-glyph-black.png"
+        type: "image/png"
+    type: "sentry"
+    links:
+      - description: Open Sentry Enterprise
+        url: "http://sentry"`,
 				},
 				{
 					Name: "config.yaml",
