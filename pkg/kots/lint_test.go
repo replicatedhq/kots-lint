@@ -1245,6 +1245,374 @@ spec:
 			},
 			expect: []LintExpression{},
 		},
+		{
+			name: "kubeval basic k8s kinds with errors",
+			specFiles: SpecFiles{
+				{
+					Name: "deployment.yaml",
+					Path: "deployment.yaml",
+					Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80`,
+				},
+				{
+					Name: "service.yaml",
+					Path: "service.yaml",
+					Content: `apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  invalid: true
+  selector:
+    app: nginx
+  ports:
+  - name: nginx-port
+    protocol: TCP
+    port: 80
+    targetPort: 80`,
+				},
+				{
+					Name: "statefulset.yaml",
+					Path: "statefulset.yaml",
+					Content: `apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx # has to match .spec.template.metadata.labels
+  serviceName: "nginx"
+  replicas: 3 # by default is 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: nginx # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "my-storage-class"
+      resources:
+        requests:
+          storage: 1Gi`,
+				},
+				{
+					Name: "job.yaml",
+					Path: "job.yaml",
+					Content: `apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi
+spec:
+  template:
+    spec:
+      containers:
+      - name: pi
+        image: perl
+        command: [1234,  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+      restartPolicy: Never
+  backoffLimit: 4`,
+				},
+				{
+					Name: "cronjob.yaml",
+					Path: "cronjob.yaml",
+					Content: `apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+  labels:
+    app: example
+    component: cronjob
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello
+          restartPolicy: OnFailure`,
+				},
+				{
+					Name: "rolebinding.yaml",
+					Path: "rolebinding.yaml",
+					Content: `apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: qakots-backup-binding
+subjects:
+- kind: ServiceAccount
+  name: qakots-backup`,
+				},
+				{
+					Name: "pvc.yaml",
+					Path: "pvc.yaml",
+					Content: `apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc
+  labels:
+    app: pvc
+spec:
+  resources:
+    storage: "100Gi"`,
+				},
+				{
+					Name: "configmap.yaml",
+					Path: "configmap.yaml",
+					Content: `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  labels:
+    app: config
+data:
+  number: 123456789`,
+				},
+				{
+					Name: "ingress-extensions-v1beta1.yaml",
+					Path: "ingress-extensions-v1beta1.yaml",
+					Content: `apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: example-nginx
+            servicePort: 80`,
+				},
+				{
+					Name: "ingress-networking-v1beta1.yaml",
+					Path: "ingress-networking-v1beta1.yaml",
+					Content: `apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            service:
+              name: example-nginx
+              port:
+              number: 80`,
+				},
+				{
+					Name: "ingress-networking-v1.yaml",
+					Path: "ingress-networking-v1.yaml",
+					Content: `apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            service:
+              name: example-nginx
+              port:
+                number: 80`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "selector is required",
+					Path:    "deployment.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 7,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "additional_property_not_allowed",
+					Type:    "warn",
+					Message: "Additional property invalid is not allowed",
+					Path:    "service.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "containers is required",
+					Path:    "statefulset.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 16,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "invalid_type",
+					Type:    "warn",
+					Message: "Invalid type. Expected: [string,null], given: integer",
+					Path:    "job.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 11,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "schedule is required",
+					Path:    "cronjob.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "additional_property_not_allowed",
+					Type:    "warn",
+					Message: "Additional property storage is not allowed",
+					Path:    "pvc.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "roleRef is required",
+					Path:    "rolebinding.yaml",
+				},
+				{
+					Rule:    "invalid_type",
+					Type:    "warn",
+					Message: "Invalid type. Expected: [string,null], given: integer",
+					Path:    "configmap.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 8,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "additional_property_not_allowed",
+					Type:    "warn",
+					Message: "Additional property pathType is not allowed",
+					Path:    "ingress-extensions-v1beta1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 9,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "serviceName is required",
+					Path:    "ingress-networking-v1beta1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "servicePort is required",
+					Path:    "ingress-networking-v1beta1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "additional_property_not_allowed",
+					Type:    "warn",
+					Message: "Additional property service is not allowed",
+					Path:    "ingress-networking-v1beta1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Message: "pathType is required",
+					Path:    "ingress-networking-v1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 9,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
