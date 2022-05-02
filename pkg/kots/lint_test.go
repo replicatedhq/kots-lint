@@ -1613,6 +1613,304 @@ spec:
 				},
 			},
 		},
+		{
+			name: "kubeval basic replicated kinds with errors",
+			specFiles: SpecFiles{
+				{
+					Name: "replicated-app.yaml",
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: my-application
+spec:
+  icon: https://support.io/img/logo.png
+  releaseNotes: These are our release notes
+  allowRollback: false
+  kubectlVersion: latest
+  kustomizeVersion: latest
+  targetKotsVersion: "1.60.0"
+  minKotsVersion: "1.40.0"
+  requireMinimalRBACPrivileges: false
+  additionalImages:
+    - jenkins/jenkins:lts
+  additionalNamespaces:
+    - "*"
+  ports:
+    - serviceName: web
+      servicePort: 9000
+      localPort: 9000
+      applicationUrl: "http://web"
+  statusInformers:
+    - deployment/my-web-svc
+    - deployment/my-worker
+  graphs:
+    - title: User Signups
+      query: 'sum(user_signup_events_total)'`,
+				},
+				{
+					Name: "application.yaml",
+					Path: "application.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "my-app"
+  labels:
+    app.kubernetes.io/name: "my-app"
+    app.kubernetes.io/version: "9.1.1"
+spec:
+  selector:
+    matchLabels:
+     app.kubernetes.io/name: "my-app"
+  componentKinds: []
+  descriptor:
+    version: 1001
+    description: "Open-source error tracking with full stacktraces & asynchronous context."
+    icons:
+      - src: "https://sentry-brand.storage.googleapis.com/sentry-glyph-black.png"
+        type: "image/png"
+    type: "sentry"
+    links:
+      - description: Open Sentry Enterprise
+        url: "http://sentry"`,
+				},
+				{
+					Name: "config.yaml",
+					Path: "config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: my-config
+spec:
+  groups:
+  - title: Authentication
+    description: Configure application authentication below.
+    items:
+    - name: email-address
+      title: Email Address
+      type: text
+    - name: password_text
+      title: Password Text
+      type: password
+      value: "{{repl RandomString 10}}"`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Preflight
+metadata:
+  name: preflight
+spec:
+  analyzers:
+    - imagePullSecret:
+        checkName: Access to index.docker.io
+        registryName: index.docker.io
+        outcomes:
+          - fail:
+              when: true
+              message: Could not find index.docker.io imagePullSecret
+          - pass:
+              message: Found credentials to pull private images from index.docker.io
+`,
+				},
+				{
+					Name: "redactor.yaml",
+					Path: "redactor.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Redactor
+metadata:
+  name: my-redactor-name
+spec:
+  redactors:
+    name: replace password # names are not used internally, but are useful for recordkeeping
+    fileSelector:
+      file: data/my-password-dump # this targets a single file
+    removals:
+      values:
+      - abc123 # this value is my password, and should never appear in a support bundle`,
+				},
+				{
+					Name: "supportbundle.yaml",
+					Path: "supportbundle.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: support-bundle
+spec:
+  collectors:
+    - secret:
+        name: myapp-postgres
+        key: uri
+        includeValue: false
+  analyzers:
+    - imagePullSecret:
+        checkName: Access to index.docker.io
+        outcomes:
+          - fail:
+              message: Could not find index.docker.io imagePullSecret
+          - pass:
+              message: Found credentials to pull private images from index.docker.io
+`,
+				},
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: samplechart
+spec:
+  exclude: "false"
+  helmVersion: v2
+  useHelmInstall: true
+  values:
+    postgresql:
+      enabled: true
+  namespace: samplechart-namespace
+  builder:
+    postgresql:
+      enabled: true`,
+				},
+				{
+					Name: "identity.yaml",
+					Path: "identity.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Identity
+metadata:
+  name: my-application
+spec:
+    identityIssuerURL: https://{{repl ConfigOption "ingress_hostname"}}/dex
+    oidcRedirectUris:
+      - https://{{repl ConfigOption "ingress_hostname"}}/oidc/login/callback
+    supportedProviders: [ oidc ]
+    roles:
+      - id: member
+        name: Member
+        description: Can see every member and non-secret team in the organization.
+      - id: owner
+        name: Owner
+        description: Has full administrative access to the entire organization.
+    oauth2AlwaysShowLoginScreen: false
+    signingKeysExpiration: 6h
+    idTokensExpiration: 24h
+    webConfig:
+      title: My App
+      theme:
+        logoUrl: data:image/png;base64,<encoded_base64_stream>
+        logoBase64: <base64 encoded png file>
+        styleCssBase64: <base64 encoded [styles.css](https://github.com/dexidp/dex/blob/v2.27.0/web/themes/coreos/styles.css) file>
+        faviconBase64: <base64 encoded png file>
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Path:    "replicated-app.yaml",
+					Message: "title is required",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "invalid_type",
+					Type:    "warn",
+					Path:    "application.yaml",
+					Message: "Invalid type. Expected: string, given: integer",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 14,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Path:    "config.yaml",
+					Message: "name is required",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 7,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "invalid_type",
+					Type:    "warn",
+					Path:    "preflight.yaml",
+					Message: "Invalid type. Expected: string, given: boolean",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 12,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "invalid_type",
+					Type:    "warn",
+					Path:    "redactor.yaml",
+					Message: "Invalid type. Expected: array, given: object",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 6,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Path:    "supportbundle.yaml",
+					Message: "registryName is required",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 12,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Path:    "helmchart.yaml",
+					Message: "chart is required",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "required",
+					Type:    "warn",
+					Path:    "identity.yaml",
+					Message: "requireIdentityProvider is required",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
