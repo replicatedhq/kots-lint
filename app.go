@@ -10,7 +10,7 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/daemon"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	"github.com/replicatedcom/saaskit/tracing/datadog"
-	"github.com/replicatedhq/kots-line/pkg/version"
+	"github.com/replicatedhq/kots-lint/pkg/version"
 	log "github.com/sirupsen/logrus"
 )
 
