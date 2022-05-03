@@ -4,15 +4,17 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	newrelic "github.com/newrelic/go-agent"
-	"github.com/newrelic/go-agent/_integrations/nrgin/v1"
+	"github.com/replicatedcom/saaskit/tracing/datadog"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
 	log "github.com/sirupsen/logrus"
 	cors "github.com/tommy351/gin-cors"
 )
 
 // Run is the main entry point of the kots lint.
-func Run(newrelicApp newrelic.Application) {
+func Run() {
+	datadog.StartTracer("kots-lint", version.GitSHA)
+	defer datadog.StopTracer()
+
 	debugMode := os.Getenv("DEBUG_MODE")
 	if debugMode != "on" {
 		gin.SetMode(gin.ReleaseMode)
@@ -24,11 +26,8 @@ func Run(newrelicApp newrelic.Application) {
 			SkipPaths: []string{"/livez"},
 		}),
 		gin.Recovery(),
+		datadog.GinMiddleware("kots-lint"),
 	)
-
-	if newrelicApp != nil {
-		r.Use(nrgin.Middleware(newrelicApp))
-	}
 
 	r.RedirectTrailingSlash = false
 	r.Use(
