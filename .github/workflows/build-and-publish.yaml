@@ -20,6 +20,7 @@ jobs:
         run: |
           echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go get github.com/replicatedcom/saaskit/tracing/datadog
         shell: bash
 
       - uses: actions/checkout@v2
