@@ -16,7 +16,7 @@ import (
 func Run() {
 	tracer.Start(
 		tracer.WithService("kots-lint"), 
-		tracer.WithServiceVersion(version.GitSHA),
+		tracer.WithServiceVersion(version.GitSHA()),
 		tracer.WithAgentAddr("dd-agent.internal:8126"),
 	)
 	defer tracer.Stop()
