@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+	"github.com/replicatedhq/kots-lint/pkg/version"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
 	log "github.com/sirupsen/logrus"
 	cors "github.com/tommy351/gin-cors"
@@ -18,7 +19,7 @@ func Run() {
 		tracer.WithServiceVersion(version.GitSHA),
 		tracer.WithAgentAddr("dd-agent.internal:8126"),
 	)
-	defer datadog.StopTracer()
+	defer tracer.Stop()
 
 	debugMode := os.Getenv("DEBUG_MODE")
 	if debugMode != "on" {
