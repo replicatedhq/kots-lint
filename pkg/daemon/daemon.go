@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/replicatedcom/saaskit/tracing/datadog"
-	"github.com/replicatedhq/kots-lint/pkg/version"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
 	log "github.com/sirupsen/logrus"
 	cors "github.com/tommy351/gin-cors"
@@ -13,7 +13,11 @@ import (
 
 // Run is the main entry point of the kots lint.
 func Run() {
-	datadog.StartTracer("kots-lint", version.GitSHA())
+	tracer.Start(
+		tracer.WithService("kots-lint"), 
+		tracer.WithServiceVersion(version.GitSHA),
+		tracer.WithAgentAddr("dd-agent.internal:8126"),
+	)
 	defer datadog.StopTracer()
 
 	debugMode := os.Getenv("DEBUG_MODE")
@@ -27,7 +31,7 @@ func Run() {
 			SkipPaths: []string{"/livez"},
 		}),
 		gin.Recovery(),
-		datadog.GinMiddleware("kots-lint"),
+		gintrace.Middleware("kots-lint"),
 	)
 
 	r.RedirectTrailingSlash = false
