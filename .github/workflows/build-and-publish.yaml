@@ -87,6 +87,6 @@ jobs:
       - uses: superfly/flyctl-actions@1.1
         working-directory: dd-agent
         with:
-          args: deploy --app dd-agent --build-args DD_AGENT_ARTIFACT=./datadog-agent_7-1_amd64.deb --dockerfile ./Dockerfiles/agent/amd64/Dockerfile -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true
+          args: deploy --config ../dd-fly-cfg/fly.toml --app dd-agent --build-args DD_AGENT_ARTIFACT=./datadog-agent_7-1_amd64.deb --dockerfile ./Dockerfiles/agent/amd64/Dockerfile -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
