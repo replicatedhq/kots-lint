@@ -78,15 +78,17 @@ jobs:
 
   flyio-dd-agent:
     runs-on: ubuntu-latest
-    needs: flyio
+      #    needs: flyio
       #    if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: download-dd-artifact
-        working-directory: dd-agent
-        run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
-      - uses: superfly/flyctl-actions@1.1
-        working-directory: dd-agent
+      - uses: actions/checkout@v2
         with:
-          args: deploy --app dd-agent --build-args DD_AGENT_ARTIFACT=./datadog-agent_7-1_amd64.deb --dockerfile ./Dockerfiles/agent/amd64/Dockerfile -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true
+          repository: 'DataDog/datadog-agent'
+          ref: '7.35.2'
+      - run: git fetch --prune --unshallow
+      - run: cd Dockerfiles/agent && cp amd64/Dockerfile ./dd-agent.Dockerfile && curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
+      - uses: superfly/flyctl-actions@1.1
+        with:
+          args: deploy Dockerfiles/agent/ --config ./dd-fly.toml --app dd-agent --build-arg DD_AGENT_ARTIFACT=./datadog-agent_7-1_amd64.deb --dockerfile ./dd-agent.Dockerfile -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
