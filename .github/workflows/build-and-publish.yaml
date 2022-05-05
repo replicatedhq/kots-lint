@@ -81,9 +81,11 @@ jobs:
     needs: flyio
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
+      - name: download-dd-artifact
+        run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
       - uses: superfly/flyctl-actions@1.1
         with:
-          args: deploy --app dd-agent --dockerfile ./dd-agent/Dockerfile -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true
+          args: deploy --app dd-agent --build-args DD_AGENT_ARTIFACT=./datadog-agent_7-1_amd64.deb --dockerfile ./dd-agent/Dockerfiles/agent/amd64/Dockerfile -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true 
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
