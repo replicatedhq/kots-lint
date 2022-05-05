@@ -8,14 +8,16 @@ require (
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/open-policy-agent/opa v0.34.2
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/replicatedcom/saaskit v0.0.0-20220404234806-42d82ab45c31
 	github.com/replicatedhq/kots v1.69.2-0.20220427202613-e7b5ac2fe43e
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	github.com/xeipuuv/gojsonschema v1.2.1-0.20200118195451-b537c054d4b4 // indirect
 	go.undefinedlabs.com/scopeagent v0.1.15
+	gopkg.in/DataDog/dd-trace-go.v1 v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.7.1
 	k8s.io/client-go v0.23.1
