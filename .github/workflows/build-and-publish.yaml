@@ -84,9 +84,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: DataDog/datadog-agent
-      - run: |
-        git fetch --prune --unshallow
-        cp Dockerfiles/agent/amd64/Dockerfile dd-agent.Dockerfile
+      - run: git fetch --prune --unshallow
+      - run: cp Dockerfiles/agent/amd64/Dockerfile dd-agent.Dockerfile
       - name: download-dd-artifact
         run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
       - uses: superfly/flyctl-actions@1.1
