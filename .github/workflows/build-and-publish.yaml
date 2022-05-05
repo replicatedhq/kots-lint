@@ -81,6 +81,7 @@ jobs:
       #    needs: flyio
       #    if: startsWith(github.ref, 'refs/tags/v')
     steps:
+      - uses: actions/checkout@v2
       - name: download-dd-artifact
         run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
       - uses: superfly/flyctl-actions@1.1
