@@ -10,18 +10,14 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/daemon"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	"github.com/replicatedhq/kots-lint/pkg/version"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"github.com/replicatedcom/saaskit/tracing/datadog"
 	log "github.com/sirupsen/logrus"
 
 )
 
 func main() {
-	tracer.Start(
-		tracer.WithService("kots-lint"),
-		tracer.WithServiceVersion(version.GitSHA()),
-		tracer.WithAgentAddr("sjc.dd-agent.internal:8126"),
-	)
-	defer tracer.Stop()
+	datadog.StartTracer("kots-lint", version.GitSHA())
+	defer datadog.StopTracer()
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
