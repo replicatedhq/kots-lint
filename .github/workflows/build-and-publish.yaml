@@ -83,7 +83,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          repository: DataDog/datadog-agent
+          repository: 'DataDog/datadog-agent'
+          ref: '7'
       - run: git fetch --prune --unshallow
       - run: cp Dockerfiles/agent/amd64/Dockerfile dd-agent.Dockerfile
       - name: download-dd-artifact
