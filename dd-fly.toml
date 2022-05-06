@@ -7,7 +7,7 @@ kill_timeout = 5
 processes = []
 
 [env]
-  PORT = "8080"
+  PORT = "8126"
 
 [experimental]
   allowed_public_ports = []
@@ -15,7 +15,7 @@ processes = []
 
 [[services]]
   http_checks = []
-  internal_port = 8080
+  internal_port = 8126
   processes = ["app"]
   protocol = "tcp"
   script_checks = []
@@ -33,12 +33,6 @@ processes = []
   [[services.ports]]
     handlers = ["tls", "http"]
     port = 443
-
-  [[services.tcp_checks]]
-    grace_period = "30s"
-    interval = "15s"
-    restart_limit = 0
-    timeout = "2s"
 
 [[statics]]
   guest_path = "/app/public"
