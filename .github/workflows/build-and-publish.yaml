@@ -81,7 +81,7 @@ jobs:
     needs: flyio
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
+      - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions@1.1
         with:
           args: deploy --app dd-agent --config ./dd-fly.toml -e DD_API_KEY=${{ secrets.DD_API_KEY }}
