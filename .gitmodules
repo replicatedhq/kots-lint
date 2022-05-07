@@ -1,3 +1,0 @@
-[submodule "dd-agent"]
-	path = dd-agent
-	url = https://github.com/DataDog/datadog-agent
