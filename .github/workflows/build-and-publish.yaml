@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions@1.1
         with:
-          args: deploy --config ./fly.toml --image-label ${GITHUB_REF:10}
+          args: deploy --app kots-lint --config ./fly.toml --image-label ${GITHUB_REF:10}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -84,6 +84,6 @@ jobs:
       - run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
       - uses: superfly/flyctl-actions@1.1
         with:
-          args: deploy --config ./dd-fly.toml -e DD_API_KEY=${{ secrets.DD_API_KEY }}
+          args: deploy -app dd-agent --config ./dd-fly.toml -e DD_API_KEY=${{ secrets.DD_API_KEY }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
