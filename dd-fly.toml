@@ -15,7 +15,7 @@ processes = []
   image = "datadog/agent:7"
 
 [build.args]
-  DD_AGENT_ARTIFACT = "./datadog-agent_7-1_amd64.deb"
+  DD_AGENT_ARTIFACT="./datadog-agent_7-1_amd64.deb"
 
 [experimental]
   allowed_public_ports = []
