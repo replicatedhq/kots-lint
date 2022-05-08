@@ -85,7 +85,7 @@ jobs:
       - run: curl https://s3.amazonaws.com/apt.datadoghq.com/pool/d/da/datadog-agent_7-1_amd64.deb -o datadog-agent_7-1_amd64.deb
       - uses: superfly/flyctl-actions@1.1
         with:
-          args: deploy --app dd-agent --config ./dd-fly.toml
+          args: deploy --app dd-agent --config ./dd-fly.toml --build-arg DD_AGENT_ARTIFACT=./datadog-agent_7-1_amd64.deb
         env:
           DD_API_KEY: ${{ secrets.DD_API_KEY }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
