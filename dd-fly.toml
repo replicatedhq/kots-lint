@@ -12,6 +12,9 @@ kill_timeout = 5
   DD_SITE = "datadoghq.com"
   DD_APM_NON_LOCAL_TRAFFIC = true
 
+[build]
+  image = "datadog/agent:7"
+
 [[services]]
   internal_port = 8126
   protocol = "tcp"
