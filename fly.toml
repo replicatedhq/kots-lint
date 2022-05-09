@@ -1,5 +1,11 @@
 app = "kots-lint"
 
+[env]
+  DD_ENV = "prod"
+  DD_AGENT_HOST = "sjc.dd-agent.internal"
+  USE_DATADOG_APM = true
+  DD_SERVICE = "kots-lint"
+
 [[services]]
   internal_port = 8082
   protocol = "tcp"
