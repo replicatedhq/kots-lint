@@ -4,15 +4,16 @@ app = "dd-agent"
 
 kill_signal = "SIGINT"
 kill_timeout = 5
-processes = []
 
 [experimental]
-  allowed_public_ports = []
   auto_rollback = true
+
+[env]
+  DD_SITE = "datadoghq.com"
+  DD_APM_NON_LOCAL_TRAFFIC = true
 
 [[services]]
   internal_port = 8126
-  processes = ["app"]
   protocol = "tcp"
 
   [services.concurrency]
@@ -23,7 +24,7 @@ processes = []
   [[services.ports]]
     force_https = true
     handlers = ["http"]
-    port = 80
+    port = 8126
 
   [[services.ports]]
     handlers = ["tls", "http"]
@@ -34,7 +35,3 @@ processes = []
     interval = "15s"
     restart_limit = 0
     timeout = "10s"
-
-[[statics]]
-  guest_path = "/app/public"
-  url_prefix = "/static/"
