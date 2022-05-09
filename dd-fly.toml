@@ -8,11 +8,6 @@ processes = []
 
 [env]
   PORT = "8126"
-  DD_SITE = "datadoghq.com"
-  DD_APM_NON_LOCAL_TRAFFIC = true
-
-[build]
-  image = "datadog/agent:7"
 
 [experimental]
   allowed_public_ports = []
