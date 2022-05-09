@@ -74,6 +74,10 @@ jobs:
         with:
           args: deploy --app kots-lint --config ./fly.toml --image-label ${GITHUB_REF:10}
         env:
+          DD_ENV: "prod"
+          DD_AGENT_HOST: "sjc.dd-agent.internal"
+          USE_DATADOG_APM: true
+          DD_SERVICE: "kots-lint"
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   flyio-dd-agent:
