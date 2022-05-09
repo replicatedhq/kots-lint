@@ -6,9 +6,6 @@ kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
 
-[env]
-  PORT = "8126"
-
 [experimental]
   allowed_public_ports = []
   auto_rollback = true
