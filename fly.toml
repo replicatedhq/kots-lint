@@ -1,8 +1,8 @@
 app = "kots-lint"
 
 [env]
-  DD_ENV = "prod"
-  DD_AGENT_HOST = "sjc.dd-agent.internal"
+  DD_ENV = "production"
+  DD_AGENT_HOST = "d8351925"
   USE_DATADOG_APM = true
   DD_SERVICE = "kots-lint"
 
