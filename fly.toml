@@ -2,7 +2,7 @@ app = "kots-lint"
 
 [env]
   DD_ENV = "production"
-  DD_AGENT_HOST = "d8351925"
+  DD_AGENT_HOST = "d8351925.internal"
   USE_DATADOG_APM = true
   DD_SERVICE = "kots-lint"
 
