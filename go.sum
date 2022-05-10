@@ -1578,8 +1578,8 @@ github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqn
 github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 h1:MkV+77GLUNo5oJ0jf870itWm3D0Sjh7+Za9gazKc5LQ=
 github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
-github.com/replicatedcom/saaskit v0.0.0-20220510211638-f1332c037b13 h1:XkuYPFlhEQO3JXMiMBVo84wzb8W0mWqUm8YYqP82xOg=
-github.com/replicatedcom/saaskit v0.0.0-20220510211638-f1332c037b13/go.mod h1:ae2LAb6COZAKb9oI4bgh52xrq17Ql4lqXfPXHZpGwPQ=
+github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41 h1:Wk4CD6DHALjqTR5HCYoitRcAobCAz1CdjcMDlJAdJBs=
+github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41/go.mod h1:ae2LAb6COZAKb9oI4bgh52xrq17Ql4lqXfPXHZpGwPQ=
 github.com/replicatedhq/kots v1.69.2-0.20220427202613-e7b5ac2fe43e h1:Z9InQR6BKsX85tWPu9laBhgn6cwRsYccJCQOwXG6u4g=
 github.com/replicatedhq/kots v1.69.2-0.20220427202613-e7b5ac2fe43e/go.mod h1:V8kilzb9/V4ieJtyPnS81QBnTP9hxH/8TDqIPb1e+tU=
 github.com/replicatedhq/kurl v0.0.0-20210414162418-8d6211901244 h1:aSORttMXeqRXgRnIS7kpRfR32c3MBkJGkZ6KoqWimhc=

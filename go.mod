@@ -9,7 +9,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/open-policy-agent/opa v0.34.2
 	github.com/pkg/errors v0.9.1
-	github.com/replicatedcom/saaskit v0.0.0-20220510211638-f1332c037b13
+	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
 	github.com/replicatedhq/kots v1.69.2-0.20220427202613-e7b5ac2fe43e
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
