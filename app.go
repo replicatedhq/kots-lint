@@ -10,15 +10,11 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/daemon"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	"github.com/replicatedhq/kots-lint/pkg/version"
-	"github.com/replicatedcom/saaskit/tracing/datadog"
 	log "github.com/sirupsen/logrus"
 
 )
 
 func main() {
-	datadog.StartTracer("kots-lint", version.GitSHA())
-	defer datadog.StopTracer()
-
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	if err := kots.InitOPALinting("/rego"); err != nil {
