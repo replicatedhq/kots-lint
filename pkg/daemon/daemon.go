@@ -12,6 +12,9 @@ import (
 
 // Run is the main entry point of the kots lint.
 func Run() {
+	datadog.StartTracer("kots-lint", version.GitSHA())
+	defer datadog.StopTracer()
+
 	debugMode := os.Getenv("DEBUG_MODE")
 	if debugMode != "on" {
 		gin.SetMode(gin.ReleaseMode)
