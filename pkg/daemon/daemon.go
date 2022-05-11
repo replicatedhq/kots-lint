@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedcom/saaskit/tracing/datadog"
+	"github.com/replicatedhq/kots-lint/pkg/version"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
 	log "github.com/sirupsen/logrus"
 	cors "github.com/tommy351/gin-cors"
