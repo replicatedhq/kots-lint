@@ -6,8 +6,8 @@ require (
 	github.com/gin-gonic/gin v1.7.1
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
-	github.com/mitchellh/mapstructure v1.4.2
-	github.com/open-policy-agent/opa v0.34.2
+	github.com/mitchellh/mapstructure v1.4.3
+	github.com/open-policy-agent/opa v0.37.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
 	github.com/replicatedhq/kots v1.69.2-0.20220427202613-e7b5ac2fe43e
