@@ -1,0 +1,40 @@
+# fly.toml file generated for dd-agent on 2022-05-05T11:33:31-07:00
+
+app = "dd-agent"
+
+kill_signal = "SIGINT"
+kill_timeout = 5
+
+[experimental]
+  auto_rollback = true
+
+[env]
+  DD_SITE = "datadoghq.com"
+  DD_APM_NON_LOCAL_TRAFFIC = "true"
+
+[build]
+  image = "datadog/agent:7"
+
+[[services]]
+  internal_port = 8126
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 8126
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 8126
+
+  [[services.tcp_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "10s"

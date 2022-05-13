@@ -41,7 +41,7 @@ jobs:
         with:
           go-version: '^1.17.4'
 
-      - run: sudo apt-get -qq -y install 
+      - run: sudo apt-get -qq -y install
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions@1.1
         with:
-          args: deploy --app kots-lint --image-label ${GITHUB_REF:10} -e DD_AGENT_HOST=dd-agent
+          args: deploy --app kots-lint --config ./fly.toml --image-label ${GITHUB_REF:10}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
@@ -81,9 +81,9 @@ jobs:
     needs: flyio
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
+      - uses: actions/checkout@v2
       - uses: superfly/flyctl-actions@1.1
         with:
-          args: deploy --app dd-agent --image gcr.io/datadoghq/agent:7 -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e DD_APM_NON_LOCAL_TRAFFIC=true
+          args: deploy --config ./dd-fly.toml --app dd-agent -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e  DD_APM_NON_LOCAL_TRAFFIC=true
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
