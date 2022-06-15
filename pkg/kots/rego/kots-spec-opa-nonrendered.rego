@@ -338,7 +338,7 @@ lint[output] {
   output := {
     "rule": "invalid-kubernetes-installer",
     "type": "error",
-    "message": "Add-ons included in the Kubernetes installer must pin specific versions rather than 'latest or x-ranges (e.g., 1.2.x).",
+    "message": "Add-ons included in the Kubernetes installer must pin specific versions rather than 'latest' or x-ranges (e.g., 1.2.x).",
     "path": file.path,
     "field": sprintf("spec.%s.version", [string(addon)]),
     "docIndex": file.docIndex
