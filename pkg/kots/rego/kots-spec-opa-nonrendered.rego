@@ -318,6 +318,33 @@ lint[output] {
   }
 }
 
+# Check if the kubernetes installer addons versions are valid
+is_kubernetes_installer(file) {
+  file.content.kind == "Installer"
+  file.content.apiVersion == "kurl.sh/v1beta1"
+} else {
+  file.content.kind == "Installer"
+  file.content.apiVersion == "cluster.kurl.sh/v1beta1"
+}
+is_addon_version_invalid(version) {
+  contains(version, ".x")
+} else {
+  version == "latest"
+}
+lint[output] {
+  file := files[_]
+  is_kubernetes_installer(file)
+  is_addon_version_invalid(file.content.spec[addon].version)
+  output := {
+    "rule": "invalid-kubernetes-installer",
+    "type": "error",
+    "message": "Add-ons versions included in the kubernetes installer must not use 'latest' or the '.x' syntax",
+    "path": file.path,
+    "field": sprintf("spec.%s.version", [string(addon)]),
+    "docIndex": file.docIndex
+  }
+}
+
 # Check if any spec has "replicas" set to 1
 lint[output] {
   spec := specs[_]
