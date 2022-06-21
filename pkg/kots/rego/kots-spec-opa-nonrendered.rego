@@ -345,6 +345,21 @@ lint[output] {
   }
 }
 
+# Check if the kubernetes installer is using the old deprecated api version
+lint[output] {
+  file := files[_]
+  file.content.kind == "Installer"
+  file.content.apiVersion == "kurl.sh/v1beta1"
+  output := {
+    "rule": "deprecated-kubernetes-installer-version",
+    "type": "warn",
+    "message": "API version 'kurl.sh/v1beta1' is deprecated. Use 'cluster.kurl.sh/v1beta1' instead.",
+    "path": file.path,
+    "field": "apiVersion",
+    "docIndex": file.docIndex
+  }
+}
+
 # Check if any spec has "replicas" set to 1
 lint[output] {
   spec := specs[_]
