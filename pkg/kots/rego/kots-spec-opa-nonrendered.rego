@@ -360,6 +360,53 @@ lint[output] {
   }
 }
 
+# A set containing all of the release names included in HelmChart CRDs
+helm_release_names[output] {
+  file := files[_]
+  file.content.kind == "HelmChart"
+  file.content.apiVersion == "kots.io/v1beta1"
+  releaseName := file.content.spec.chart.releaseName
+  output := {
+    "filePath": file.path,
+    "docIndex": file.docIndex,
+    "releaseName": releaseName
+  }
+}
+
+# Check if the releaseName field in HelmChart CRDs is valid
+is_valid_helm_release_name(name) {
+  regex.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$", name)
+  count(name) <= 53
+}
+lint[output] {
+  rn := helm_release_names[_]
+  not is_valid_helm_release_name(rn.releaseName)
+  output := {
+    "rule": "invalid-helm-release-name",
+    "type": "error",
+    "message": "Invalid Helm release name, must match regex ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$ and the length must not be longer than 53",
+    "path": rn.filePath,
+    "field": "spec.chart.releaseName",
+    "docIndex": rn.docIndex
+  }
+}
+
+# Check if the releaseName field in HelmChart CRDs is unique across all charts
+lint[output] {
+  rni := helm_release_names[i]
+  rnj := helm_release_names[j]
+  i != j
+  rni.releaseName == rnj.releaseName
+  output := {
+    "rule": "duplicate-helm-release-name",
+    "type": "error",
+    "message": sprintf("Release name is already used in %s", [string(rnj.filePath)]),
+    "path": rni.filePath,
+    "field": "spec.chart.releaseName",
+    "docIndex": rni.docIndex
+  }
+}
+
 # Check if any spec has "replicas" set to 1
 lint[output] {
   spec := specs[_]
