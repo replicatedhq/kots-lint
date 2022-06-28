@@ -1,7 +1,6 @@
 package kots
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -525,7 +524,6 @@ spec:
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config, path, err := tt.files.findAndValidateConfig()
-			fmt.Println("ERROR", err)
 			assert.Equal(t, err.Error(), tt.wantErr)
 			assert.Equal(t, path, tt.configPath)
 			assert.NotNil(t, config)

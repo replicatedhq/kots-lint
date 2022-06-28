@@ -91,6 +91,62 @@ specs[output] {
   }
 }
 
+# A set containing all of the kots kinds
+is_troubleshoot_api_version(apiVersion) {
+  apiVersion == "troubleshoot.replicated.com/v1beta1"
+} else {
+  apiVersion == "troubleshoot.sh/v1beta2"
+}
+is_kubernetes_installer_api_version(apiVersion) {
+  apiVersion == "cluster.kurl.sh/v1beta1"
+} else {
+  apiVersion == "kurl.sh/v1beta1"
+}
+is_kots_kind(file) {
+  file.content.apiVersion == "kots.io/v1beta1"
+  file.content.kind == "Config"
+} else {
+  file.content.apiVersion == "kots.io/v1beta1"
+  file.content.kind == "Application"
+} else {
+  file.content.apiVersion == "kots.io/v1beta1"
+  file.content.kind == "Identity"
+} else {
+  is_troubleshoot_api_version(file.content.apiVersion)
+  file.content.kind == "Collector"
+} else {
+  is_troubleshoot_api_version(file.content.apiVersion)
+  file.content.kind == "Analyzer"
+} else {
+  is_troubleshoot_api_version(file.content.apiVersion)
+  file.content.kind == "SupportBundle"
+} else {
+  is_troubleshoot_api_version(file.content.apiVersion)
+  file.content.kind == "Redactor"
+} else {
+  is_troubleshoot_api_version(file.content.apiVersion)
+  file.content.kind == "Preflight"
+} else {
+  file.content.apiVersion == "velero.io/v1"
+  file.content.kind == "Backup"
+} else {
+  is_kubernetes_installer_api_version(file.content.apiVersion)
+  file.content.kind == "Installer"
+} else {
+  file.content.apiVersion == "app.k8s.io/v1beta1"
+  file.content.kind == "Application"
+}
+kots_kinds[output] {
+  file := files[_]
+  is_kots_kind(file)
+  output := {
+    "apiVersion": file.content.apiVersion,
+    "kind": file.content.kind,
+    "filePath": file.path,
+    "docIndex": file.docIndex
+  }
+}
+
 # A rule that returns the config file path
 config_file_path = file.path {
   file := files[_]
@@ -320,11 +376,8 @@ lint[output] {
 
 # Check if the kubernetes installer addons versions are valid
 is_kubernetes_installer(file) {
+  is_kubernetes_installer_api_version(file.content.apiVersion)
   file.content.kind == "Installer"
-  file.content.apiVersion == "kurl.sh/v1beta1"
-} else {
-  file.content.kind == "Installer"
-  file.content.apiVersion == "cluster.kurl.sh/v1beta1"
 }
 is_addon_version_invalid(version) {
   contains(version, ".x")
@@ -357,6 +410,34 @@ lint[output] {
     "path": file.path,
     "field": "apiVersion",
     "docIndex": file.docIndex
+  }
+}
+
+# Check if there are any duplicate kots kinds included
+is_same_kots_kind(k1, k2) {
+  k1.apiVersion == k2.apiVersion
+  k1.kind == k2.kind
+} else {
+  is_troubleshoot_api_version(k1.apiVersion)
+  is_troubleshoot_api_version(k2.apiVersion)
+  k1.kind == k2.kind
+} else {
+  is_kubernetes_installer_api_version(k1.apiVersion)
+  is_kubernetes_installer_api_version(k2.apiVersion)
+  k1.kind == k2.kind
+}
+lint[output] {
+  kki := kots_kinds[i]
+  kkj := kots_kinds[j]
+  i != j
+  is_same_kots_kind(kki, kkj)
+  output := {
+    "rule": "duplicate-kots-kind",
+    "type": "error",
+    "message": sprintf("A release can only include one '%s' resource, but another '%s' resource was found in %s", [string(kki.kind), string(kki.kind), string(kkj.filePath)]),
+    "path": kki.filePath,
+    "field": "apiVersion",
+    "docIndex": kki.docIndex
   }
 }
 
