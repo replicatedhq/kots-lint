@@ -413,7 +413,7 @@ lint[output] {
   }
 }
 
-# Check if there are any multiple kots kinds included
+# Check if there are any duplicate kots kinds included
 is_same_kots_kind(k1, k2) {
   k1.apiVersion == k2.apiVersion
   k1.kind == k2.kind
