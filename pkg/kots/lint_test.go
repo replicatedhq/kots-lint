@@ -2540,6 +2540,192 @@ spec:
 				},
 			},
 		},
+		{
+			name: "up-to-date and valid kubernetes installer",
+			specFiles: SpecFiles{
+				{
+					Name: "installer.yaml",
+					Path: "installer.yaml",
+					Content: `apiVersion: cluster.kurl.sh/v1beta1
+kind: Installer
+metadata:
+  name: my-installer
+spec:
+  contour:
+    version: 0.14.0
+  kotsadm:
+    version: 1.70.0
+  kubernetes:
+    version: 1.23.5
+  registry:
+    version: 2.7.1
+  rook:
+    version: 1.4.3
+  weave:
+    version: 2.5.2
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+			},
+		},
+		{
+			name: "deprecated kubernetes installer api version",
+			specFiles: SpecFiles{
+				{
+					Name: "installer.yaml",
+					Path: "installer.yaml",
+					Content: `apiVersion: kurl.sh/v1beta1
+kind: Installer
+metadata:
+  name: my-installer
+spec:
+  contour:
+    version: 0.14.0
+  kotsadm:
+    version: 1.70.0
+  kubernetes:
+    version: 1.23.5
+  registry:
+    version: 2.7.1
+  rook:
+    version: 1.4.3
+  weave:
+    version: 2.5.2
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "deprecated-kubernetes-installer-version",
+					Path:    "installer.yaml",
+					Type:    "warn",
+					Message: "API version 'kurl.sh/v1beta1' is deprecated. Use 'cluster.kurl.sh/v1beta1' instead.",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid kubernetes installer in release",
+			specFiles: SpecFiles{
+				{
+					Name: "installer.yaml",
+					Path: "installer.yaml",
+					Content: `apiVersion: cluster.kurl.sh/v1beta1
+kind: Installer
+metadata:
+  name: my-installer
+spec:
+  contour:
+    version: 0.14.0
+  kotsadm:
+    version: 1.70.0
+  kubernetes:
+    version: 1.23.x
+  registry:
+    version: 2.7.1
+  rook:
+    version: latest
+  weave:
+    version: 2.5.2
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "invalid-kubernetes-installer",
+					Path:    "installer.yaml",
+					Type:    "error",
+					Message: "Add-ons included in the Kubernetes installer must pin specific versions rather than 'latest' or x-ranges (e.g., 1.2.x).",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 11,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "invalid-kubernetes-installer",
+					Path:    "installer.yaml",
+					Type:    "error",
+					Message: "Add-ons included in the Kubernetes installer must pin specific versions rather than 'latest' or x-ranges (e.g., 1.2.x).",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 15,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	InitOPALinting("./rego")
