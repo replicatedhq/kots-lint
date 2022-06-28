@@ -2726,6 +2726,727 @@ spec:
 				},
 			},
 		},
+		{
+			name: "duplicate kots kinds in release",
+			specFiles: SpecFiles{
+				{
+					Name: "config-1.yaml",
+					Path: "config-1.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+`,
+				},
+				{
+					Name: "config-2.yaml",
+					Path: "config-2.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+`,
+				},
+				{
+					Name: "replicated-app-1.yaml",
+					Path: "replicated-app-1.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+spec:
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+`,
+				},
+				{
+					Name: "replicated-app-2.yaml",
+					Path: "replicated-app-2.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+spec:
+  icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+`,
+				},
+				{
+					Name: "identity-1.yaml",
+					Path: "identity-1.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Identity
+`,
+				},
+				{
+					Name: "identity-2.yaml",
+					Path: "identity-2.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Identity
+`,
+				},
+				{
+					Name: "collector-1.yaml",
+					Path: "collector-1.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Collector
+`,
+				},
+				{
+					Name: "collector-2.yaml",
+					Path: "collector-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Collector
+`,
+				},
+				{
+					Name: "analyzer-1.yaml",
+					Path: "analyzer-1.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Analyzer
+`,
+				},
+				{
+					Name: "analyzer-2.yaml",
+					Path: "analyzer-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Analyzer
+`,
+				},
+				{
+					Name: "support-bundle-1.yaml",
+					Path: "support-bundle-1.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+`,
+				},
+				{
+					Name: "support-bundle-2.yaml",
+					Path: "support-bundle-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+`,
+				},
+				{
+					Name: "redactor-1.yaml",
+					Path: "redactor-1.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Redactor
+`,
+				},
+				{
+					Name: "redactor-2.yaml",
+					Path: "redactor-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Redactor
+`,
+				},
+				{
+					Name: "preflight-1.yaml",
+					Path: "preflight-1.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+`,
+				},
+				{
+					Name: "preflight-2.yaml",
+					Path: "preflight-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+`,
+				},
+				{
+					Name: "backup-1.yaml",
+					Path: "backup-1.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Backup
+`,
+				},
+				{
+					Name: "backup-2.yaml",
+					Path: "backup-2.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Backup
+`,
+				},
+				{
+					Name: "k8s-app-1.yaml",
+					Path: "k8s-app-1.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+`,
+				},
+				{
+					Name: "k8s-app-2.yaml",
+					Path: "k8s-app-2.yaml",
+					Content: `apiVersion: app.k8s.io/v1beta1
+kind: Application
+`,
+				},
+				{
+					Name: "installer-1.yaml",
+					Path: "installer-1.yaml",
+					Content: `apiVersion: cluster.kurl.sh/v1beta1
+kind: Installer
+`,
+				},
+				{
+					Name: "installer-2.yaml",
+					Path: "installer-2.yaml",
+					Content: `apiVersion: cluster.kurl.sh/v1beta1
+kind: Installer
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "config-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Config' resource, but another 'Config' resource was found in config-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "config-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Config' resource, but another 'Config' resource was found in config-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "replicated-app-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Application' resource, but another 'Application' resource was found in replicated-app-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "replicated-app-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Application' resource, but another 'Application' resource was found in replicated-app-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "identity-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Identity' resource, but another 'Identity' resource was found in identity-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "identity-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Identity' resource, but another 'Identity' resource was found in identity-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "collector-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Collector' resource, but another 'Collector' resource was found in collector-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "collector-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Collector' resource, but another 'Collector' resource was found in collector-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "analyzer-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Analyzer' resource, but another 'Analyzer' resource was found in analyzer-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "analyzer-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Analyzer' resource, but another 'Analyzer' resource was found in analyzer-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "support-bundle-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'SupportBundle' resource, but another 'SupportBundle' resource was found in support-bundle-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "support-bundle-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'SupportBundle' resource, but another 'SupportBundle' resource was found in support-bundle-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "redactor-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Redactor' resource, but another 'Redactor' resource was found in redactor-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "redactor-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Redactor' resource, but another 'Redactor' resource was found in redactor-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "preflight-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Preflight' resource, but another 'Preflight' resource was found in preflight-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "preflight-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Preflight' resource, but another 'Preflight' resource was found in preflight-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "backup-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Backup' resource, but another 'Backup' resource was found in backup-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "backup-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Backup' resource, but another 'Backup' resource was found in backup-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "k8s-app-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Application' resource, but another 'Application' resource was found in k8s-app-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "k8s-app-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Application' resource, but another 'Application' resource was found in k8s-app-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "installer-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Installer' resource, but another 'Installer' resource was found in installer-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "installer-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Installer' resource, but another 'Installer' resource was found in installer-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "duplicate kots kinds in release with different api versions",
+			specFiles: SpecFiles{
+				{
+					Name: "collector-1.yaml",
+					Path: "collector-1.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Collector
+`,
+				},
+				{
+					Name: "collector-2.yaml",
+					Path: "collector-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Collector
+`,
+				},
+				{
+					Name: "analyzer-1.yaml",
+					Path: "analyzer-1.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Analyzer
+`,
+				},
+				{
+					Name: "analyzer-2.yaml",
+					Path: "analyzer-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Analyzer
+`,
+				},
+				{
+					Name: "support-bundle-1.yaml",
+					Path: "support-bundle-1.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: SupportBundle
+`,
+				},
+				{
+					Name: "support-bundle-2.yaml",
+					Path: "support-bundle-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+`,
+				},
+				{
+					Name: "redactor-1.yaml",
+					Path: "redactor-1.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Redactor
+`,
+				},
+				{
+					Name: "redactor-2.yaml",
+					Path: "redactor-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Redactor
+`,
+				},
+				{
+					Name: "preflight-1.yaml",
+					Path: "preflight-1.yaml",
+					Content: `apiVersion: troubleshoot.replicated.com/v1beta1
+kind: Preflight
+`,
+				},
+				{
+					Name: "preflight-2.yaml",
+					Path: "preflight-2.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+`,
+				},
+				{
+					Name: "installer-1.yaml",
+					Path: "installer-1.yaml",
+					Content: `apiVersion: kurl.sh/v1beta1
+kind: Installer
+`,
+				},
+				{
+					Name: "installer-2.yaml",
+					Path: "installer-2.yaml",
+					Content: `apiVersion: cluster.kurl.sh/v1beta1
+kind: Installer
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "deprecated-kubernetes-installer-version",
+					Path:    "installer-1.yaml",
+					Type:    "warn",
+					Message: "API version 'kurl.sh/v1beta1' is deprecated. Use 'cluster.kurl.sh/v1beta1' instead.",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "collector-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Collector' resource, but another 'Collector' resource was found in collector-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "collector-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Collector' resource, but another 'Collector' resource was found in collector-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "analyzer-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Analyzer' resource, but another 'Analyzer' resource was found in analyzer-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "analyzer-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Analyzer' resource, but another 'Analyzer' resource was found in analyzer-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "support-bundle-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'SupportBundle' resource, but another 'SupportBundle' resource was found in support-bundle-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "support-bundle-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'SupportBundle' resource, but another 'SupportBundle' resource was found in support-bundle-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "redactor-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Redactor' resource, but another 'Redactor' resource was found in redactor-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "redactor-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Redactor' resource, but another 'Redactor' resource was found in redactor-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "preflight-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Preflight' resource, but another 'Preflight' resource was found in preflight-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "preflight-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Preflight' resource, but another 'Preflight' resource was found in preflight-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "installer-1.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Installer' resource, but another 'Installer' resource was found in installer-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-kots-kind",
+					Path:    "installer-2.yaml",
+					Type:    "error",
+					Message: "A release can only include one 'Installer' resource, but another 'Installer' resource was found in installer-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 1,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	InitOPALinting("./rego")
