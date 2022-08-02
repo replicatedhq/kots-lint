@@ -108,29 +108,24 @@ func InitOPALinting(regoPath string) error {
 func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	unnestedFiles := specFiles.unnest()
 
-	filteredFiles := SpecFiles{}
+	tarGzFiles := SpecFiles{}
+	yamlFiles := SpecFiles{}
 	for _, file := range unnestedFiles {
+		if file.isTarGz() {
+			tarGzFiles = append(tarGzFiles, file)
+		}
 		if file.isYAML() {
-			filteredFiles = append(filteredFiles, file)
+			yamlFiles = append(yamlFiles, file)
 		}
 	}
 
 	// if there are yaml errors, end early there
-	yamlLintExpressions := lintIsValidYAML(filteredFiles)
+	yamlLintExpressions := lintIsValidYAML(yamlFiles)
 	if lintExpressionsHaveErrors(yamlLintExpressions) {
 		return yamlLintExpressions, false, nil
 	}
 
-	// if helm charts are missing corresponding manifests or vise versa, end early there
-	helmChartsLintExpressions, err := lintHelmCharts(unnestedFiles)
-	if err != nil {
-		return nil, false, errors.Wrap(err, "failed to lint helm charts")
-	}
-	if lintExpressionsHaveErrors(helmChartsLintExpressions) {
-		return helmChartsLintExpressions, false, nil
-	}
-
-	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(filteredFiles)
+	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(yamlFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA non-rendered")
 	}
@@ -139,7 +134,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return opaNonRenderedLintExpressions, false, nil
 	}
 
-	renderContentLintExpressions, renderedFiles, err := lintRenderContent(filteredFiles)
+	renderContentLintExpressions, renderedFiles, err := lintRenderContent(yamlFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint render content")
 	}
@@ -148,7 +143,18 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return renderContentLintExpressions, false, nil
 	}
 
-	targetMinLintExpressions, err := lintTargetMinKotsVersions(filteredFiles)
+	// if helm charts are missing corresponding manifests or vise versa, end early there.
+	// use rendered files since the HelmChart custom resource might not have the right schema before rendering
+	// and the linter could fail to detect it.
+	helmChartsLintExpressions, err := lintHelmCharts(renderedFiles, tarGzFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint helm charts")
+	}
+	if lintExpressionsHaveErrors(helmChartsLintExpressions) {
+		return helmChartsLintExpressions, false, nil
+	}
+
+	targetMinLintExpressions, err := lintTargetMinKotsVersions(yamlFiles)
 	if err != nil {
 		log.Warn(errors.Wrap(err, "failed to lint target and min KOTS versions").Error())
 	}
@@ -157,7 +163,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return targetMinLintExpressions, false, nil
 	}
 
-	opaRenderedLintExpressions, err := lintWithOPARendered(renderedFiles, filteredFiles)
+	opaRenderedLintExpressions, err := lintWithOPARendered(renderedFiles, yamlFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA rendered")
 	}
@@ -166,7 +172,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return opaRenderedLintExpressions, false, nil
 	}
 
-	kubevalLintExpressions, err := lintWithKubeval(renderedFiles, filteredFiles)
+	kubevalLintExpressions, err := lintWithKubeval(renderedFiles, yamlFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
@@ -536,11 +542,11 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 	return lintExpressions, renderedFiles, nil
 }
 
-func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
+func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpression, error) {
 	lintExpressions := []LintExpression{}
 
 	// separate multi docs because the manifest can be a part of a multi doc yaml file
-	separatedSpecFiles, err := specFiles.separate()
+	separatedSpecFiles, err := renderedFiles.separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
@@ -548,7 +554,7 @@ func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
 	// check if all helm charts have corresponding archives
 	allKotsHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
 	for _, helmChart := range allKotsHelmCharts {
-		archiveExists, err := archiveForHelmChartExists(separatedSpecFiles, helmChart)
+		archiveExists, err := archiveForHelmChartExists(tarGzFiles, helmChart)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to check if archive for helm chart exists")
 		}
@@ -564,7 +570,7 @@ func lintHelmCharts(specFiles SpecFiles) ([]LintExpression, error) {
 	}
 
 	// check if all archives have corresponding helm chart manifests
-	for _, specFile := range separatedSpecFiles {
+	for _, specFile := range tarGzFiles {
 		if !specFile.isTarGz() {
 			continue
 		}
