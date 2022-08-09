@@ -3864,8 +3864,7 @@ spec:
 					Rule:    "nonexistent-status-informer-object",
 					Type:    "warn",
 					Path:    "test.yaml",
-					Message: "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, ignore the warning and proceed 
-					.",
+					Message: "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, this warning can be ignored.", 
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
