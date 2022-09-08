@@ -111,7 +111,7 @@ lint[output] {
   output := {
     "rule": "nonexistent-status-informer-object",
     "type": "warn",
-    "message": "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, ignore the warning and proceed safely.",
+    "message": "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, this warning can be ignored.",
     "path": file.path,
     "field": field,
     "docIndex": file.docIndex
