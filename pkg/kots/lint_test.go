@@ -7,6 +7,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var validExampleNginxDeploymentSpecFile = SpecFile{
+	Name: "deployment.yaml",
+	Path: "deployment.yaml",
+	Content: `apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: example-nginx
+labels:
+app: example
+component: nginx
+spec:
+replicas: 1
+selector:
+matchLabels:
+app: example
+component: nginx
+template:
+metadata:
+labels:
+app: example
+component: nginx
+spec:
+containers:
+- image: nginx
+	envFrom:
+	- configMapRe:
+			name: example-config
+	resources:
+		limits:
+			memory: '256Mi'
+			cpu: '500m'`,
+}
+
 func Test_lintFileHasValidYAML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -2129,6 +2162,7 @@ metadata:
 		{
 			name: "leading v is valid in target/min kots versions",
 			specFiles: SpecFiles{
+				validExampleNginxDeploymentSpecFile,
 				{
 					Name: "replicated-app.yaml",
 					Path: "replicated-app.yaml",
@@ -2141,6 +2175,8 @@ spec:
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   minKotsVersion: v1.50.0
   targetKotsVersion: v1.60.0
+  statusInformers:
+    - deployment/example-nginx
 `,
 				},
 			},
@@ -2165,6 +2201,7 @@ spec:
 		{
 			name: "target kots version must be a valid semver",
 			specFiles: SpecFiles{
+				validExampleNginxDeploymentSpecFile,
 				{
 					Name: "replicated-app.yaml",
 					Path: "replicated-app.yaml",
@@ -2176,6 +2213,8 @@ spec:
   title: App Name
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   targetKotsVersion: vv1.50.0
+  statusInformers:
+    - deployment/example-nginx	
 `,
 				},
 			},
@@ -2213,6 +2252,7 @@ spec:
 		{
 			name: "min kots version must be a valid semver",
 			specFiles: SpecFiles{
+				validExampleNginxDeploymentSpecFile,
 				{
 					Name: "replicated-app.yaml",
 					Path: "replicated-app.yaml",
@@ -2224,6 +2264,8 @@ spec:
   title: App Name
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   minKotsVersion: vv1.4s0.0
+  statusInformers:
+    - deployment/example-nginx
 `,
 				},
 			},
@@ -2808,6 +2850,7 @@ spec:
 		{
 			name: "duplicate kots kinds in release",
 			specFiles: SpecFiles{
+				validExampleNginxDeploymentSpecFile,
 				{
 					Name: "config-1.yaml",
 					Path: "config-1.yaml",
@@ -2829,6 +2872,8 @@ kind: Config
 kind: Application
 spec:
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - deployment/example-nginx
 `,
 				},
 				{
@@ -2838,6 +2883,8 @@ spec:
 kind: Application
 spec:
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
+  statusInformers:
+    - deployment/example-nginx
 `,
 				},
 				{
@@ -3526,6 +3573,53 @@ kind: Installer
 				},
 			},
 		},
+		{
+			name: "validate missing icon, status informer, config-spec, preflight-spec, troubleshoot-spec",
+			specFiles: SpecFiles{
+				{
+					Name: "kots-app.yaml",
+					Path: "kots-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app
+  spec:
+    title: App Name`,
+				},
+				{
+					Name: "app-preflight.yaml",
+					Path: "app-preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight`,
+				},
+				{
+					Name: "app-supportbundle.yaml",
+					Path: "app-supportbundle.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle`,
+				},
+				{
+					Name: "app-config.yaml",
+					Path: "app-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "application-icon",
+					Type:    "warn",
+					Message: "Missing application icon",
+					Path:    "kots-app.yaml",
+				},
+				{
+					Rule:    "application-statusInformers",
+					Type:    "warn",
+					Message: "Missing application statusInformers",
+					Path:    "kots-app.yaml",
+				},
+			},
+		},
 	}
 
 	InitOPALinting("./rego")
@@ -3864,7 +3958,7 @@ spec:
 					Rule:    "nonexistent-status-informer-object",
 					Type:    "warn",
 					Path:    "test.yaml",
-					Message: "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, this warning can be ignored.", 
+					Message: "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, this warning can be ignored.",
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{

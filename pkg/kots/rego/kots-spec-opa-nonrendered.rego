@@ -340,6 +340,21 @@ lint[output] {
   }
 }
 
+lint[output] {
+  file := files[_]
+  file.content.kind == "Application"
+  file.content.apiVersion == "kots.io/v1beta1"
+  not file.content.spec.statusInformers
+  output := {
+    "rule": "application-statusInformers",
+    "type": "warn",
+    "message": "Missing application statusInformers",
+    "path": file.path,
+    "field": "spec",
+    "docIndex": file.docIndex
+  }
+}
+
 # Check if targetKotsVersion in the Application spec is a valid semver
 lint[output] {
   file := files[_]
