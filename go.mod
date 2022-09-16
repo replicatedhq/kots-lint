@@ -7,7 +7,7 @@ require (
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/open-policy-agent/opa v0.42.2
+	github.com/open-policy-agent/opa v0.43.1
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
 	github.com/replicatedhq/kots v1.78.1-0.20220802214355-5ceb0c6d8b99
