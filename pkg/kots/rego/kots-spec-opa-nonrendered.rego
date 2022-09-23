@@ -261,6 +261,99 @@ lint[output] {
   }
 }
 
+preflight_data = output {
+  file := files[_]
+  file.content.kind == "Preflight"
+  file.content.apiVersion == "troubleshoot.replicated.com/v1beta1"
+  output := {
+    "content": file.content,
+    "path": file.path,
+    "docIndex": file.docIndex
+  }
+}
+
+preflight_data = output {
+  file := files[_]
+  file.content.kind == "Preflight"
+  file.content.apiVersion == "troubleshoot.sh/v1beta2"
+  output := {
+    "content": file.content,
+    "path": file.path,
+    "docIndex": file.docIndex
+  }
+}
+
+# Check if preflight spec has content
+lint[output] {
+  not preflight_data.content.spec
+  output := {
+    "rule": "preflight-spec",
+    "type": "warn",
+    "message": "Missing preflight spec",
+    "path": preflight_data.path,
+    "docIndex": preflight_data.docIndex
+  }
+}
+
+# Check if preflight spec has analyzers
+lint[output] {
+  preflight_data.content.spec
+  not preflight_data.content.spec.analyzers
+  output := {
+    "rule": "preflight-spec-analyzers",
+    "type": "warn",
+    "message": "Missing preflight spec analyzers",
+    "path": preflight_data.path,
+    "docIndex": preflight_data.docIndex
+  }
+}
+
+# Check if prelight analyzers contain clusterVersion
+lint[output] {
+  preflight_data.content.spec
+  analyzers := preflight_data.content.spec.analyzers
+  clusterVersionAnalyzers := [analyzers | a := analyzers[_]; a.clusterVersion]
+  not count(clusterVersionAnalyzers) > 0
+  output := {
+    "rule": "missing-preflight-cluster-version-analyzer",
+    "type": "warn",
+    "message": "Missing default preflight analyzer clusterVersion",
+    "path": preflight_data.path,
+    "docIndex": preflight_data.docIndex
+  }
+}
+
+# Check if prelight analyzers contain distribution
+lint[output] {
+  preflight_data.content.spec
+  analyzers := preflight_data.content.spec.analyzers
+  distributionAnalyzers := [analyzers | a := analyzers[_]; a.distribution]
+  not count(distributionAnalyzers) > 0
+  output := {
+    "rule": "missing-preflight-distribution-analyzer",
+    "type": "warn",
+    "message": "Missing default preflight analyzer distribution",
+    "path": preflight_data.path,
+    "docIndex": preflight_data.docIndex
+  }
+}
+
+# Check if prelight analyzers contain analyzers other than default analyzers
+lint[output] {
+  preflight_data.content.spec
+  analyzers := preflight_data.content.spec.analyzers
+  distributionAnalyzers := [analyzers | a := analyzers[_]; a.distribution]
+  clusterVersionAnalyzers := [analyzers | a := analyzers[_]; a.clusterVersion]
+  count(analyzers) == 2; count(distributionAnalyzers) == 1; count(clusterVersionAnalyzers) == 1
+  output := {
+    "rule": "default-preflight-analyzers",
+    "type": "warn",
+    "message": "preflight spec should contain at least one analyzer other than the default analyzers(clusterVersion and distribution)",
+    "path": preflight_data.path,
+    "docIndex": preflight_data.docIndex
+  }
+}
+
 # Check if Config spec exists
 config_spec_exists {
   file := files[_]

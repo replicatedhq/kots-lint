@@ -7,6 +7,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var validPreflightSpec = SpecFile{
+	Name: "app-preflight.yaml",
+	Path: "app-preflight.yaml",
+	Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+metadata:
+  name: preflight-checks
+spec: 
+  analyzers:
+  - clusterVersion:
+    outcomes:
+      - pass:
+        message: Your cluster meets the recommended and required versions of Kubernetes.
+  - distribution:
+    outcomes:
+      - pass:
+        when: "== kurl"
+        message: kURL is a supported distribution.
+`,
+}
+
 var validExampleNginxDeploymentSpecFile = SpecFile{
 	Name: "deployment.yaml",
 	Path: "deployment.yaml",
@@ -3574,7 +3595,7 @@ kind: Installer
 			},
 		},
 		{
-			name: "validate missing icon, status informer, config-spec, preflight-spec, troubleshoot-spec",
+			name: "validate missing icon, status informer, and preflight with default analyzers",
 			specFiles: SpecFiles{
 				{
 					Name: "kots-app.yaml",
@@ -3586,12 +3607,7 @@ metadata:
   spec:
     title: App Name`,
 				},
-				{
-					Name: "app-preflight.yaml",
-					Path: "app-preflight.yaml",
-					Content: `apiVersion: troubleshoot.sh/v1beta2
-kind: Preflight`,
-				},
+				validPreflightSpec,
 				{
 					Name: "app-supportbundle.yaml",
 					Path: "app-supportbundle.yaml",
@@ -3617,6 +3633,12 @@ kind: Config`,
 					Type:    "warn",
 					Message: "Missing application statusInformers",
 					Path:    "kots-app.yaml",
+				},
+				{
+					Rule:    "default-preflight-analyzers",
+					Type:    "warn",
+					Message: "preflight spec should contain at least one analyzer other than the default analyzers(clusterVersion and distribution)",
+					Path:    "app-preflight.yaml",
 				},
 			},
 		},

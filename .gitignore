@@ -9,3 +9,4 @@ test-results/
 .vscode
 junit.xml
 .idea
+.stignore

@@ -1,4 +1,4 @@
-name: id
+name: kots-lint
 command: bash
 workdir: /go/src/github.com/replicatedhq/kots-lint
 sync:
@@ -9,4 +9,3 @@ resources:
     memory: 4Gi
 forward:
   - 2354:2345
-
