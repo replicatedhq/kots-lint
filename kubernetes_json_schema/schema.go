@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -40,12 +41,18 @@ func initKubernetesJsonSchemaDir(schemaFS embed.FS) (string, error) {
 			return errors.Wrapf(err, "failed to read file %s", path)
 		}
 
-		destDir := filepath.Dir(filepath.Join(tempDir, path))
+		parts := strings.Split(path, string(os.PathSeparator))
+		if len(parts) < 2 {
+			return nil
+		}
+		destPath := filepath.Join(parts[1:]...) // trim root directory
+
+		destDir := filepath.Dir(filepath.Join(tempDir, destPath))
 		if err := os.MkdirAll(destDir, 0755); err != nil {
 			return errors.Wrapf(err, "failed to create dir %s", destDir)
 		}
 
-		if err := ioutil.WriteFile(filepath.Join(tempDir, path), data, 0755); err != nil {
+		if err := ioutil.WriteFile(filepath.Join(tempDir, destPath), data, 0755); err != nil {
 			return errors.Wrap(err, "failed to write file")
 		}
 
@@ -55,7 +62,7 @@ func initKubernetesJsonSchemaDir(schemaFS embed.FS) (string, error) {
 		return "", errors.Wrap(err, "failed to walk kubernetes json schema dir")
 	}
 
-	KubernetesJsonSchemaDir = filepath.Join(tempDir, "schema")
+	KubernetesJsonSchemaDir = tempDir
 
 	return tempDir, nil
 }
