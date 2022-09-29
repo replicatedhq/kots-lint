@@ -15,6 +15,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
+	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	kotsscheme "github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
@@ -287,7 +288,7 @@ func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([
 // renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
 // originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
 func lintWithKubeval(renderedFiles SpecFiles, originalFiles SpecFiles) ([]LintExpression, error) {
-	return lintWithKubevalSchema(renderedFiles, originalFiles, "file://kubernetes-json-schema")
+	return lintWithKubevalSchema(renderedFiles, originalFiles, fmt.Sprintf("file://%s", kjs.KubernetesJsonSchemaDir))
 }
 
 // renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)

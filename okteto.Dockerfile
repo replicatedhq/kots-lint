@@ -7,7 +7,6 @@ WORKDIR $PROJECT_PATH
 
 COPY . .
 ADD ./pkg/kots/rego /rego
-ADD ./kubernetes-json-schema /kubernetes-json-schema
 
 RUN --mount=target=/root/.cache,type=cache make build
 

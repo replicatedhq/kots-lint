@@ -1334,7 +1334,7 @@ spec:
 			renderedFiles, err := separatedSpecFiles.render()
 			require.NoError(t, err)
 
-			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, "file://../../kubernetes-json-schema")
+			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, "file://../../kubernetes_json_schema/schema")
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})

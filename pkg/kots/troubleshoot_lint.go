@@ -2,11 +2,13 @@ package kots
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 
 	"github.com/instrumenta/kubeval/kubeval"
 	"github.com/pkg/errors"
+	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	goyaml "gopkg.in/yaml.v2"
 )
@@ -31,7 +33,7 @@ func TroubleshootLintSpec(spec string) ([]LintExpression, error) {
 }
 
 func lintSpecWithKubeval(spec string) ([]LintExpression, error) {
-	return lintSpecWithKubevalSchema(spec, "file://kubernetes-json-schema")
+	return lintSpecWithKubevalSchema(spec, fmt.Sprintf("file://%s", kjs.KubernetesJsonSchemaDir))
 }
 
 func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpression, error) {
