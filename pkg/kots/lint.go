@@ -3,9 +3,9 @@ package kots
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -60,21 +60,24 @@ type LintExpressionItemLinePosition struct {
 	Line int `json:"line"`
 }
 
-// a prepared rego query for linting NON-rendered files
-var nonRenderedRegoQuery *rego.PreparedEvalQuery
+var (
+	//go:embed rego/kots-spec-opa-nonrendered.rego
+	nonRenderedRegoContent string
 
-// a prepared rego query for linting RENDERED files
-var renderedRegoQuery *rego.PreparedEvalQuery
+	//go:embed rego/kots-spec-opa-rendered.rego
+	renderedRegoContent string
 
-func InitOPALinting(regoPath string) error {
+	// a prepared rego query for linting NON-rendered files
+	nonRenderedRegoQuery *rego.PreparedEvalQuery
+
+	// a prepared rego query for linting RENDERED files
+	renderedRegoQuery *rego.PreparedEvalQuery
+)
+
+func InitOPALinting() error {
 	ctx := context.Background()
 
 	// prepare rego query for linting non-rendered files
-	nonRenderedRegoContent, err := ioutil.ReadFile(fmt.Sprintf("%s/kots-spec-opa-nonrendered.rego", regoPath))
-	if err != nil {
-		return errors.Wrap(err, "failed to read non-rendered rego file")
-	}
-
 	nonRenderedQuery, err := rego.New(
 		rego.Query("data.kots.spec.nonrendered.lint"),
 		rego.Module("kots-spec-opa-nonrendered.rego", string(nonRenderedRegoContent)),
@@ -87,11 +90,6 @@ func InitOPALinting(regoPath string) error {
 	nonRenderedRegoQuery = &nonRenderedQuery
 
 	// prepare rego query for linting rendered files
-	renderedRegoContent, err := ioutil.ReadFile(fmt.Sprintf("%s/kots-spec-opa-rendered.rego", regoPath))
-	if err != nil {
-		return errors.Wrap(err, "failed to read rendered rego file")
-	}
-
 	renderedQuery, err := rego.New(
 		rego.Query("data.kots.spec.rendered.lint"),
 		rego.Module("kots-spec-opa-rendered.rego", string(renderedRegoContent)),

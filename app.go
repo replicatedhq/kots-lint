@@ -23,7 +23,7 @@ func main() {
 	}
 	defer os.RemoveAll(schemaDir)
 
-	if err := kots.InitOPALinting("/rego"); err != nil {
+	if err := kots.InitOPALinting(); err != nil {
 		log.Errorf("failed to init opa linting: %v", err)
 		os.Exit(1)
 	}

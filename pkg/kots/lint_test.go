@@ -3528,7 +3528,7 @@ kind: Installer
 		},
 	}
 
-	InitOPALinting("./rego")
+	InitOPALinting()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -3988,7 +3988,7 @@ spec:
 		},
 	}
 
-	InitOPALinting("./rego")
+	InitOPALinting()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

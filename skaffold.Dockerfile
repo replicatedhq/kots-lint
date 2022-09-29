@@ -10,7 +10,6 @@ FROM debian:buster-slim
 
 ENV DEBUG_MODE on
 
-ADD ./pkg/kots/rego /rego
 COPY --from=builder /go/src/github.com/replicatedhq/kots-lint/bin /app
 
 EXPOSE 8082
