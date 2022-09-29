@@ -1367,7 +1367,7 @@ spec:
 			renderedFiles, err := separatedSpecFiles.render()
 			require.NoError(t, err)
 
-			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, "file://../../kubernetes-json-schema")
+			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, "file://../../kubernetes_json_schema/schema")
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
@@ -3622,7 +3622,7 @@ kind: Config`,
 		},
 	}
 
-	InitOPALinting("./rego")
+	InitOPALinting()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -4082,7 +4082,7 @@ spec:
 		},
 	}
 
-	InitOPALinting("./rego")
+	InitOPALinting()
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

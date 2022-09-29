@@ -2,12 +2,15 @@ package kots
 
 import (
 	"context"
-	"io/ioutil"
+	_ "embed"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
 )
+
+//go:embed rego/enterprise-opa-prepend.rego
+var enterpriseRegoPrepend string
 
 type EnterprisePolicy struct {
 	Name   string `json:"name"`
@@ -63,17 +66,11 @@ func EnterpriseLintSpecFiles(specFiles SpecFiles, policies []EnterprisePolicy) (
 }
 
 func lintWithOPAPolicy(specFiles SpecFiles, policy string) ([]LintExpression, error) {
-	b, err := ioutil.ReadFile("/rego/enterprise-opa-prepend.rego")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read rego file")
-	}
-	regoPrepend := string(b)
-
 	ctx := context.Background()
 
 	query, err := rego.New(
 		rego.Query("data.kots.enterprise.lint"),
-		rego.Module("enterprise-lint.rego", regoPrepend+"\n\n"+policy),
+		rego.Module("enterprise-lint.rego", enterpriseRegoPrepend+"\n\n"+policy),
 	).PrepareForEval(ctx)
 
 	if err != nil {
