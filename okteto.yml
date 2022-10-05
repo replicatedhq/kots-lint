@@ -1,4 +1,4 @@
-name: id
+name: kots-lint
 command: bash
 workdir: /go/src/github.com/replicatedhq/kots-lint
 sync:
