@@ -3,14 +3,15 @@ module github.com/replicatedhq/kots-lint
 go 1.16
 
 require (
-	github.com/gin-gonic/gin v1.7.1
+	github.com/gin-gonic/gin v1.7.7
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/open-policy-agent/opa v0.42.2
+	github.com/open-policy-agent/opa v0.45.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
 	github.com/replicatedhq/kots v1.78.1-0.20220802214355-5ceb0c6d8b99
+	github.com/replicatedhq/kurlkinds v1.0.4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
