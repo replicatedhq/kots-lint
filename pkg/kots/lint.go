@@ -19,6 +19,7 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	kotsscheme "github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
+	"github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	goyaml "gopkg.in/yaml.v2"
@@ -28,8 +29,10 @@ import (
 
 var kotsVersions map[string]bool
 var rwMutex sync.RWMutex
+var kurlLinter *lint.Linter
 
 func init() {
+	kurlLinter = lint.New()
 	kotsscheme.AddToScheme(scheme.Scheme)
 	kotsVersions = make(map[string]bool)
 }
@@ -176,12 +179,18 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
 
+	installerLintExpressions, err := lintKurlInstaller(kurlLinter, yamlFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint kurl installer")
+	}
+
 	allLintExpressions := []LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaRenderedLintExpressions...)
 	allLintExpressions = append(allLintExpressions, renderContentLintExpressions...)
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
+	allLintExpressions = append(allLintExpressions, installerLintExpressions...)
 
 	return allLintExpressions, true, nil
 }
@@ -462,6 +471,41 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 	}
 
 	return lintExpressions, nil
+}
+
+// lintKurlInstaller searches installer yamls for errors or misconfigurations.
+func lintKurlInstaller(linter *lint.Linter, specFiles SpecFiles) ([]LintExpression, error) {
+	separated, err := specFiles.separate()
+	if err != nil {
+		return nil, errors.Wrap(err, "error separating spec files")
+	}
+
+	var expressions []LintExpression
+	for _, file := range separated {
+		if !file.isYAML() {
+			continue
+		}
+
+		output, err := linter.ValidateMarshaledYAML(context.Background(), file.Content)
+		if err != nil {
+			if err != lint.ErrNotInstaller {
+				return nil, errors.Wrap(err, "unable to lint installer")
+			}
+			continue
+		}
+
+		for _, out := range output {
+			expressions = append(
+				expressions, LintExpression{
+					Rule:    out.Type,
+					Type:    "error",
+					Path:    file.Path,
+					Message: out.Message,
+				},
+			)
+		}
+	}
+	return expressions, nil
 }
 
 func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error) {
