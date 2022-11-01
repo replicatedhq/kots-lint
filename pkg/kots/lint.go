@@ -19,7 +19,7 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	kotsscheme "github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
-	"github.com/replicatedhq/kurlkinds/pkg/lint"
+	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	goyaml "gopkg.in/yaml.v2"
@@ -29,10 +29,10 @@ import (
 
 var kotsVersions map[string]bool
 var rwMutex sync.RWMutex
-var kurlLinter *lint.Linter
+var kurlLinter *kurllint.Linter
 
 func init() {
-	kurlLinter = lint.New()
+	kurlLinter = kurllint.New()
 	kotsscheme.AddToScheme(scheme.Scheme)
 	kotsVersions = make(map[string]bool)
 }
@@ -474,7 +474,7 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 }
 
 // lintKurlInstaller searches installer yamls for errors or misconfigurations.
-func lintKurlInstaller(linter *lint.Linter, specFiles SpecFiles) ([]LintExpression, error) {
+func lintKurlInstaller(linter *kurllint.Linter, specFiles SpecFiles) ([]LintExpression, error) {
 	separated, err := specFiles.separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "error separating spec files")
@@ -488,7 +488,7 @@ func lintKurlInstaller(linter *lint.Linter, specFiles SpecFiles) ([]LintExpressi
 
 		output, err := linter.ValidateMarshaledYAML(context.Background(), file.Content)
 		if err != nil {
-			if err != lint.ErrNotInstaller {
+			if err != kurllint.ErrNotInstaller {
 				return nil, errors.Wrap(err, "unable to lint installer")
 			}
 			continue
@@ -497,7 +497,7 @@ func lintKurlInstaller(linter *lint.Linter, specFiles SpecFiles) ([]LintExpressi
 		for _, out := range output {
 			expressions = append(
 				expressions, LintExpression{
-					Rule:    out.Type,
+					Rule:    fmt.Sprintf("kubernetes-installer-%s", out.Type),
 					Type:    "error",
 					Path:    file.Path,
 					Message: out.Message,

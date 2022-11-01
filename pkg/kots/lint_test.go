@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/replicatedhq/kurlkinds/pkg/lint"
+	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -4215,7 +4215,7 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "misconfiguration",
+					Rule:    "kubernetes-installer-misconfiguration",
 					Type:    "error",
 					Path:    "installer.yaml",
 					Message: "No container runtime (Docker or Containerd) selected",
@@ -4251,13 +4251,13 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "misconfiguration",
+					Rule:    "kubernetes-installer-misconfiguration",
 					Type:    "error",
 					Path:    "installer.yaml",
 					Message: "No container runtime (Docker or Containerd) selected",
 				},
 				{
-					Rule:    "misconfiguration",
+					Rule:    "kubernetes-installer-misconfiguration",
 					Type:    "error",
 					Path:    "installer.yaml",
 					Message: "No CNI plugin (Flannel, Weave or Antrea) selected",
@@ -4298,13 +4298,13 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "misconfiguration",
+					Rule:    "kubernetes-installer-misconfiguration",
 					Type:    "error",
 					Path:    "installer.yaml",
 					Message: "No container runtime (Docker or Containerd) selected",
 				},
 				{
-					Rule:    "unknown-addon",
+					Rule:    "kubernetes-installer-unknown-addon",
 					Type:    "error",
 					Path:    "installer-2.yaml",
 					Message: "Unknown containerd add-on version 8.8.8",
@@ -4349,7 +4349,7 @@ spec:
 	if err != nil {
 		t.Fatalf("unable to parse test url: %s", err)
 	}
-	linter := lint.New(lint.WithAPIBaseURL(u))
+	linter := kurllint.New(kurllint.WithAPIBaseURL(u))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
