@@ -16,7 +16,7 @@ require (
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	go.undefinedlabs.com/scopeagent v0.1.15
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.9.0
+	helm.sh/helm/v3 v3.9.4
 	k8s.io/client-go v1.5.2
 )
 
