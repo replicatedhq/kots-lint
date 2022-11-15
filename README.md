@@ -40,3 +40,20 @@ Tests can be run manually with
 ```shell
 $ make test
 ```
+
+## Updating specs
+
+Generated specs can be copied from the source project directly.
+File names should match, but since projects will change independently, care should be taken when copying.
+
+### Troubleshoot
+
+```
+cp <troubleshoot root>/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/v1.23.6-standalone-strict/
+```
+
+### KOTS
+
+```
+cp <kots root>/kotskinds/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/v1.23.6-standalone-strict/
+```
