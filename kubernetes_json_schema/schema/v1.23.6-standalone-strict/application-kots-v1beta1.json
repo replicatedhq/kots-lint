@@ -127,7 +127,13 @@
         "proxyPublicImages": {
           "type": "boolean"
         },
+        "proxyRegistryDomain": {
+          "type": "string"
+        },
         "releaseNotes": {
+          "type": "string"
+        },
+        "replicatedRegistryDomain": {
           "type": "string"
         },
         "requireMinimalRBACPrivileges": {
