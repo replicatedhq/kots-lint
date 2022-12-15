@@ -9,14 +9,14 @@ require (
 	github.com/open-policy-agent/opa v0.45.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
-	github.com/replicatedhq/kots v1.91.0
+	github.com/replicatedhq/kots v1.91.4-0.20221215205821-88deb4644096
 	github.com/replicatedhq/kurlkinds v1.0.4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	go.undefinedlabs.com/scopeagent v0.1.15
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.9.0
+	helm.sh/helm/v3 v3.9.4
 	k8s.io/client-go v1.5.2
 )
 
@@ -46,7 +46,7 @@ require (
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.12.0 // indirect
-	github.com/containers/image/v5 v5.23.0 // indirect
+	github.com/containers/image/v5 v5.23.1 // indirect
 	github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a // indirect
 	github.com/containers/ocicrypt v1.1.5 // indirect
 	github.com/containers/storage v1.43.0 // indirect

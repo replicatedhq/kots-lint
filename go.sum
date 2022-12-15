@@ -393,8 +393,8 @@ github.com/containernetworking/cni v0.8.1/go.mod h1:LGwApLUm2FpoOfxTDEeq8T9ipbpZ
 github.com/containernetworking/plugins v0.8.6/go.mod h1:qnw5mN19D8fIwkqW7oHHYDHVlzhJpcY6TQxn/fUyDDM=
 github.com/containernetworking/plugins v0.9.1/go.mod h1:xP/idU2ldlzN6m4p5LmGiwRDjeJr6FLK6vuiUwoH7P8=
 github.com/containers/image/v5 v5.10.4/go.mod h1:SgIbWEedCNBbn2FI5cH0/jed1Ecy2s8XK5zTxvJTzII=
-github.com/containers/image/v5 v5.23.0 h1:Uv/n8zsHVUBBJK2rfBUHbN4CutHHmsQeyi4f80lAOf8=
-github.com/containers/image/v5 v5.23.0/go.mod h1:EXFFGEsL99S6aqLqK2mQJ3yrNh6Q05UCHt4mhF9JNoM=
+github.com/containers/image/v5 v5.23.1 h1:dUK9p5xfd38iTQXJEgMsUGqIHXbkDugrleZtd3zB+Wg=
+github.com/containers/image/v5 v5.23.1/go.mod h1:EXFFGEsL99S6aqLqK2mQJ3yrNh6Q05UCHt4mhF9JNoM=
 github.com/containers/libtrust v0.0.0-20190913040956-14b96171aa3b/go.mod h1:9rfv8iPl1ZP7aqh9YA68wnZv2NUDbXdcdPHVz0pFbPY=
 github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a h1:spAGlqziZjCJL25C6F1zsQY05tfCKE9F5YwtEWWe6hU=
 github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a/go.mod h1:9rfv8iPl1ZP7aqh9YA68wnZv2NUDbXdcdPHVz0pFbPY=
@@ -1346,8 +1346,8 @@ github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0/go.mod h1:bCqn
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
 github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41 h1:Wk4CD6DHALjqTR5HCYoitRcAobCAz1CdjcMDlJAdJBs=
 github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41/go.mod h1:ae2LAb6COZAKb9oI4bgh52xrq17Ql4lqXfPXHZpGwPQ=
-github.com/replicatedhq/kots v1.91.0 h1:V9f11ghS23mDWe3LjihJxg+BGABFGsdNYjYlJrLPBRU=
-github.com/replicatedhq/kots v1.91.0/go.mod h1:uCwxS2QeDVfEOu+iY9LVjqT+oP9+6urcgJPpo/KBFns=
+github.com/replicatedhq/kots v1.91.4-0.20221215205821-88deb4644096 h1:2tk8YTPAHfTgzmCNtoRGsQz/gAb0fITv+kHsG81OtLo=
+github.com/replicatedhq/kots v1.91.4-0.20221215205821-88deb4644096/go.mod h1:AC23m088mhhby9CGaCrSKk/7n4s11oNx6vCM4+u7eq8=
 github.com/replicatedhq/kurl v0.0.0-20210414162418-8d6211901244 h1:aSORttMXeqRXgRnIS7kpRfR32c3MBkJGkZ6KoqWimhc=
 github.com/replicatedhq/kurl v0.0.0-20210414162418-8d6211901244/go.mod h1:SoROyLOtkt95R1COPVzdCi5FZbMmATPHohQQzW9V9ds=
 github.com/replicatedhq/kurlkinds v1.0.4 h1:WZ3/XkfUiVAAwPChSu3RtSAwuyM1uCRbtAo18k7IMNI=
@@ -2440,8 +2440,8 @@ gotest.tools/gotestsum v0.3.5/go.mod h1:Mnf3e5FUzXbkCfynWBGOwLssY7gTQgCHObK9tMpA
 gotest.tools/v3 v3.0.2/go.mod h1:3SzNCllyD9/Y+b5r9JIKQ474KzkZyqLqEfYqMsX94Bk=
 gotest.tools/v3 v3.0.3/go.mod h1:Z7Lb0S5l+klDB31fvDQX8ss/FlKDxtlFlw3Oa8Ymbl8=
 grpc.go4.org v0.0.0-20170609214715-11d0a25b4919/go.mod h1:77eQGdRu53HpSqPFJFmuJdjuHRquDANNeA4x7B8WQ9o=
-helm.sh/helm/v3 v3.9.0 h1:qDSWViuF6SzZX5s5AB/NVRGWmdao7T5j4S4ebIkMGag=
-helm.sh/helm/v3 v3.9.0/go.mod h1:fzZfyslcPAWwSdkXrXlpKexFeE2Dei8N27FFQWt+PN0=
+helm.sh/helm/v3 v3.9.4 h1:TCI1QhJUeLVOdccfdw+vnSEO3Td6gNqibptB04QtExY=
+helm.sh/helm/v3 v3.9.4/go.mod h1:3eaWAIqzvlRSD06gR9MMwmp2KBKwlu9av1/1BZpjeWY=
 honnef.co/go/tools v0.0.0-20180728063816-88497007e858/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 honnef.co/go/tools v0.0.0-20190106161140-3f1c8253044a/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
