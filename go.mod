@@ -9,7 +9,7 @@ require (
 	github.com/open-policy-agent/opa v0.45.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
-	github.com/replicatedhq/kots v1.91.4-0.20221215205821-88deb4644096
+	github.com/replicatedhq/kots v1.92.1-0.20221216233235-f9c290815012
 	github.com/replicatedhq/kurlkinds v1.0.4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
