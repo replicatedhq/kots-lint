@@ -96,6 +96,10 @@ informer_object_exists(informer) {
   informer == ""
 }
 lint[output] {
+  rule_name := "nonexistent-status-informer-object"
+  rule_config := lint_rule_config(rule_name, "warn")
+  not rule_config.off
+
   file := files[_]
   file.content.apiVersion == "kots.io/v1beta1"
   file.content.kind == "Application"
@@ -109,11 +113,42 @@ lint[output] {
 
   field := sprintf("spec.statusInformers.%d", [i])
   output := {
-    "rule": "nonexistent-status-informer-object",
-    "type": "warn",
+    "rule": rule_name,
+    "type": rule_config.level,
     "message": "Status informer points to a nonexistent kubernetes object. If this is a Helm resource, this warning can be ignored.",
     "path": file.path,
     "field": field,
     "docIndex": file.docIndex
   }
 }
+
+# Check if LintConfig spec exists
+lintconfig_spec_exists {
+  file := files[_]
+  file.content.kind == "LintConfig"
+  file.content.apiVersion == "kots.io/v1beta1"
+}
+
+# Check if linting rule is ignored
+lint_rule_config(lint_rule_name, default_level) = lint_rule_config {
+  lintconfig_spec_exists
+  lintconfig := files[_].content.spec
+  lint_rule = lintconfig.rules[_]
+  lint_rule.name == lint_rule_name
+  rule_level := validate_lint_rule_level(default_level, lint_rule.level)
+  lint_rule_config := {
+    "off": lint_rule.level == "off",
+    "level": rule_level
+  }
+} else = {
+  "off": false,
+  "level": default_level
+}
+
+# Validate linting rule level, use default if not valid
+validate_lint_rule_level(default_level, input_level) = default_level {
+  input_level != "error"
+  input_level != "warn"
+  input_level != "info"
+  input_level != "off"
+} else = input_level
