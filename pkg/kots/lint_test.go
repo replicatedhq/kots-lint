@@ -4085,6 +4085,35 @@ spec:
 				},
 			},
 		},
+		{
+			name: "ignore nonexistent-status-informer-object rule",
+			specFiles: SpecFiles{
+				{
+					Name: "app.yaml",
+					Path: "app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: app-slug
+spec:
+  statusInformers:
+    - service/example-nginx`,
+				},
+				{
+					Name: "lint-config.yaml",
+					Path: "lint-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: LintConfig
+metadata:
+  name: lint-config
+spec:
+  rules:
+    - name: nonexistent-status-informer-object
+      level: "off"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
 	}
 
 	InitOPALinting()
