@@ -60,8 +60,8 @@ jobs:
       - uses: docker/build-push-action@v1
         with:
           repository: replicated/kots-lint
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
           tag_with_ref: true
 
   flyio:
