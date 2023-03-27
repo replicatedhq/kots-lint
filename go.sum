@@ -1435,8 +1435,8 @@ github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1y
 github.com/onsi/gomega v1.10.2/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1ybHNo=
 github.com/onsi/gomega v1.10.3/go.mod h1:V9xEwhxec5O8UDM77eCW8vLymOMltsqPVYWrpDsH8xc=
 github.com/onsi/gomega v1.27.4 h1:Z2AnStgsdSayCMDiCU42qIz+HLqEPcgiOCXjAU/w+8E=
-github.com/open-policy-agent/opa v0.50.1 h1:ZQOqmzTUjcdX7Bu6gnmWZ6ghFTAQI0rI1fR7AqaOW70=
-github.com/open-policy-agent/opa v0.50.1/go.mod h1:9jKfDk0L5b9rnhH4M0nq10cGHbYOxqygxzTT3dsvhec=
+github.com/open-policy-agent/opa v0.50.2 h1:iD2kKLFkflgSCTMtrC/3jLmOQ7IWyDXMg6+VQA0tSC0=
+github.com/open-policy-agent/opa v0.50.2/go.mod h1:9jKfDk0L5b9rnhH4M0nq10cGHbYOxqygxzTT3dsvhec=
 github.com/opencontainers/go-digest v0.0.0-20180430190053-c9281466c8b2/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
 github.com/opencontainers/go-digest v1.0.0-rc1/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
 github.com/opencontainers/go-digest v1.0.0-rc1.0.20180430190053-c9281466c8b2/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
@@ -1576,8 +1576,8 @@ github.com/replicatedhq/kots v1.92.1-0.20221216233235-f9c290815012 h1:G37etDTJhr
 github.com/replicatedhq/kots v1.92.1-0.20221216233235-f9c290815012/go.mod h1:AC23m088mhhby9CGaCrSKk/7n4s11oNx6vCM4+u7eq8=
 github.com/replicatedhq/kurl v0.0.0-20210414162418-8d6211901244 h1:aSORttMXeqRXgRnIS7kpRfR32c3MBkJGkZ6KoqWimhc=
 github.com/replicatedhq/kurl v0.0.0-20210414162418-8d6211901244/go.mod h1:SoROyLOtkt95R1COPVzdCi5FZbMmATPHohQQzW9V9ds=
-github.com/replicatedhq/kurlkinds v1.2.1 h1:BeYVx8tIWYKMF3cTjE5gnFDNK92V07EEq0Klw6tr/0Y=
-github.com/replicatedhq/kurlkinds v1.2.1/go.mod h1:CAdL6+7Oep3g4gWfAKuZw78EApnHOccCr8/qIvLXtug=
+github.com/replicatedhq/kurlkinds v1.3.0 h1:kVdWMJOAB3LMIcMt0TxQWN7fm/ck1ZzqoA/MCwJ9tCo=
+github.com/replicatedhq/kurlkinds v1.3.0/go.mod h1:9Pw0nQLzOoGbjj6Q9FnmSgY128btPjFlP5VOm5YsjUQ=
 github.com/replicatedhq/termui/v3 v3.1.1-0.20200811145416-f40076d26851/go.mod h1:JDxG6+uubnk9/BZ2yUsyAJJwlptjrnmB2MPF5d2Xe/8=
 github.com/replicatedhq/troubleshoot v0.10.18/go.mod h1:8oFRnMJlFjzJ490eq72iLEN7DGJjkgLx22Z1vX6WwU0=
 github.com/replicatedhq/troubleshoot v0.59.0 h1:PCTU6m36bvNovQZO+CcPdQPtvAa2c7rwUL6zuIxRK64=
