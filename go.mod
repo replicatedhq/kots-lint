@@ -6,11 +6,11 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/instrumenta/kubeval v0.0.0-20190918223246-8d013ec9fc56
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/open-policy-agent/opa v0.50.2
+	github.com/open-policy-agent/opa v0.51.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
 	github.com/replicatedhq/kots v1.92.1-0.20221216233235-f9c290815012
-	github.com/replicatedhq/kurlkinds v1.3.0
+	github.com/replicatedhq/kurlkinds v1.3.3
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
@@ -70,7 +70,7 @@ require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
@@ -179,7 +179,7 @@ require (
 	github.com/sigstore/sigstore v1.5.1 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/cobra v1.6.1 // indirect
+	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.15.0 // indirect
@@ -220,19 +220,19 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/term v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/term v0.7.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.107.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
-	google.golang.org/grpc v1.53.0 // indirect
+	google.golang.org/grpc v1.54.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -252,7 +252,7 @@ require (
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
 	periph.io/x/host/v3 v3.8.0 // indirect
 	sigs.k8s.io/application v0.8.3 // indirect
-	sigs.k8s.io/controller-runtime v0.14.5 // indirect
+	sigs.k8s.io/controller-runtime v0.14.6 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
