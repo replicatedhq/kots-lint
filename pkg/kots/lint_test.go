@@ -12,39 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var validExampleNginxDeploymentSpecFile = SpecFile{
-	Name: "deployment.yaml",
-	Path: "deployment.yaml",
-	Content: `apiVersion: apps/v1
-kind: Deployment
-metadata:
-name: example-nginx
-labels:
-app: example
-component: nginx
-spec:
-replicas: 1
-selector:
-matchLabels:
-app: example
-component: nginx
-template:
-metadata:
-labels:
-app: example
-component: nginx
-spec:
-containers:
-- image: nginx
-	envFrom:
-	- configMapRe:
-			name: example-config
-	resources:
-		limits:
-			memory: '256Mi'
-			cpu: '500m'`,
-}
-
 func Test_lintFileHasValidYAML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -3622,6 +3589,44 @@ kind: Config`,
 					Type:    "warn",
 					Message: "Missing application statusInformers",
 					Path:    "kots-app.yaml",
+				},
+			},
+		}, {
+			name: "invalid regex pattern",
+			specFiles: SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				{
+					Name: "app-config.yaml",
+					Path: "app-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+spec:
+  groups:
+    - name: test
+      title: Test
+      items:
+      - name: test
+        title: Test
+        type: text
+        validation:
+          regex:
+            pattern: abc[`},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-option-invalid-regex-validator",
+					Type:    "error",
+					Path:    "app-config.yaml",
+					Message: "Config option regex validator pattern \"abc[\" is invalid",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 13,
+							},
+						},
+					},
 				},
 			},
 		},
