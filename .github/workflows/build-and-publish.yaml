@@ -12,7 +12,8 @@ jobs:
   build-kots-lint:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-go@v2.1.3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: '^1.19.3'
 
@@ -22,9 +23,9 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
         shell: bash
 
-      - uses: actions/checkout@v2
-
       - run: make test build
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   goreleaser:
     runs-on: ubuntu-latest
@@ -32,19 +33,19 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Unshallow
         run: git fetch --prune --unshallow
 
-      - uses: actions/setup-go@v2.1.3
+      - uses: actions/setup-go@v4
         with:
           go-version: '^1.19.3'
 
       - run: sudo apt-get -qq -y install
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v1
+        uses: goreleaser/goreleaser-action@v4
         with:
           version: "v0.166.1"
           args: release --rm-dist --config deploy/.goreleaser.yaml
@@ -56,20 +57,23 @@ jobs:
     needs: build-kots-lint
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v2
-      - uses: docker/build-push-action@v1
+      - uses: actions/checkout@v3
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/login-action@v2
         with:
-          repository: replicated/kots-lint
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          tag_with_ref: true
+      - uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: replicated/kots-lint:${{ github.ref_name }}
 
   flyio:
     runs-on: ubuntu-latest
     needs: build-kots-lint
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions@1.1
         with:
           args: deploy --app kots-lint --config ./fly.toml --image-label ${GITHUB_REF:10}
@@ -81,7 +85,7 @@ jobs:
     needs: flyio
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions@1.1
         with:
           args: deploy --config ./dd-fly.toml --app dd-agent -e DD_API_KEY=${{ secrets.DD_API_KEY }} -e DD_SITE="datadoghq.com" -e  DD_APM_NON_LOCAL_TRAFFIC=true
