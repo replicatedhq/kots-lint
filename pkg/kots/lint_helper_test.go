@@ -65,4 +65,22 @@ kind: Config`,
 				memory: '256Mi'
 				cpu: '500m'`,
 	}
+
+	validRegexdConfigSpec = SpecFile{
+		Name: "app-config.yaml",
+		Path: "app-config.yaml",
+		Content: `apiVersion: kots.io/v1beta1
+kind: Config
+spec:
+  groups:
+  - name: test
+  title: Test
+  items:
+  - name: test
+    title: Test
+    type: text
+    validation:
+      regex:
+        pattern: .*`,
+	}
 )

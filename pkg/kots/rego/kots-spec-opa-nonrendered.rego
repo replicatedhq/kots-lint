@@ -1107,6 +1107,26 @@ lint[output] {
   }
 }
 
+# Check if type is one of [text|textarea|password|file] when validation is present
+lint[output] {
+  rule_name := "config-option-regex-validator-invalid-type"
+  rule_config := lint_rule_config(rule_name, "error")
+  not rule_config.off
+  config_option := config_options[_]
+  item := config_option.item
+  item.validation.regex.pattern
+  not re_match("text|textarea|password|file", item.type)
+  field := concat(".", [config_option.field, "type",])
+  output := {
+    "rule": rule_name,
+    "type": rule_config.level,
+    "message": "Config option type should be one of [text|textarea|password|file] with regex validator",
+    "path": config_file_path,
+    "field": field,
+    "docIndex": config_data.docIndex
+  }
+}
+
 # Check if LintConfig spec exists
 lintconfig_spec_exists {
   file := files[_]

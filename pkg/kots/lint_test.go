@@ -3592,7 +3592,7 @@ kind: Config`,
 				},
 			},
 		}, {
-			name: "invalid regex pattern",
+			name: "config-option-invalid-regex-validator",
 			specFiles: SpecFiles{
 				validKotsAppSpec,
 				validPreflightSpec,
@@ -3629,6 +3629,53 @@ spec:
 					},
 				},
 			},
+		}, {
+			name: "config-option-regex-validator-invalid-type",
+			specFiles: SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				{
+					Name: "app-config.yaml",
+					Path: "app-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+spec:
+  groups:
+    - name: test
+      title: Test
+      items:
+      - name: test
+        title: Test
+        type: bool
+        validation:
+          regex:
+            pattern: .*`},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-option-regex-validator-invalid-type",
+					Type:    "error",
+					Path:    "app-config.yaml",
+					Message: "Config option type should be one of [text|textarea|password|file] with regex validator",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		}, {
+			name: "valid regex pattern",
+			specFiles: SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validRegexdConfigSpec,
+			},
+			expect: []LintExpression{},
 		},
 	}
 
