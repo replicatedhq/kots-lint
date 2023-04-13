@@ -3673,7 +3673,7 @@ spec:
 				validKotsAppSpec,
 				validPreflightSpec,
 				validSupportBundleSpec,
-				validRegexdConfigSpec,
+				validRegexValidationConfigSpec,
 			},
 			expect: []LintExpression{},
 		},
