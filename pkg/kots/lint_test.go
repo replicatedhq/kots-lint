@@ -12,39 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var validExampleNginxDeploymentSpecFile = SpecFile{
-	Name: "deployment.yaml",
-	Path: "deployment.yaml",
-	Content: `apiVersion: apps/v1
-kind: Deployment
-metadata:
-name: example-nginx
-labels:
-app: example
-component: nginx
-spec:
-replicas: 1
-selector:
-matchLabels:
-app: example
-component: nginx
-template:
-metadata:
-labels:
-app: example
-component: nginx
-spec:
-containers:
-- image: nginx
-	envFrom:
-	- configMapRe:
-			name: example-config
-	resources:
-		limits:
-			memory: '256Mi'
-			cpu: '500m'`,
-}
-
 func Test_lintFileHasValidYAML(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -3624,6 +3591,91 @@ kind: Config`,
 					Path:    "kots-app.yaml",
 				},
 			},
+		}, {
+			name: "config-option-invalid-regex-validator",
+			specFiles: SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				{
+					Name: "app-config.yaml",
+					Path: "app-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+spec:
+  groups:
+    - name: test
+      title: Test
+      items:
+      - name: test
+        title: Test
+        type: text
+        validation:
+          regex:
+            pattern: abc[`},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-option-invalid-regex-validator",
+					Type:    "error",
+					Path:    "app-config.yaml",
+					Message: "Config option regex validator pattern \"abc[\" is invalid",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 13,
+							},
+						},
+					},
+				},
+			},
+		}, {
+			name: "config-option-regex-validator-invalid-type",
+			specFiles: SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				{
+					Name: "app-config.yaml",
+					Path: "app-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+spec:
+  groups:
+    - name: test
+      title: Test
+      items:
+      - name: test
+        title: Test
+        type: bool
+        validation:
+          regex:
+            pattern: .*`},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "config-option-regex-validator-invalid-type",
+					Type:    "error",
+					Path:    "app-config.yaml",
+					Message: "Config option type should be one of [text|textarea|password|file] with regex validator",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		}, {
+			name: "valid regex pattern",
+			specFiles: SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+			},
+			expect: []LintExpression{},
 		},
 	}
 

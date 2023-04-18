@@ -4,14 +4,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/replicatedhq/kots-lint/pkg/util"
-	goyaml "gopkg.in/yaml.v2"
-
 	"github.com/pkg/errors"
+	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
 	"github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
 	kotsconfig "github.com/replicatedhq/kots/pkg/config"
+	registrytypes "github.com/replicatedhq/kots/pkg/registry/types"
 	"github.com/replicatedhq/kots/pkg/template"
+	goyaml "gopkg.in/yaml.v2"
 )
 
 type RenderTemplateError struct {
@@ -129,7 +129,7 @@ func (f SpecFile) shouldBeRendered() (bool, error) {
 }
 
 func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
-	localRegistry := template.LocalRegistry{}
+	localRegistry := registrytypes.RegistrySettings{}
 	appInfo := template.ApplicationInfo{}
 	configValues := map[string]template.ItemValue{}
 
@@ -147,7 +147,7 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 }
 
 func getTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {
-	localRegistry := template.LocalRegistry{}
+	localRegistry := registrytypes.RegistrySettings{}
 	templateContextValues := make(map[string]template.ItemValue)
 
 	configGroups := []kotsv1beta1.ConfigGroup{}
