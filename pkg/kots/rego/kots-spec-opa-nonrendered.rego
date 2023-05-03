@@ -42,7 +42,7 @@ secrets_regular_expressions = [
 
 # Files set with the contents of each file as json
 files[output] {
-  file := input[_]
+  file := input.files[_]
   output := {
     "name": file.name,
     "path": file.path,
@@ -264,6 +264,7 @@ lint[output] {
   rule_name := "preflight-spec"
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
+  not input.limitedToFoundationPlan
   not v1beta1_preflight_spec_exists
   not v1beta2_preflight_spec_exists
   output := {
@@ -283,6 +284,7 @@ lint[output] {
   rule_name := "config-spec"
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
+  not input.limitedToFoundationPlan
   not config_spec_exists
   output := {
     "rule": rule_name,
@@ -316,6 +318,7 @@ lint[output] {
   rule_name := "troubleshoot-spec"
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
+  not input.limitedToFoundationPlan
   not v1beta1_troubleshoot_spec_exists
   not v1beta2_troubleshoot_spec_exists
   not v1beta1_supportbundle_spec_exists
@@ -337,6 +340,7 @@ lint[output] {
   rule_name := "application-spec"
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
+  not input.limitedToFoundationPlan
   not application_spec_exists
   output := {
     "rule": rule_name,
@@ -846,7 +850,7 @@ lint[output] {
   rule_name := "may-contain-secrets"
   rule_config := lint_rule_config(rule_name, "info")
   not rule_config.off
-  file := input[_] # using "input" instead if "files" because "file.content" is string in "input"
+  file := input.files[_] # using "input" instead if "files" because "file.content" is string in "input"
   expression := secrets_regular_expressions[_]
   expression_matches := regex.find_n(expression, file.content, -1)
   count(expression_matches) > 0
@@ -977,7 +981,7 @@ lint[output] {
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
 
-  file := input[_]
+  file := input.files[_] # using "input" instead if "files" because "file.content" is string in "input"
 
   expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)?([\\w\\d_-]+)"
   expression_matches := regex.find_all_string_submatch_n(expression, file.content, -1)
@@ -1037,7 +1041,7 @@ lint[output] {
   rule_config := lint_rule_config(rule_name, "error")
   not rule_config.off
 
-  file := input[_]
+  file := input.files[_] # using "input" instead if "files" because "file.content" is string in "input"
 
   expression := "(ConfigOption|ConfigOptionName|ConfigOptionEquals|ConfigOptionNotEquals)\\W+?(repl\\W+?)([\\w\\d_-]+)"
   expression_matches := regex.find_all_string_submatch_n(expression, file.content, -1)

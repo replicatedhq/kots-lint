@@ -1737,9 +1737,11 @@ spec:
 
 func Test_lintWithOPANonRendered(t *testing.T) {
 	tests := []struct {
-		name      string
-		specFiles SpecFiles
-		expect    []LintExpression
+		name                    string
+		specFiles               SpecFiles
+		supportsFoundationPlan  bool
+		limitedToFoundationPlan bool
+		expect                  []LintExpression
 	}{
 		{
 			name: "config option found",
@@ -3683,7 +3685,7 @@ spec:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintWithOPANonRendered(test.specFiles)
+			actual, err := lintWithOPANonRendered(test.specFiles, test.supportsFoundationPlan, test.limitedToFoundationPlan)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
@@ -3692,9 +3694,11 @@ spec:
 
 func Test_lintWithOPARendered(t *testing.T) {
 	tests := []struct {
-		name      string
-		specFiles SpecFiles
-		expect    []LintExpression
+		name                    string
+		specFiles               SpecFiles
+		supportsFoundationPlan  bool
+		limitedToFoundationPlan bool
+		expect                  []LintExpression
 	}{
 		{
 			name: "type/name no errors",
@@ -4178,7 +4182,7 @@ spec:
 			renderedFiles, err := separatedSpecFiles.render()
 			require.NoError(t, err)
 
-			actual, err := lintWithOPARendered(renderedFiles, test.specFiles)
+			actual, err := lintWithOPARendered(renderedFiles, test.specFiles, test.supportsFoundationPlan, test.limitedToFoundationPlan)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})

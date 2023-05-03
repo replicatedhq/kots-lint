@@ -12,7 +12,7 @@ kustomize_versions = {
 
 # Files set with the contents of each file as json
 files[output] {
-  file := input[_]
+  file := input.files[_]
   output := {
     "name": file.name,
     "path": file.path,

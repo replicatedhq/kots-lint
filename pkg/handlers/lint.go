@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
@@ -20,6 +21,10 @@ type LintReleaseParameters struct {
 	Body struct {
 		// The spec to lint
 		Spec string `json:"spec"`
+		// If the spec supports the Replicated Foundation Plan
+		SupportsFoundationPlan bool `json:"supportsFoundationPlan"`
+		// If the spec is limited to the Replicated Foundation Plan
+		LimitedToFoundationPlan bool `json:"limitedToFoundationPlan"`
 	}
 }
 
@@ -48,6 +53,9 @@ func LintRelease(c *gin.Context) {
 	}
 
 	specFiles := kots.SpecFiles{}
+	supportsFoundationPlan := false
+	limitedToFoundationPlan := false
+
 	if util.IsTarFile(data) {
 		f, err := kots.SpecFilesFromTar(bytes.NewReader(data))
 		if err != nil {
@@ -56,6 +64,8 @@ func LintRelease(c *gin.Context) {
 			return
 		}
 		specFiles = f
+		supportsFoundationPlan, _ = strconv.ParseBool(c.Query("supportsFoundationPlan"))
+		limitedToFoundationPlan, _ = strconv.ParseBool(c.Query("limitedToFoundationPlan"))
 	} else {
 		// restore request body to its original state to be able to bind it
 		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(data))
@@ -72,9 +82,12 @@ func LintRelease(c *gin.Context) {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
+
+		supportsFoundationPlan = request.Body.SupportsFoundationPlan
+		limitedToFoundationPlan = request.Body.LimitedToFoundationPlan
 	}
 
-	lintExpressions, isComplete, err := kots.LintSpecFiles(specFiles)
+	lintExpressions, isComplete, err := kots.LintSpecFiles(specFiles, supportsFoundationPlan, limitedToFoundationPlan)
 	if err != nil {
 		fmt.Printf("failed to lint spec files: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)

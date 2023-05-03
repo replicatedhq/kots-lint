@@ -107,7 +107,7 @@ func InitOPALinting() error {
 	return nil
 }
 
-func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
+func LintSpecFiles(specFiles SpecFiles, supportsFoundationPlan bool, limitedToFoundationPlan bool) ([]LintExpression, bool, error) {
 	unnestedFiles := specFiles.unnest()
 
 	tarGzFiles := SpecFiles{}
@@ -127,7 +127,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return yamlLintExpressions, false, nil
 	}
 
-	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(yamlFiles)
+	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(yamlFiles, supportsFoundationPlan, limitedToFoundationPlan)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA non-rendered")
 	}
@@ -148,7 +148,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	// if helm charts are missing corresponding manifests or vise versa, end early there.
 	// use rendered files since the HelmChart custom resource might not have the right schema before rendering
 	// and the linter could fail to detect it.
-	helmChartsLintExpressions, err := lintHelmCharts(renderedFiles, tarGzFiles)
+	helmChartsLintExpressions, err := lintHelmCharts(renderedFiles, tarGzFiles, supportsFoundationPlan, limitedToFoundationPlan)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint helm charts")
 	}
@@ -165,7 +165,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return targetMinLintExpressions, false, nil
 	}
 
-	opaRenderedLintExpressions, err := lintWithOPARendered(renderedFiles, yamlFiles)
+	opaRenderedLintExpressions, err := lintWithOPARendered(renderedFiles, yamlFiles, supportsFoundationPlan, limitedToFoundationPlan)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA rendered")
 	}
@@ -189,6 +189,7 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaRenderedLintExpressions...)
 	allLintExpressions = append(allLintExpressions, renderContentLintExpressions...)
+	allLintExpressions = append(allLintExpressions, helmChartsLintExpressions...)
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
 	allLintExpressions = append(allLintExpressions, installerLintExpressions...)
 
@@ -197,14 +198,19 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 
 // InitOPALinting needs to be called first in order for this function to run successfully
 // This function will lint using the prepared query for NON-rendered files
-func lintWithOPANonRendered(specFiles SpecFiles) ([]LintExpression, error) {
+func lintWithOPANonRendered(specFiles SpecFiles, supportsFoundationPlan bool, limitedToFoundationPlan bool) ([]LintExpression, error) {
 	separatedSpecFiles, err := specFiles.separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	ctx := context.Background()
-	results, err := nonRenderedRegoQuery.Eval(ctx, rego.EvalInput(separatedSpecFiles))
+	regoInput := map[string]interface{}{
+		"files":                   separatedSpecFiles,
+		"supportsFoundationPlan":  supportsFoundationPlan,
+		"limitedToFoundationPlan": limitedToFoundationPlan,
+	}
+
+	results, err := nonRenderedRegoQuery.Eval(context.Background(), rego.EvalInput(regoInput))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to evaluate query")
 	}
@@ -216,12 +222,18 @@ func lintWithOPANonRendered(specFiles SpecFiles) ([]LintExpression, error) {
 // This function will lint using the prepared query for RENDERED files
 // renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
 // originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
-func lintWithOPARendered(renderedFiles SpecFiles, originalFiles SpecFiles) ([]LintExpression, error) {
-	ctx := context.Background()
-	results, err := renderedRegoQuery.Eval(ctx, rego.EvalInput(renderedFiles))
+func lintWithOPARendered(renderedFiles SpecFiles, originalFiles SpecFiles, supportsFoundationPlan bool, limitedToFoundationPlan bool) ([]LintExpression, error) {
+	regoInput := map[string]interface{}{
+		"files":                   renderedFiles,
+		"supportsFoundationPlan":  supportsFoundationPlan,
+		"limitedToFoundationPlan": limitedToFoundationPlan,
+	}
+
+	results, err := renderedRegoQuery.Eval(context.Background(), rego.EvalInput(regoInput))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to evaluate query")
 	}
+
 	return opaResultsToLintExpressions(results, originalFiles)
 }
 
@@ -585,49 +597,62 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 	return lintExpressions, renderedFiles, nil
 }
 
-func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpression, error) {
+func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles, supportsFoundationPlan bool, limitedToFoundationPlan bool) ([]LintExpression, error) {
 	lintExpressions := []LintExpression{}
 
-	// separate multi docs because the manifest can be a part of a multi doc yaml file
-	separatedSpecFiles, err := renderedFiles.separate()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to separate multi docs")
-	}
-
-	// check if all helm charts have corresponding archives
-	allKotsHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
-	for _, helmChart := range allKotsHelmCharts {
-		archiveExists, err := archiveForHelmChartExists(tarGzFiles, helmChart)
+	if !limitedToFoundationPlan {
+		// separate multi docs because the manifest can be a part of a multi doc yaml file
+		separatedSpecFiles, err := renderedFiles.separate()
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to check if archive for helm chart exists")
+			return nil, errors.Wrap(err, "failed to separate multi docs")
 		}
 
-		if !archiveExists {
-			lintExpression := LintExpression{
-				Rule:    "helm-archive-missing",
-				Type:    "error",
-				Message: fmt.Sprintf("Could not find helm archive for chart '%s' version '%s'", helmChart.Spec.Chart.Name, helmChart.Spec.Chart.ChartVersion),
+		// check if all helm charts have corresponding archives
+		allKotsHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
+		for _, helmChart := range allKotsHelmCharts {
+			archiveExists, err := archiveForHelmChartExists(tarGzFiles, helmChart)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if archive for helm chart exists")
 			}
-			lintExpressions = append(lintExpressions, lintExpression)
+
+			if !archiveExists {
+				lintExpression := LintExpression{
+					Rule:    "helm-archive-missing",
+					Type:    "error",
+					Message: fmt.Sprintf("Could not find helm archive for chart '%s' version '%s'", helmChart.Spec.Chart.Name, helmChart.Spec.Chart.ChartVersion),
+				}
+				lintExpressions = append(lintExpressions, lintExpression)
+			}
+		}
+
+		// check if all archives have corresponding helm chart manifests
+		for _, specFile := range tarGzFiles {
+			if !specFile.isTarGz() {
+				continue
+			}
+
+			chartExists, err := helmChartForArchiveExists(allKotsHelmCharts, specFile)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if helm chart for archive exists")
+			}
+
+			if !chartExists {
+				lintExpression := LintExpression{
+					Rule:    "helm-chart-missing",
+					Type:    "error",
+					Message: fmt.Sprintf("Could not find helm chart manifest for archive '%s'", specFile.Path),
+				}
+				lintExpressions = append(lintExpressions, lintExpression)
+			}
 		}
 	}
 
-	// check if all archives have corresponding helm chart manifests
-	for _, specFile := range tarGzFiles {
-		if !specFile.isTarGz() {
-			continue
-		}
-
-		chartExists, err := helmChartForArchiveExists(allKotsHelmCharts, specFile)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to check if helm chart for archive exists")
-		}
-
-		if !chartExists {
+	if supportsFoundationPlan || limitedToFoundationPlan {
+		if len(tarGzFiles) == 0 {
 			lintExpression := LintExpression{
-				Rule:    "helm-chart-missing",
-				Type:    "error",
-				Message: fmt.Sprintf("Could not find helm chart manifest for archive '%s'", specFile.Path),
+				Rule:    "foundation-plan-helm-archives-missing",
+				Type:    "warn",
+				Message: "Could not find any helm archives for the foundation plan",
 			}
 			lintExpressions = append(lintExpressions, lintExpression)
 		}
