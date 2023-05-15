@@ -18,7 +18,9 @@ import (
 	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
+	kotsv1beta2 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta2"
 	kotsscheme "github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
+	"github.com/replicatedhq/kots/pkg/kotsutil"
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -606,7 +608,7 @@ func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpres
 			lintExpression := LintExpression{
 				Rule:    "helm-archive-missing",
 				Type:    "error",
-				Message: fmt.Sprintf("Could not find helm archive for chart '%s' version '%s'", helmChart.Spec.Chart.Name, helmChart.Spec.Chart.ChartVersion),
+				Message: fmt.Sprintf("Could not find helm archive for chart '%s' version '%s'", helmChart.GetChartName(), helmChart.GetChartVersion()),
 			}
 			lintExpressions = append(lintExpressions, lintExpression)
 		}
@@ -707,7 +709,7 @@ func lintExpressionsHaveErrors(lintExpressions []LintExpression) bool {
 
 // archiveForHelmChartExists iterates through all files, looking for a helm chart archive
 // that matches the chart name and version specified in the kotsHelmChart parameter
-func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart *kotsv1beta1.HelmChart) (bool, error) {
+func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart kotsutil.HelmChartInterface) (bool, error) {
 	for _, specFile := range specFiles {
 		if !specFile.isTarGz() {
 			continue
@@ -726,8 +728,8 @@ func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart *kotsv1beta1.H
 					return false, errors.Wrap(err, "failed to unmarshal chart yaml")
 				}
 
-				if chartManifest.Name == kotsHelmChart.Spec.Chart.Name {
-					if chartManifest.Version == kotsHelmChart.Spec.Chart.ChartVersion {
+				if chartManifest.Name == kotsHelmChart.GetChartName() {
+					if chartManifest.Version == kotsHelmChart.GetChartVersion() {
 						return true, nil
 					}
 				}
@@ -740,7 +742,7 @@ func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart *kotsv1beta1.H
 
 // helmChartForArchiveExists iterates through all existing helm charts, looking for a helm chart manifest
 // that matches the chart name and version specified in the Chart.yaml file in the archive
-func helmChartForArchiveExists(allKotsHelmCharts []*kotsv1beta1.HelmChart, archive SpecFile) (bool, error) {
+func helmChartForArchiveExists(allKotsHelmCharts []kotsutil.HelmChartInterface, archive SpecFile) (bool, error) {
 	files, err := SpecFilesFromTarGz(archive)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to read chart archive")
@@ -757,8 +759,8 @@ func helmChartForArchiveExists(allKotsHelmCharts []*kotsv1beta1.HelmChart, archi
 		}
 
 		for _, kotsHelmChart := range allKotsHelmCharts {
-			if chartManifest.Name == kotsHelmChart.Spec.Chart.Name {
-				if chartManifest.Version == kotsHelmChart.Spec.Chart.ChartVersion {
+			if chartManifest.Name == kotsHelmChart.GetChartName() {
+				if chartManifest.Version == kotsHelmChart.GetChartVersion() {
 					return true, nil
 				}
 			}
@@ -768,8 +770,8 @@ func helmChartForArchiveExists(allKotsHelmCharts []*kotsv1beta1.HelmChart, archi
 	return false, nil
 }
 
-func findAllKotsHelmCharts(specFiles SpecFiles) []*kotsv1beta1.HelmChart {
-	kotsHelmCharts := []*kotsv1beta1.HelmChart{}
+func findAllKotsHelmCharts(specFiles SpecFiles) []kotsutil.HelmChartInterface {
+	kotsHelmCharts := []kotsutil.HelmChartInterface{}
 	for _, specFile := range specFiles {
 		kotsHelmChart := tryParsingAsHelmChartGVK([]byte(specFile.Content))
 		if kotsHelmChart != nil {
@@ -780,7 +782,7 @@ func findAllKotsHelmCharts(specFiles SpecFiles) []*kotsv1beta1.HelmChart {
 	return kotsHelmCharts
 }
 
-func tryParsingAsHelmChartGVK(content []byte) *kotsv1beta1.HelmChart {
+func tryParsingAsHelmChartGVK(content []byte) kotsutil.HelmChartInterface {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, gvk, err := decode(content, nil, nil)
 	if err != nil {
@@ -791,6 +793,10 @@ func tryParsingAsHelmChartGVK(content []byte) *kotsv1beta1.HelmChart {
 		if gvk.Version == "v1beta1" {
 			if gvk.Kind == "HelmChart" {
 				return obj.(*kotsv1beta1.HelmChart)
+			}
+		} else if gvk.Version == "v1beta2" {
+			if gvk.Kind == "HelmChart" {
+				return obj.(*kotsv1beta2.HelmChart)
 			}
 		}
 	}
