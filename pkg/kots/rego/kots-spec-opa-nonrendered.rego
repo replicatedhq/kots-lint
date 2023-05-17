@@ -498,16 +498,31 @@ lint[output] {
   }
 }
 
+helm_chart_release_name_from_file(file) = releaseName {
+  file.content.apiVersion == "kots.io/v1beta1"
+  releaseName = {
+    "value": file.content.spec.chart.releaseName,
+    "field": "spec.chart.releaseName"
+  }
+} else = releaseName {
+  file.content.apiVersion == "kots.io/v1beta2"
+  releaseName = {
+    "value": file.content.spec.releaseName,
+    "field": "spec.releaseName"
+  }
+}
+
 # A set containing all of the release names included in HelmChart CRDs
 helm_release_names[output] {
   file := files[_]
   file.content.kind == "HelmChart"
-  file.content.apiVersion == "kots.io/v1beta1"
-  releaseName := file.content.spec.chart.releaseName
+  releaseName := helm_chart_release_name_from_file(file)
   output := {
     "filePath": file.path,
     "docIndex": file.docIndex,
-    "releaseName": releaseName
+    "apiVersion": file.content.apiVersion,
+    "releaseName": releaseName.value,
+    "field": releaseName.field
   }
 }
 
@@ -527,7 +542,7 @@ lint[output] {
     "type": rule_config.level,
     "message": "Invalid Helm release name, must match regex ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$ and the length must not be longer than 53",
     "path": rn.filePath,
-    "field": "spec.chart.releaseName",
+    "field": rn.field,
     "docIndex": rn.docIndex
   }
 }
@@ -540,13 +555,14 @@ lint[output] {
   rni := helm_release_names[i]
   rnj := helm_release_names[j]
   i != j
+  rni.apiVersion == rnj.apiVersion
   rni.releaseName == rnj.releaseName
   output := {
     "rule": rule_name,
     "type": rule_config.level,
     "message": sprintf("Release name is already used in %s", [string(rnj.filePath)]),
     "path": rni.filePath,
-    "field": "spec.chart.releaseName",
+    "field": rni.field,
     "docIndex": rni.docIndex
   }
 }
