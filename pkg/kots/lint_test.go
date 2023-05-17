@@ -1834,6 +1834,9 @@ func Test_lintWithOPANonRendered(t *testing.T) {
 		{
 			name: "config option found",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "config.yaml",
 					Path: "config.yaml",
@@ -1872,27 +1875,14 @@ data:
     ENV_VAR_2: '{{repl ConfigOption "a_templated_value" }}'`,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "config option not found",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "config.yaml",
 					Path: "config.yaml",
@@ -1933,21 +1923,6 @@ data:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "config-option-not-found",
 					Type:    "warn",
 					Path:    "test.yaml",
@@ -1978,6 +1953,9 @@ data:
 		{
 			name: "repeatable config options",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "config.yaml",
 					Path: "config.yaml",
@@ -2028,21 +2006,6 @@ data:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "config-option-not-repeatable",
 					Type:    "error",
 					Path:    "test.yaml",
@@ -2086,6 +2049,9 @@ data:
 		{
 			name: "repeatable config spec",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "config.yaml",
 					Path: "config.yaml",
@@ -2136,21 +2102,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "repeat-option-missing-template",
 					Type:    "error",
 					Path:    "config.yaml",
@@ -2194,6 +2145,9 @@ spec:
 		{
 			name: "support bundle is troubelshoot spec",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validKotsAppSpec,
+				validConfigSpec,
 				{
 					Name: "supportbundle.yaml",
 					Path: "supportbundle.yaml",
@@ -2203,28 +2157,15 @@ metadata:
   name: support-bundle`,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "leading v is valid in target/min kots versions",
 			specFiles: SpecFiles{
 				validExampleNginxDeploymentSpecFile,
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
 				{
 					Name: "replicated-app.yaml",
 					Path: "replicated-app.yaml",
@@ -2242,28 +2183,15 @@ spec:
 `,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "target kots version must be a valid semver",
 			specFiles: SpecFiles{
 				validExampleNginxDeploymentSpecFile,
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
 				{
 					Name: "replicated-app.yaml",
 					Path: "replicated-app.yaml",
@@ -2281,21 +2209,6 @@ spec:
 				},
 			},
 			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
 				{
 					Rule:    "invalid-target-kots-version",
 					Type:    "error",
@@ -2315,6 +2228,9 @@ spec:
 			name: "min kots version must be a valid semver",
 			specFiles: SpecFiles{
 				validExampleNginxDeploymentSpecFile,
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
 				{
 					Name: "replicated-app.yaml",
 					Path: "replicated-app.yaml",
@@ -2333,21 +2249,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
 					Rule:    "invalid-min-kots-version",
 					Type:    "error",
 					Message: "Minimum KOTS version must be a valid semver",
@@ -2365,6 +2266,10 @@ spec:
 		{
 			name: "invalid helm release name - contains a space",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis.yaml",
 					Path: "redis-10.3.5.tar.gz/redis.yaml",
@@ -2391,26 +2296,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "invalid-helm-release-name",
 					Path:    "redis-10.3.5.tar.gz/redis.yaml",
 					Type:    "error",
@@ -2428,6 +2313,10 @@ spec:
 		{
 			name: "invalid helm release name - no capital letters",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis.yaml",
 					Path: "redis-10.3.5.tar.gz/redis.yaml",
@@ -2454,26 +2343,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "invalid-helm-release-name",
 					Path:    "redis-10.3.5.tar.gz/redis.yaml",
 					Type:    "error",
@@ -2491,6 +2360,10 @@ spec:
 		{
 			name: "invalid helm release name - invalid characters",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis.yaml",
 					Path: "redis-10.3.5.tar.gz/redis.yaml",
@@ -2517,26 +2390,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "invalid-helm-release-name",
 					Path:    "redis-10.3.5.tar.gz/redis.yaml",
 					Type:    "error",
@@ -2554,6 +2407,10 @@ spec:
 		{
 			name: "duplicate helm release name",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis-release-1.yaml",
 					Path: "redis-10.3.5.tar.gz/redis-release-1.yaml",
@@ -2603,26 +2460,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "duplicate-helm-release-name",
 					Path:    "redis-10.3.5.tar.gz/redis-release-1.yaml",
 					Type:    "error",
@@ -2653,6 +2490,10 @@ spec:
 		{
 			name: "unique helm release names - no errors",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis-release-1.yaml",
 					Path: "redis-10.3.5.tar.gz/redis-release-1.yaml",
@@ -2700,32 +2541,15 @@ spec:
 `,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "invalid v1beta2 helm release name - invalid characters",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis.yaml",
 					Path: "redis-10.3.5.tar.gz/redis.yaml",
@@ -2752,26 +2576,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "invalid-helm-release-name",
 					Path:    "redis-10.3.5.tar.gz/redis.yaml",
 					Type:    "error",
@@ -2789,6 +2593,10 @@ spec:
 		{
 			name: "duplicate v1beta2 helm release name",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis-release-1.yaml",
 					Path: "redis-10.3.5.tar.gz/redis-release-1.yaml",
@@ -2838,26 +2646,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "duplicate-helm-release-name",
 					Path:    "redis-10.3.5.tar.gz/redis-release-1.yaml",
 					Type:    "error",
@@ -2888,6 +2676,10 @@ spec:
 		{
 			name: "unique v1beta2 helm release names - no errors",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis-release-1.yaml",
 					Path: "redis-10.3.5.tar.gz/redis-release-1.yaml",
@@ -2935,32 +2727,15 @@ spec:
 `,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "v1beta1 and v1beta2 helmchart resources for same source chart - no errors",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "redis-release-1.yaml",
 					Path: "redis-10.3.5.tar.gz/redis-release-v1beta1.yaml",
@@ -3008,32 +2783,15 @@ spec:
 `,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "up-to-date and valid kubernetes installer",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "installer.yaml",
 					Path: "installer.yaml",
@@ -3057,32 +2815,15 @@ spec:
 `,
 				},
 			},
-			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-			},
+			expect: []LintExpression{},
 		},
 		{
 			name: "deprecated kubernetes installer api version",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "installer.yaml",
 					Path: "installer.yaml",
@@ -3108,26 +2849,6 @@ spec:
 			},
 			expect: []LintExpression{
 				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
-				{
 					Rule:    "deprecated-kubernetes-installer-version",
 					Path:    "installer.yaml",
 					Type:    "warn",
@@ -3145,6 +2866,10 @@ spec:
 		{
 			name: "invalid kubernetes installer in release",
 			specFiles: SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
 				{
 					Name: "installer.yaml",
 					Path: "installer.yaml",
@@ -3169,26 +2894,6 @@ spec:
 				},
 			},
 			expect: []LintExpression{
-				{
-					Rule:    "preflight-spec",
-					Type:    "warn",
-					Message: "Missing preflight spec",
-				},
-				{
-					Rule:    "config-spec",
-					Type:    "warn",
-					Message: "Missing config spec",
-				},
-				{
-					Rule:    "troubleshoot-spec",
-					Type:    "warn",
-					Message: "Missing troubleshoot spec",
-				},
-				{
-					Rule:    "application-spec",
-					Type:    "warn",
-					Message: "Missing application spec",
-				},
 				{
 					Rule:    "invalid-kubernetes-installer",
 					Path:    "installer.yaml",
