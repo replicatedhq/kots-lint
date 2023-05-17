@@ -2724,6 +2724,241 @@ spec:
 			},
 		},
 		{
+			name: "invalid v1beta2 helm release name - invalid characters",
+			specFiles: SpecFiles{
+				{
+					Name: "redis.yaml",
+					Path: "redis-10.3.5.tar.gz/redis.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: redis
+spec:
+  # chart identifies a matching chart from a .tgz
+  chart:
+    name: redis
+    chartVersion: 10.3.5
+  releaseName: inval$$id-name
+
+  # values are used in the customer environment, as a pre-render step
+  # these values will be supplied to helm template
+  values: {}
+
+  # builder values provide a way to render the chart with all images
+  # and manifests. this is used in replicated to create airgap packages
+  builder: {}
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "invalid-helm-release-name",
+					Path:    "redis-10.3.5.tar.gz/redis.yaml",
+					Type:    "error",
+					Message: "Invalid Helm release name, must match regex ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$ and the length must not be longer than 53",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "duplicate v1beta2 helm release name",
+			specFiles: SpecFiles{
+				{
+					Name: "redis-release-1.yaml",
+					Path: "redis-10.3.5.tar.gz/redis-release-1.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: redis-release-1
+spec:
+  # chart identifies a matching chart from a .tgz
+  chart:
+    name: redis
+    chartVersion: 10.3.5
+  releaseName: redis
+
+  # values are used in the customer environment, as a pre-render step
+  # these values will be supplied to helm template
+  values: {}
+
+  # builder values provide a way to render the chart with all images
+  # and manifests. this is used in replicated to create airgap packages
+  builder: {}
+`,
+				},
+				{
+					Name: "redis-release-2.yaml",
+					Path: "redis-10.3.5.tar.gz/redis-release-2.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: redis-release-2
+spec:
+  # chart identifies a matching chart from a .tgz
+  chart:
+    name: redis
+    chartVersion: 10.3.5
+  releaseName: redis
+
+  # values are used in the customer environment, as a pre-render step
+  # these values will be supplied to helm template
+  values: {}
+
+  # builder values provide a way to render the chart with all images
+  # and manifests. this is used in replicated to create airgap packages
+  builder: {}
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+				{
+					Rule:    "duplicate-helm-release-name",
+					Path:    "redis-10.3.5.tar.gz/redis-release-1.yaml",
+					Type:    "error",
+					Message: "Release name is already used in redis-10.3.5.tar.gz/redis-release-2.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+				{
+					Rule:    "duplicate-helm-release-name",
+					Path:    "redis-10.3.5.tar.gz/redis-release-2.yaml",
+					Type:    "error",
+					Message: "Release name is already used in redis-10.3.5.tar.gz/redis-release-1.yaml",
+					Positions: []LintExpressionItemPosition{
+						{
+							Start: LintExpressionItemLinePosition{
+								Line: 10,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unique v1beta2 helm release names - no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "redis-release-1.yaml",
+					Path: "redis-10.3.5.tar.gz/redis-release-1.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: redis-release-1
+spec:
+  # chart identifies a matching chart from a .tgz
+  chart:
+    name: redis
+    chartVersion: 10.3.5
+  releaseName: redis-release-1
+
+  # values are used in the customer environment, as a pre-render step
+  # these values will be supplied to helm template
+  values: {}
+
+  # builder values provide a way to render the chart with all images
+  # and manifests. this is used in replicated to create airgap packages
+  builder: {}
+`,
+				},
+				{
+					Name: "redis-release-2.yaml",
+					Path: "redis-10.3.5.tar.gz/redis-release-2.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: redis-release-2
+spec:
+  # chart identifies a matching chart from a .tgz
+  chart:
+    name: redis
+    chartVersion: 10.3.5
+  releaseName: redis-release-2
+
+  # values are used in the customer environment, as a pre-render step
+  # these values will be supplied to helm template
+  values: {}
+
+  # builder values provide a way to render the chart with all images
+  # and manifests. this is used in replicated to create airgap packages
+  builder: {}
+`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+				{
+					Rule:    "config-spec",
+					Type:    "warn",
+					Message: "Missing config spec",
+				},
+				{
+					Rule:    "troubleshoot-spec",
+					Type:    "warn",
+					Message: "Missing troubleshoot spec",
+				},
+				{
+					Rule:    "application-spec",
+					Type:    "warn",
+					Message: "Missing application spec",
+				},
+			},
+		},
+		{
 			name: "v1beta1 and v1beta2 helmchart resources for same source chart - no errors",
 			specFiles: SpecFiles{
 				{
