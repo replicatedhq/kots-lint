@@ -323,6 +323,230 @@ spec:
 	}
 }
 
+func Test_lintResourceAnnotations(t *testing.T) {
+	tests := []struct {
+		name      string
+		specFiles SpecFiles
+		expect    []LintExpression
+	}{
+		{
+			name: "no annotations",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "valid annotations",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/creation-phase: "-1"
+    kots.io/deletion-phase: "1"
+    kots.io/wait-for-properties: ".status.ready=true,status.conditions.0.status=Ready"
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{},
+		},
+		{
+			name: "non-numeric phase",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/creation-phase: "asdf"
+    kots.io/deletion-phase: "asdf"
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "deployment-phase-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/creation-phase should be an integer",
+				},
+				{
+					Rule:    "deployment-phase-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/deletion-phase should be an integer",
+				},
+			},
+		},
+		{
+			name: "out of range phase",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/creation-phase: "-99999"
+    kots.io/deletion-phase: "99999"
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "deployment-phase-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/creation-phase should be between -9999 and 9999",
+				},
+				{
+					Rule:    "deployment-phase-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/deletion-phase should be between -9999 and 9999",
+				},
+			},
+		},
+		{
+			name: "empty wait-for-properties",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/wait-for-properties: ""
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "wait-for-properties-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/wait-for-properties should not be empty",
+				},
+			},
+		},
+		{
+			name: "invalid wait-for-properties key=value",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/wait-for-properties: "not-a-key-value-pair"
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "wait-for-properties-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Failed to parse kots.io/wait-for-properties annotation key=value pair: not-a-key-value-pair",
+				},
+			},
+		},
+		{
+			name: "empty wait-for-properties key",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/wait-for-properties: "=value"
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "wait-for-properties-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/wait-for-properties should not have an empty jsonpath key: =value",
+				},
+			},
+		},
+		{
+			name: "empty wait-for-properties value",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/wait-for-properties: ".status.task="
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "wait-for-properties-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/wait-for-properties should not have an empty value: .status.task=",
+				},
+			},
+		},
+		{
+			name: "invalid wait-for-properties jsonpath key",
+			specFiles: SpecFiles{
+				{
+					Path: "test.yaml",
+					Content: `apiVersion: example.com/v1
+kind: Example
+metadata:
+  name: example
+  annotations:
+    kots.io/wait-for-properties: "invalid][path=value"
+spec: {}`,
+				},
+			},
+			expect: []LintExpression{
+				{
+					Rule:    "wait-for-properties-annotation",
+					Type:    "error",
+					Path:    "test.yaml",
+					Message: "Resource annotation kots.io/wait-for-properties should have a valid jsonpath key: invalid][path=value",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := lintResourceAnnotations(test.specFiles)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, actual, test.expect)
+		})
+	}
+}
+
 func Test_lintHelmCharts(t *testing.T) {
 	tests := []struct {
 		name      string
