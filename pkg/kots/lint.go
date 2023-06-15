@@ -47,6 +47,7 @@ type LintExpression struct {
 	Type      string                       `json:"type"`
 	Message   string                       `json:"message"`
 	Path      string                       `json:"path"`
+	Patch     string                      `json:"patch"`
 	Positions []LintExpressionItemPosition `json:"positions"`
 }
 
@@ -625,8 +626,10 @@ func lintKurlInstaller(linter *kurllint.Linter, specFiles SpecFiles) ([]LintExpr
 					Type:    "error",
 					Path:    file.Path,
 					Message: out.Message,
+					Patch:   out.patch,
 				},
 			)
+			fmt.Print(expressions)
 		}
 	}
 	return expressions, nil
