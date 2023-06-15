@@ -626,10 +626,9 @@ func lintKurlInstaller(linter *kurllint.Linter, specFiles SpecFiles) ([]LintExpr
 					Type:    "error",
 					Path:    file.Path,
 					Message: out.Message,
-					Patch:   out.patch,
+					Patch:   out.Patch,
 				},
 			)
-			fmt.Print(expressions)
 		}
 	}
 	return expressions, nil
