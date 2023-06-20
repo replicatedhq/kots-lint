@@ -30,6 +30,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/jsonpath"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 )
 
 var kotsVersions map[string]bool
@@ -47,7 +48,7 @@ type LintExpression struct {
 	Type      string                       `json:"type"`
 	Message   string                       `json:"message"`
 	Path      string                       `json:"path"`
-	Patch     string                      `json:"patch"`
+	Patch     jsonpatch.Patch              `json:"patch"`
 	Positions []LintExpressionItemPosition `json:"positions"`
 }
 
