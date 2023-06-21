@@ -55,3 +55,15 @@ test:
 .PHONY: example
 example:
 	go run -tags "$(BUILDTAGS)" ./example/main.go
+
+.PHONY: debug-build
+debug-build:
+	go build \
+		${LDFLAGS} \
+		-tags "$(BUILDTAGS)" \
+		-o ./bin/kots-lint-debug \
+		.
+
+.PHONY: debug
+debug: debug-build
+	dlv --listen=:2345 --headless=true --api-version=2 exec ./bin/kots-lint-debug
