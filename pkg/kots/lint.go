@@ -835,8 +835,10 @@ func lintRenderedFilesYAMLValidity(renderedFiles SpecFiles) []LintExpression {
 			if err == nil && errLine > -1 {
 				lines := strings.Split(renderedFile.Content, "\n")
 				if len(lines) > errLine {
-					errLineContent := lines[errLine-1]
-					lintErrMsg = strings.Replace(lintErrMsg, fmt.Sprintf("line %d", errLine), fmt.Sprintf("(%s)", errLineContent), 1)
+					errLineContent := strings.TrimSpace(lines[errLine-1])
+					lineToRemove := fmt.Sprintf(" line %d:", errLine)
+					lintErrMsg = strings.Replace(lintErrMsg, lineToRemove, "", 1)
+					lintErrMsg = fmt.Sprintf("%s: %s", lintErrMsg, errLineContent)
 				}
 			}
 
