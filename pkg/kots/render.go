@@ -11,7 +11,7 @@ import (
 	kotsconfig "github.com/replicatedhq/kots/pkg/config"
 	registrytypes "github.com/replicatedhq/kots/pkg/registry/types"
 	"github.com/replicatedhq/kots/pkg/template"
-	goyaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 type RenderTemplateError struct {
@@ -84,7 +84,7 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 
 	for _, file := range files {
 		document := &GVKDoc{}
-		if err := goyaml.Unmarshal([]byte(file.Content), document); err != nil {
+		if err := yaml.Unmarshal([]byte(file.Content), document); err != nil {
 			continue
 		}
 
@@ -117,7 +117,7 @@ func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, err
 
 func (f SpecFile) shouldBeRendered() (bool, error) {
 	document := &GVKDoc{}
-	if err := goyaml.Unmarshal([]byte(f.Content), document); err != nil {
+	if err := yaml.Unmarshal([]byte(f.Content), document); err != nil {
 		return false, errors.Wrap(err, "failed to unmarshal file content")
 	}
 
@@ -138,7 +138,7 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 		return nil, errors.Wrap(err, "failed to template config objects")
 	}
 
-	b, err := goyaml.Marshal(renderedConfig)
+	b, err := yaml.Marshal(renderedConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal rendered config")
 	}

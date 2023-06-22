@@ -26,7 +26,6 @@ import (
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	goyaml "gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/jsonpath"
@@ -436,7 +435,7 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 		var tv, mv string
 		var tvExists, mvExists bool
 		doc := map[string]interface{}{}
-		if err := goyaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal spec content")
 		}
 		if doc["apiVersion"] == "kots.io/v1beta1" && doc["kind"] == "Application" {
@@ -497,7 +496,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 
 	for _, spec := range separatedSpecFiles {
 		var doc map[string]interface{}
-		if err := goyaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal spec content")
 		}
 
@@ -779,7 +778,7 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 	lintExpressions := []LintExpression{}
 
 	reader := bytes.NewReader([]byte(file.Content))
-	decoder := goyaml.NewDecoder(reader)
+	decoder := yaml.NewDecoder(reader)
 	decoder.SetStrict(true)
 
 	for {
