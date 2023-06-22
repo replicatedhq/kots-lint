@@ -149,6 +149,11 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		return renderContentLintExpressions, false, nil
 	}
 
+	renderedYAMLLintExpressions := lintRenderedFilesYAMLValidity(renderedFiles)
+	if lintExpressionsHaveErrors(renderedYAMLLintExpressions) {
+		return renderedYAMLLintExpressions, false, nil
+	}
+
 	// if helm charts are missing corresponding manifests or vise versa, end early there.
 	// use rendered files since the HelmChart custom resource might not have the right schema before rendering
 	// and the linter could fail to detect it.
@@ -814,6 +819,35 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 		lintExpressions = append(lintExpressions, lintExpression)
 
 		break // break on first error, otherwise decoder will panic
+	}
+
+	return lintExpressions
+}
+
+func lintRenderedFilesYAMLValidity(renderedFiles SpecFiles) []LintExpression {
+	var lintExpressions []LintExpression
+	for _, renderedFile := range renderedFiles {
+		var doc interface{}
+		err := yaml.Unmarshal([]byte(renderedFile.Content), &doc)
+		if err != nil {
+			lintErrMsg := err.Error()
+			errLine, err := util.TryGetLineNumberFromValue(err.Error())
+			if err == nil && errLine > -1 {
+				lines := strings.Split(renderedFile.Content, "\n")
+				if len(lines) > errLine {
+					errLineContent := lines[errLine-1]
+					lintErrMsg = strings.Replace(lintErrMsg, fmt.Sprintf("line %d", errLine), fmt.Sprintf("(%s)", errLineContent), 1)
+				}
+			}
+
+			lintExpression := LintExpression{
+				Rule:    "invalid-rendered-yaml",
+				Type:    "error",
+				Path:    renderedFile.Path,
+				Message: lintErrMsg,
+			}
+			lintExpressions = append(lintExpressions, lintExpression)
+		}
 	}
 
 	return lintExpressions

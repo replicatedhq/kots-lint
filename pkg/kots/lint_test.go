@@ -1,10 +1,12 @@
 package kots
 
 import (
+	_ "embed"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"testing"
 
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
@@ -4764,6 +4766,112 @@ spec:
 			actual, err := lintKurlInstaller(linter, test.specFiles)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
+		})
+	}
+}
+
+func Test_lintRenderedFilesYAMLValidity(t *testing.T) {
+	type args struct {
+		renderedFiles SpecFiles
+	}
+	tests := []struct {
+		name string
+		args args
+		want []LintExpression
+	}{
+		{
+			name: "valid",
+			args: args{
+				renderedFiles: SpecFiles{
+					{
+						Name:    "valid.yaml",
+						Path:    "valid.yaml",
+						Content: "apiVersion: v1\nkind: Pod\nmetadata:\n  name: valid",
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "invalid content at line 1",
+			args: args{
+				renderedFiles: SpecFiles{
+					{
+						Name:    "invalid.yaml",
+						Path:    "invalid.yaml",
+						Content: `apiVersion: ***HIDDEN***/0`,
+					},
+				},
+			},
+			want: []LintExpression{
+				{
+					Rule:    "invalid-rendered-yaml",
+					Type:    "error",
+					Path:    "invalid.yaml",
+					Message: "yaml: did not find expected alphabetic or numeric character",
+				},
+			},
+		},
+		{
+			name: "invalid content at line 2",
+			args: args{
+				renderedFiles: SpecFiles{
+					{
+						Name: "invalid.yaml",
+						Path: "invalid.yaml",
+						Content: `
+apiVersion: ***HIDDEN***/0
+kind: Pod
+metadata:
+  name: test
+  annotations:
+    alb.ingress.kubernetes.io/inbound-cidrs: ***HIDDEN***/0
+`,
+					},
+				},
+			},
+			want: []LintExpression{
+				{
+					Rule:    "invalid-rendered-yaml",
+					Type:    "error",
+					Path:    "invalid.yaml",
+					Message: "yaml: (apiVersion: ***HIDDEN***/0): did not find expected alphabetic or numeric character",
+				},
+			},
+		},
+		{
+			name: "invalid content in last line",
+			args: args{
+				renderedFiles: SpecFiles{
+					{
+						Name: "invalid.yaml",
+						Path: "invalid.yaml",
+						Content: `apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+  annotations:
+	  alb.ingress.kubernetes.io/inbound-cidrs: ***HIDDEN***/0
+`,
+					},
+				},
+			},
+			want: []LintExpression{
+				{
+					Rule:    "invalid-rendered-yaml",
+					Type:    "error",
+					Path:    "invalid.yaml",
+					Message: "yaml: (	  alb.ingress.kubernetes.io/inbound-cidrs: ***HIDDEN***/0): found character that cannot start any token",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := lintRenderedFilesYAMLValidity(tt.args.renderedFiles); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("lintRenderedFilesYAMLValidity() got =\n%v \nwant =\n%v", got, tt.want)
+			}
 		})
 	}
 }
