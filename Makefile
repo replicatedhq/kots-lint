@@ -42,7 +42,7 @@ run:
 .PHONY: build
 build:
 	mkdir -p bin
-	go build \
+	CGO_ENABLED=0 go build \
 		${LDFLAGS} \
 		-tags "$(BUILDTAGS)" \
 		-o ./bin/kots-lint \
