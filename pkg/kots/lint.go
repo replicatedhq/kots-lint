@@ -26,7 +26,6 @@ import (
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	goyaml "gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/chart"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/jsonpath"
@@ -148,6 +147,11 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 	// if there are render content errors, end early there
 	if lintExpressionsHaveErrors(renderContentLintExpressions) {
 		return renderContentLintExpressions, false, nil
+	}
+
+	renderedYAMLLintExpressions := lintRenderedFilesYAMLValidity(renderedFiles)
+	if lintExpressionsHaveErrors(renderedYAMLLintExpressions) {
+		return renderedYAMLLintExpressions, false, nil
 	}
 
 	// if helm charts are missing corresponding manifests or vise versa, end early there.
@@ -436,7 +440,7 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 		var tv, mv string
 		var tvExists, mvExists bool
 		doc := map[string]interface{}{}
-		if err := goyaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal spec content")
 		}
 		if doc["apiVersion"] == "kots.io/v1beta1" && doc["kind"] == "Application" {
@@ -497,7 +501,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 
 	for _, spec := range separatedSpecFiles {
 		var doc map[string]interface{}
-		if err := goyaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal spec content")
 		}
 
@@ -779,7 +783,7 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 	lintExpressions := []LintExpression{}
 
 	reader := bytes.NewReader([]byte(file.Content))
-	decoder := goyaml.NewDecoder(reader)
+	decoder := yaml.NewDecoder(reader)
 	decoder.SetStrict(true)
 
 	for {
@@ -815,6 +819,37 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 		lintExpressions = append(lintExpressions, lintExpression)
 
 		break // break on first error, otherwise decoder will panic
+	}
+
+	return lintExpressions
+}
+
+func lintRenderedFilesYAMLValidity(renderedFiles SpecFiles) []LintExpression {
+	var lintExpressions []LintExpression
+	for _, renderedFile := range renderedFiles {
+		var doc interface{}
+		err := yaml.Unmarshal([]byte(renderedFile.Content), &doc)
+		if err != nil {
+			lintErrMsg := err.Error()
+			errLine, err := util.TryGetLineNumberFromValue(err.Error())
+			if err == nil && errLine > -1 {
+				lines := strings.Split(renderedFile.Content, "\n")
+				if len(lines) > errLine {
+					errLineContent := strings.TrimSpace(lines[errLine-1])
+					lineToRemove := fmt.Sprintf(" line %d:", errLine)
+					lintErrMsg = strings.Replace(lintErrMsg, lineToRemove, "", 1)
+					lintErrMsg = fmt.Sprintf("%s: %s", lintErrMsg, errLineContent)
+				}
+			}
+
+			lintExpression := LintExpression{
+				Rule:    "invalid-rendered-yaml",
+				Type:    "error",
+				Path:    renderedFile.Path,
+				Message: lintErrMsg,
+			}
+			lintExpressions = append(lintExpressions, lintExpression)
+		}
 	}
 
 	return lintExpressions
