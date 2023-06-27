@@ -49,6 +49,12 @@ type LintExpression struct {
 	Positions []LintExpressionItemPosition `json:"positions"`
 }
 
+type LintExpressionsByRule []LintExpression
+
+func (a LintExpressionsByRule) Len() int           { return len(a) }
+func (a LintExpressionsByRule) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a LintExpressionsByRule) Less(i, j int) bool { return a[i].Rule < a[j].Rule }
+
 type OPALintExpression struct {
 	Rule     string `json:"rule"`
 	Type     string `json:"type"`
@@ -74,11 +80,17 @@ var (
 	//go:embed rego/kots-spec-opa-rendered.rego
 	renderedRegoContent string
 
+	//go:embed rego/builders-opa.rego
+	buildersRegoContent string
+
 	// a prepared rego query for linting NON-rendered files
 	nonRenderedRegoQuery *rego.PreparedEvalQuery
 
 	// a prepared rego query for linting RENDERED files
 	renderedRegoQuery *rego.PreparedEvalQuery
+
+	// a prepared rego query for linting builders charts
+	buildersRegoQuery *rego.PreparedEvalQuery
 )
 
 func InitOPALinting() error {
@@ -107,6 +119,18 @@ func InitOPALinting() error {
 	}
 
 	renderedRegoQuery = &renderedQuery
+
+	// prepare rego query for linting non-rendered files
+	buildersQuery, err := rego.New(
+		rego.Query("data.kots.spec.builders.lint"),
+		rego.Module("builders-opa.rego", string(buildersRegoContent)),
+	).PrepareForEval(ctx)
+
+	if err != nil {
+		return errors.Wrap(err, "prepare builders query for eval")
+	}
+
+	buildersRegoQuery = &buildersQuery
 
 	return nil
 }

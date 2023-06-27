@@ -45,6 +45,7 @@ func Run() {
 	v1 := r.Group("/v1")
 
 	v1.POST("/lint", handlers.LintRelease)
+	v1.POST("/builders-lint", handlers.LintBuildersRelease)
 	v1.POST("/enterprise-lint", handlers.EnterpriseLintRelease)
 	v1.POST("/troubleshoot-lint", handlers.TroubleshootLintSpec)
 
