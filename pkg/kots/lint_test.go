@@ -4008,7 +4008,10 @@ spec:
 		},
 	}
 
-	InitOPALinting()
+	err := InitOPALinting()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -4497,7 +4500,9 @@ spec:
 		},
 	}
 
-	InitOPALinting()
+	if err := InitOPALinting(); err != nil {
+		t.Fatal(err)
+	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

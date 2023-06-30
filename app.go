@@ -16,6 +16,10 @@ import (
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	if logLevel, err := log.ParseLevel(os.Getenv("LOG_LEVEL")); err == nil {
+		log.SetLevel(logLevel)
+	}
+
 	schemaDir, err := kjs.InitKubernetesJsonSchemaDir()
 	if err != nil {
 		log.Errorf("failed to init kubernetes json schema dir: %v", err)

@@ -20,6 +20,21 @@ $ tar cvf - example/files-to-lint | curl -XPOST --data-binary @- https://lint.re
 
 Development for the applications in this project is done through [Okteto](https://replicated.okteto.dev).
 
+### Debugging Rego files
+
+Rego supports the use of `print()` function. To enable printing to stderr, add `EnablePrintStatements` and `PrintHook` to initialization code. For example:
+
+```
+	buildersQuery, err := rego.New(
+		rego.Query("data.kots.spec.builders.lint"),
+		rego.Module("builders-opa.rego", string(buildersRegoContent)),
+
+		// The lines below allow using print() in the rego code to print to stderr
+		rego.EnablePrintStatements(true),
+		rego.PrintHook(topdown.NewPrintHook(os.Stderr)),
+	).PrepareForEval(ctx)
+```
+
 ## Setup
 
 1. Install the Okteto CLI (`brew install okteto`)
