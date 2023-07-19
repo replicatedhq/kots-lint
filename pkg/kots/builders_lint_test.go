@@ -16,10 +16,10 @@ var testdata embed.FS
 
 func TestLintBuilders(t *testing.T) {
 	tests := []struct {
-		name        string
-		chartReader func() io.Reader
-		wantErr     bool
-		want        []LintExpression
+		name         string
+		chartReader  func() io.Reader
+		isValidChart bool
+		want         []LintExpression
 	}{
 		{
 			name: "chart with all recommended labels present",
@@ -30,7 +30,7 @@ func TestLintBuilders(t *testing.T) {
 				}
 				return f
 			},
-			wantErr: false,
+			isValidChart: true,
 			want: []LintExpression{
 				{
 					Rule:      "preflight-spec",
@@ -50,7 +50,7 @@ func TestLintBuilders(t *testing.T) {
 				}
 				return f
 			},
-			wantErr: false,
+			isValidChart: true,
 			want: []LintExpression{
 				{
 					Rule:      "informers-labels-not-found",
@@ -77,7 +77,7 @@ func TestLintBuilders(t *testing.T) {
 				}
 				return f
 			},
-			wantErr: false,
+			isValidChart: true,
 			want: []LintExpression{
 				{
 					Rule:      "informers-labels-not-found",
@@ -97,8 +97,8 @@ func TestLintBuilders(t *testing.T) {
 				}
 				return f
 			},
-			wantErr: true,
-			want:    nil,
+			isValidChart: false,
+			want:         nil,
 		},
 	}
 
@@ -109,17 +109,15 @@ func TestLintBuilders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotFiles, err := GetFilesFromChartReader(tt.chartReader())
-			if tt.wantErr {
+			if tt.isValidChart {
+				assert.NoError(t, err)
+			} else {
 				assert.Error(t, err)
 				return
 			}
 
 			got, err := LintBuilders(context.Background(), gotFiles)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			assert.NoError(t, err)
 
 			sort.Sort(LintExpressionsByRule(tt.want))
 			sort.Sort(LintExpressionsByRule(got))
