@@ -1,70 +1,63 @@
 package kots
 
 import (
-	"bytes"
 	_ "embed"
-	"fmt"
 	"io"
-	"strings"
+	"path/filepath"
 
 	"github.com/pkg/errors"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/engine"
 )
 
+// GetFilesFromChartReader will render chart templates and return the resulting files
+// This function will ignore missing required values.
+// This function will also not validate value types.
 func GetFilesFromChartReader(r io.Reader) (SpecFiles, error) {
-	cfg := &action.Configuration{
-		// Log: nil,
-	}
-	client := action.NewInstall(cfg)
-	client.DryRun = true
-	client.ReleaseName = "release-name"
-	client.Replace = true
-	client.ClientOnly = true
-	client.IncludeCRDs = true
-	client.Namespace = "default"
-
 	chart, err := loader.LoadArchive(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "load chart archive")
 	}
 
-	rel, err := client.Run(chart, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "helm template")
+	options := chartutil.ReleaseOptions{
+		Name: "app-chart",
 	}
 
-	var manifests bytes.Buffer
-	fmt.Fprintln(&manifests, strings.TrimSpace(rel.Manifest))
+	// If chart has a schema file, it will be used to validate values, which will fail if there are missing required values.
+	chart.Schema = nil
+	if err := chartutil.ProcessDependencies(chart, chartutil.Values{}); err != nil {
+		return nil, errors.Wrap(err, "process dependencies")
+	}
 
-	docs := strings.Split(manifests.String(), "\n---\n")
+	rValues, err := chartutil.ToRenderValues(chart, chart.Values, options, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "convert values to render values")
+	}
+
+	eng := new(engine.Engine)
+	eng.LintMode = true // setting this to true makes `required` and `fail` not fail
+
+	renderedTemplates, err := eng.Render(chart, rValues)
+	if err != nil {
+		return nil, errors.Wrap(err, "render templates")
+	}
+
 	specFiles := SpecFiles{}
-	for index, doc := range docs {
-		doc = strings.TrimPrefix(doc, "---\n")
-
-		fileName := getFileNameFromDoc(doc)
-		if fileName == "" {
-			fileName = fmt.Sprintf("doc[%d]", index)
+	for fileName, fileData := range renderedTemplates {
+		if ext := filepath.Ext(fileName); ext != ".yaml" && ext != ".yml" {
+			continue
 		}
 
-		separatedSpecFile := SpecFile{
+		specFile := SpecFile{
 			Name:     fileName,
-			Path:     "",
-			Content:  doc,
-			DocIndex: index,
+			Path:     filepath.Dir(fileName),
+			Content:  fileData,
+			DocIndex: len(specFiles),
 		}
 
-		specFiles = append(specFiles, separatedSpecFile)
+		specFiles = append(specFiles, specFile)
 	}
 
 	return specFiles, nil
-}
-
-// Get file name from the input doc. File name is the string after "# Source: " in the first line of the doc.
-func getFileNameFromDoc(doc string) string {
-	lines := strings.SplitN(doc, "\n", 2)
-	if len(lines) > 1 && strings.HasPrefix(lines[0], "# Source: ") {
-		return strings.TrimPrefix(lines[0], "# Source: ")
-	}
-	return ""
 }
