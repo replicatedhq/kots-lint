@@ -11,23 +11,36 @@ files[output] {
   }
 }
 
+allowed_preflight_api_versions := {
+  "troubleshoot.replicated.com/v1beta1",
+  "troubleshoot.sh/v1beta2"
+}
+
 # Check if Preflight spec exists
-v1beta1_preflight_spec_exists {
+preflight_spec_exists {
   file := files[_]
   file.content.kind == "Preflight"
-  file.content.apiVersion == "troubleshoot.replicated.com/v1beta1"
+  file.content.apiVersion == allowed_preflight_api_versions[_]
 }
-v1beta2_preflight_spec_exists {
+
+preflight_embedded_exists {
+  kinds := {"Secret", "ConfigMap"}
   file := files[_]
-  file.content.kind == "Preflight"
-  file.content.apiVersion == "troubleshoot.sh/v1beta2"
+  file.content.kind == kinds[_]
+  file.content.apiVersion == "v1"
+  file.content.metadata.labels["troubleshoot.sh/kind"] == "preflight"
+  sd := file.content.stringData[_]
+  string_data := yaml.unmarshal(sd)
+  string_data.kind == "Preflight"
+  string_data.apiVersion == allowed_preflight_api_versions[_]
 }
+
 lint[output] {
   rule_name := "preflight-spec"
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
-  not v1beta1_preflight_spec_exists
-  not v1beta2_preflight_spec_exists
+  not preflight_spec_exists
+  not preflight_embedded_exists
   output := {
     "rule": rule_name,
     "type": rule_config.level,
