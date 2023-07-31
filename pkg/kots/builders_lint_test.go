@@ -89,6 +89,26 @@ func TestLintBuilders(t *testing.T) {
 			},
 		},
 		{
+			name: "chart with some recommended labels missing, but with preflight spec embedded in a secret",
+			chartReader: func() io.Reader {
+				f, err := testdata.Open("test-data/builders/testchart-without-labels-with-preflight-secret-16.2.3.tgz")
+				if err != nil {
+					t.Fatalf("failed to open file: %v", err)
+				}
+				return f
+			},
+			isValidChart: true,
+			want: []LintExpression{
+				{
+					Rule:      "informers-labels-not-found",
+					Type:      "warn",
+					Message:   "No informer labels found on any resources",
+					Path:      "",
+					Positions: nil,
+				},
+			},
+		},
+		{
 			name: "invalid chart",
 			chartReader: func() io.Reader {
 				f, err := testdata.Open("test-data/builders/not-a-chart.tgz")
