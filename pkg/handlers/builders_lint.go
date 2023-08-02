@@ -29,6 +29,9 @@ func LintBuildersRelease(c *gin.Context) {
 	log.Infof("Received builders lint request with content-length=%s, content-type=%s, client-ip=%s", c.GetHeader("content-length"), c.ContentType(), c.ClientIP())
 
 	specFiles := kots.SpecFiles{}
+
+	// Include rendering errors in the lint results (even though pedantically they're not lint expressions)
+	var lintExpressions []kots.LintExpression
 	if c.ContentType() == "application/tar" {
 		tarReader := tar.NewReader(c.Request.Body)
 		for {
@@ -50,6 +53,12 @@ func LintBuildersRelease(c *gin.Context) {
 			files, err := kots.GetFilesFromChartReader(tarReader)
 			if err != nil {
 				log.Infof("failed to get files from chart %s: %v", header.Name, err)
+				lintExpressions = append(lintExpressions, kots.LintExpression{
+					Rule:    "rendering",
+					Type:    "error",
+					Message: err.Error(),
+					Path:    header.Name,
+				})
 				continue
 			}
 
@@ -58,9 +67,12 @@ func LintBuildersRelease(c *gin.Context) {
 	} else if c.ContentType() == "application/gzip" {
 		files, err := kots.GetFilesFromChartReader(c.Request.Body)
 		if err != nil {
-			log.Errorf("failed to get files from chart: %v", err)
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
+			log.Infof("failed to get files from request: %v", err)
+			lintExpressions = append(lintExpressions, kots.LintExpression{
+				Rule:    "rendering",
+				Type:    "error",
+				Message: err.Error(),
+			})
 		}
 
 		specFiles = append(specFiles, files...)
@@ -69,13 +81,14 @@ func LintBuildersRelease(c *gin.Context) {
 		return
 	}
 
-	lintExpressions, err := kots.LintBuilders(c.Request.Context(), specFiles)
+	lint, err := kots.LintBuilders(c.Request.Context(), specFiles)
 	if err != nil {
 		log.Errorf("failed to lint builders charts: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
+	lintExpressions = append(lintExpressions, lint...)
 	response := LintReleaseResponse{}
 	response.Body.LintExpressions = lintExpressions
 
