@@ -6,11 +6,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/replicatedhq/kots-lint/pkg/util"
-	kotsv1beta1 "github.com/replicatedhq/kots/kotskinds/apis/kots/v1beta1"
-	"github.com/replicatedhq/kots/kotskinds/client/kotsclientset/scheme"
 	kotsconfig "github.com/replicatedhq/kots/pkg/config"
 	registrytypes "github.com/replicatedhq/kots/pkg/registry/types"
 	"github.com/replicatedhq/kots/pkg/template"
+	kotsv1beta1 "github.com/replicatedhq/kotskinds/apis/kots/v1beta1"
+	"github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
 	"gopkg.in/yaml.v2"
 )
 
