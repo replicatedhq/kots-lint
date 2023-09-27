@@ -50,7 +50,7 @@ build:
 
 .PHONY: test
 test:
-	go test ./pkg/... -tags "$(BUILDTAGS)"
+	go test -v ./pkg/... -tags "$(BUILDTAGS)"
 
 .PHONY: example
 example:
