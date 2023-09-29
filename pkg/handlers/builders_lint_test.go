@@ -58,19 +58,17 @@ func Test_LintBuildersRelease(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		chartReader  func() io.Reader
-		isValidChart bool
-		want         resultType
-		skip         bool
+		name        string
+		chartReader func() io.ReadCloser
+		contentType string
+		want        resultType
 	}{
 		{
-			skip: false,
 			name: "one valid chart without preflights",
-			chartReader: func() io.Reader {
-				return getTarReader([]string{"testchart-with-labels-16.2.2.tgz"})
+			chartReader: func() io.ReadCloser {
+				return io.NopCloser(getTarReader([]string{"testchart-with-labels-16.2.2.tgz"}))
 			},
-			isValidChart: true,
+			contentType: "application/tar",
 			want: resultType{
 				LintExpressions: []kots.LintExpression{
 					{
@@ -84,12 +82,11 @@ func Test_LintBuildersRelease(t *testing.T) {
 			},
 		},
 		{
-			skip: false,
 			name: "one valid chart without preflights and one invalid chart",
-			chartReader: func() io.Reader {
-				return getTarReader([]string{"testchart-with-labels-16.2.2.tgz", "not-a-chart.tgz"})
+			chartReader: func() io.ReadCloser {
+				return io.NopCloser(getTarReader([]string{"testchart-with-labels-16.2.2.tgz", "not-a-chart.tgz"}))
 			},
-			isValidChart: true,
+			contentType: "application/tar",
 			want: resultType{
 				LintExpressions: []kots.LintExpression{
 					{
@@ -110,12 +107,11 @@ func Test_LintBuildersRelease(t *testing.T) {
 			},
 		},
 		{
-			skip: false,
 			name: "one invalid chart",
-			chartReader: func() io.Reader {
-				return getTarReader([]string{"not-a-chart.tgz"})
+			chartReader: func() io.ReadCloser {
+				return io.NopCloser(getTarReader([]string{"not-a-chart.tgz"}))
 			},
-			isValidChart: true,
+			contentType: "application/tar",
 			want: resultType{
 				LintExpressions: []kots.LintExpression{
 					{
@@ -123,6 +119,24 @@ func Test_LintBuildersRelease(t *testing.T) {
 						Type:      "error",
 						Message:   "load chart archive: EOF",
 						Path:      "not-a-chart.tgz",
+						Positions: nil,
+					},
+				},
+			},
+		},
+		{
+			name: "one invalid chart",
+			chartReader: func() io.ReadCloser {
+				r, _ := testdata.Open("test-data/builders/not-a-chart.tgz")
+				return r
+			},
+			contentType: "application/gzip",
+			want: resultType{
+				LintExpressions: []kots.LintExpression{
+					{
+						Rule:      "rendering",
+						Type:      "error",
+						Message:   "load chart archive: EOF",
 						Positions: nil,
 					},
 				},
@@ -131,16 +145,13 @@ func Test_LintBuildersRelease(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if tt.skip {
-			continue
-		}
 		t.Run(tt.name, func(t *testing.T) {
 			req := require.New(t)
 
 			clientRequest := &http.Request{
-				Body: io.NopCloser(tt.chartReader()),
+				Body: tt.chartReader(),
 				Header: http.Header{
-					"Content-Type": []string{"application/tar"},
+					"Content-Type": []string{tt.contentType},
 				},
 			}
 			respWriter := httptest.NewRecorder()

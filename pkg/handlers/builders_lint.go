@@ -75,10 +75,10 @@ func LintBuildersRelease(c *gin.Context) {
 				Type:    "error",
 				Message: err.Error(),
 			})
+		} else {
+			numChartsRendered += 1
+			specFiles = append(specFiles, files...)
 		}
-
-		numChartsRendered += 1
-		specFiles = append(specFiles, files...)
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "content type must be application/gzip or application/tar"})
 		return
