@@ -228,7 +228,6 @@ metadata:
 name: app-slug
 spec:
 title: App Name
-kustomizeVersion: "3.5.4"
 icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
 statusInformers:
 - deployment/example-nginx
@@ -1423,8 +1422,6 @@ spec:
   icon: https://support.io/img/logo.png
   releaseNotes: These are our release notes
   allowRollback: false
-  kubectlVersion: latest
-  kustomizeVersion: latest
   targetKotsVersion: "1.60.0"
   minKotsVersion: "1.40.0"
   requireMinimalRBACPrivileges: false
@@ -4072,7 +4069,6 @@ metadata:
   name: app-slug
 spec:
   title: App Name
-  kustomizeVersion: "3.5.4"
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   statusInformers:
     - deployment/example-nginx
@@ -4129,7 +4125,6 @@ metadata:
   name: app-slug
 spec:
   title: App Name
-  kustomizeVersion: "latest"
   icon: https://github.com/cncf/artwork/blob/master/projects/kubernetes/icon/color/kubernetes-icon-color.png
   statusInformers:
     - deployment-example-nginx
@@ -4150,7 +4145,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 10,
+								Line: 9,
 							},
 						},
 					},
@@ -4163,7 +4158,7 @@ spec:
 					Positions: []LintExpressionItemPosition{
 						{
 							Start: LintExpressionItemLinePosition{
-								Line: 11,
+								Line: 10,
 							},
 						},
 					},
@@ -4438,36 +4433,6 @@ spec:
 				},
 			},
 			expect: []LintExpression{},
-		},
-		{
-			name: "unsupported kustomize version",
-			specFiles: SpecFiles{
-				{
-					Name: "kots-app.yaml",
-					Path: "kots-app.yaml",
-					Content: `apiVersion: kots.io/v1beta1
-kind: Application
-metadata:
-  name: app-slug
-spec:
-  kustomizeVersion: "2.0.0"`,
-				},
-			},
-			expect: []LintExpression{
-				{
-					Rule:    "kustomize-version",
-					Type:    "warn",
-					Path:    "kots-app.yaml",
-					Message: "Unsupported kustomize version, 3.5.4 will be used instead",
-					Positions: []LintExpressionItemPosition{
-						{
-							Start: LintExpressionItemLinePosition{
-								Line: 6,
-							},
-						},
-					},
-				},
-			},
 		},
 		{
 			name: "ignore nonexistent-status-informer-object rule",
