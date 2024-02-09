@@ -18,11 +18,11 @@ import (
 	"github.com/pkg/errors"
 	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/util"
-	"github.com/replicatedhq/kots/pkg/kotsutil"
 	kotsoperatortypes "github.com/replicatedhq/kots/pkg/operator/types"
 	kotsv1beta1 "github.com/replicatedhq/kotskinds/apis/kots/v1beta1"
 	kotsv1beta2 "github.com/replicatedhq/kotskinds/apis/kots/v1beta2"
 	kotsscheme "github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
+	"github.com/replicatedhq/kotskinds/pkg/helmchart"
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -890,7 +890,7 @@ func lintExpressionsHaveErrors(lintExpressions []LintExpression) bool {
 
 // archiveForHelmChartExists iterates through all files, looking for a helm chart archive
 // that matches the chart name and version specified in the kotsHelmChart parameter
-func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart kotsutil.HelmChartInterface) (bool, error) {
+func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart helmchart.HelmChartInterface) (bool, error) {
 	for _, specFile := range specFiles {
 		if !specFile.isTarGz() {
 			continue
@@ -923,7 +923,7 @@ func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart kotsutil.HelmC
 
 // helmChartForArchiveExists iterates through all existing helm charts, looking for a helm chart manifest
 // that matches the chart name and version specified in the Chart.yaml file in the archive
-func helmChartForArchiveExists(allKotsHelmCharts []kotsutil.HelmChartInterface, archive SpecFile) (bool, error) {
+func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface, archive SpecFile) (bool, error) {
 	files, err := SpecFilesFromTarGz(archive)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to read chart archive")
@@ -951,8 +951,8 @@ func helmChartForArchiveExists(allKotsHelmCharts []kotsutil.HelmChartInterface, 
 	return false, nil
 }
 
-func findAllKotsHelmCharts(specFiles SpecFiles) []kotsutil.HelmChartInterface {
-	kotsHelmCharts := []kotsutil.HelmChartInterface{}
+func findAllKotsHelmCharts(specFiles SpecFiles) []helmchart.HelmChartInterface {
+	kotsHelmCharts := []helmchart.HelmChartInterface{}
 	for _, specFile := range specFiles {
 		kotsHelmChart := tryParsingAsHelmChartGVK([]byte(specFile.Content))
 		if kotsHelmChart != nil {
@@ -963,7 +963,7 @@ func findAllKotsHelmCharts(specFiles SpecFiles) []kotsutil.HelmChartInterface {
 	return kotsHelmCharts
 }
 
-func tryParsingAsHelmChartGVK(content []byte) kotsutil.HelmChartInterface {
+func tryParsingAsHelmChartGVK(content []byte) helmchart.HelmChartInterface {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, gvk, err := decode(content, nil, nil)
 	if err != nil {
