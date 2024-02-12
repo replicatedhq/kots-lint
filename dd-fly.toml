@@ -27,11 +27,13 @@ kill_timeout = 5
   [[services.ports]]
     force_https = true
     handlers = ["http"]
-    port = 8126
+    start_port = 8126
+    end_port = 8126
 
   [[services.ports]]
     handlers = ["tls", "http"]
-    port = 8126
+    start_port = 8126
+    end_port = 8126
 
   [[services.tcp_checks]]
     grace_period = "30s"
