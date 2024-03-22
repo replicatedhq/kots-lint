@@ -128,7 +128,7 @@ func TestLintBuilders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotFiles, err := GetFilesFromChartReader(tt.chartReader())
+			gotFiles, err := GetFilesFromChartReader(context.Background(), tt.chartReader())
 			if tt.isValidChart {
 				assert.NoError(t, err)
 			} else {
