@@ -28,9 +28,10 @@ func GetEmbeddedTroubleshootSpecs(ctx context.Context, specsFiles SpecFiles) Spe
 		troubleshootSpecs := findTroubleshootSpecs(ctx, specFile.Content)
 		for _, tsSpec := range troubleshootSpecs {
 			tsSpecs = append(tsSpecs, SpecFile{
-				Name:    path.Join(specFile.Name, tsSpec.Name),
-				Path:    specFile.Name,
-				Content: tsSpec.Content,
+				Name:            path.Join(specFile.Name, tsSpec.Name),
+				Path:            specFile.Name,
+				Content:         tsSpec.Content,
+				AllowDuplicates: tsSpec.AllowDuplicates,
 			})
 		}
 	}
@@ -76,8 +77,9 @@ func getSpecFromConfigMap(cm *v1.ConfigMap, namePrefix string) SpecFiles {
 		str, ok := cm.Data[key]
 		if ok {
 			specs = append(specs, SpecFile{
-				Name:    namePrefix + key,
-				Content: str,
+				Name:            namePrefix + key,
+				Content:         str,
+				AllowDuplicates: true,
 			})
 		}
 	}
@@ -98,16 +100,18 @@ func getSpecFromSecret(secret *v1.Secret, namePrefix string) SpecFiles {
 		data, ok := secret.Data[key]
 		if ok {
 			specs = append(specs, SpecFile{
-				Name:    namePrefix + key,
-				Content: string(data),
+				Name:            namePrefix + key,
+				Content:         string(data),
+				AllowDuplicates: true,
 			})
 		}
 
 		str, ok := secret.StringData[key]
 		if ok {
 			specs = append(specs, SpecFile{
-				Name:    namePrefix + key,
-				Content: str,
+				Name:            namePrefix + key,
+				Content:         str,
+				AllowDuplicates: true,
 			})
 		}
 	}
