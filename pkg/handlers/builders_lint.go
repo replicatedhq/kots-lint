@@ -28,6 +28,8 @@ type LintBuildersReleaseResponse struct {
 func LintBuildersRelease(c *gin.Context) {
 	log.Infof("Received builders lint request with content-length=%s, content-type=%s, client-ip=%s", c.GetHeader("content-length"), c.ContentType(), c.ClientIP())
 
+	ctx := c.Request.Context()
+
 	specFiles := kots.SpecFiles{}
 	numChartsRendered := 0
 
@@ -51,7 +53,7 @@ func LintBuildersRelease(c *gin.Context) {
 			}
 
 			log.Debugf("adding files for chart %s", header.Name)
-			files, err := kots.GetFilesFromChartReader(tarReader)
+			files, err := kots.GetFilesFromChartReader(ctx, tarReader)
 			if err != nil {
 				log.Infof("failed to get files from chart %s: %v", header.Name, err)
 				lintExpressions = append(lintExpressions, kots.LintExpression{
@@ -63,11 +65,14 @@ func LintBuildersRelease(c *gin.Context) {
 				continue
 			}
 
+			troubleshootSpecs := kots.GetEmbeddedTroubleshootSpecs(ctx, files)
+
 			numChartsRendered += 1
 			specFiles = append(specFiles, files...)
+			specFiles = append(specFiles, troubleshootSpecs...)
 		}
 	} else if c.ContentType() == "application/gzip" {
-		files, err := kots.GetFilesFromChartReader(c.Request.Body)
+		files, err := kots.GetFilesFromChartReader(ctx, c.Request.Body)
 		if err != nil {
 			log.Infof("failed to get files from request: %v", err)
 			lintExpressions = append(lintExpressions, kots.LintExpression{
@@ -76,8 +81,11 @@ func LintBuildersRelease(c *gin.Context) {
 				Message: err.Error(),
 			})
 		} else {
+			troubleshootSpecs := kots.GetEmbeddedTroubleshootSpecs(ctx, files)
+
 			numChartsRendered += 1
 			specFiles = append(specFiles, files...)
+			specFiles = append(specFiles, troubleshootSpecs...)
 		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "content type must be application/gzip or application/tar"})
@@ -86,7 +94,7 @@ func LintBuildersRelease(c *gin.Context) {
 
 	// Only lint if at least one chart was rendered, otherwise we get missing spec warnings/errors
 	if numChartsRendered > 0 {
-		lint, err := kots.LintBuilders(c.Request.Context(), specFiles)
+		lint, err := kots.LintBuilders(ctx, specFiles)
 		if err != nil {
 			log.Errorf("failed to lint builders charts: %v", err)
 			c.AbortWithError(http.StatusInternalServerError, err)

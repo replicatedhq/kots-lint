@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"archive/tar"
-	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,13 +13,6 @@ import (
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	"github.com/stretchr/testify/require"
 )
-
-func init() {
-	kots.InitOPALinting()
-}
-
-//go:embed test-data/*
-var testdata embed.FS
 
 func Test_LintBuildersRelease(t *testing.T) {
 
@@ -79,6 +71,16 @@ func Test_LintBuildersRelease(t *testing.T) {
 						Positions: nil,
 					},
 				},
+			},
+		},
+		{
+			name: "one valid chart with preflights",
+			chartReader: func() io.ReadCloser {
+				return io.NopCloser(getTarReader([]string{"testchart-with-labels-with-preflightspec-in-secret-16.2.2.tgz"}))
+			},
+			contentType: "application/tar",
+			want: resultType{
+				LintExpressions: nil,
 			},
 		},
 		{
@@ -169,7 +171,7 @@ func Test_LintBuildersRelease(t *testing.T) {
 			var got resultType
 			err = json.Unmarshal(body, &got)
 			req.NoError(err)
-			req.Equal(tt.want, got)
+			req.ElementsMatch(tt.want.LintExpressions, got.LintExpressions)
 		})
 	}
 }

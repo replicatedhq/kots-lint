@@ -1,6 +1,7 @@
 package kots
 
 import (
+	"context"
 	_ "embed"
 	"io"
 	"path/filepath"
@@ -14,7 +15,7 @@ import (
 // GetFilesFromChartReader will render chart templates and return the resulting files
 // This function will ignore missing required values.
 // This function will also not validate value types.
-func GetFilesFromChartReader(r io.Reader) (SpecFiles, error) {
+func GetFilesFromChartReader(ctx context.Context, r io.Reader) (SpecFiles, error) {
 	chart, err := loader.LoadArchive(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "load chart archive")

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -135,7 +136,7 @@ func InitOPALinting() error {
 	return nil
 }
 
-func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
+func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, bool, error) {
 	unnestedFiles := specFiles.unnest()
 
 	tarGzFiles := SpecFiles{}
@@ -146,6 +147,40 @@ func LintSpecFiles(specFiles SpecFiles) ([]LintExpression, bool, error) {
 		}
 		if file.isYAML() {
 			yamlFiles = append(yamlFiles, file)
+		}
+	}
+
+	// Extract troubleshoot specs from ConfigMaps and Secrets, which may also be in Helm charts
+	troubleshootSpecs := GetEmbeddedTroubleshootSpecs(ctx, yamlFiles)
+	for _, tsSpec := range troubleshootSpecs {
+		yamlFiles = append(yamlFiles, SpecFile{
+			Name:     tsSpec.Name,
+			Path:     tsSpec.Path,
+			Content:  tsSpec.Content,
+			DocIndex: len(yamlFiles),
+		})
+	}
+
+	for _, tarGtarGzFile := range tarGzFiles {
+		content, err := base64.StdEncoding.DecodeString(tarGtarGzFile.Content)
+		if err != nil {
+			log.Debugf("failed to base64 decode tarGz content: %v", err)
+			continue
+		}
+
+		files, err := GetFilesFromChartReader(ctx, bytes.NewReader(content))
+		if err != nil {
+			log.Debugf("failed to get files from tgz file %s: %v", tarGtarGzFile.Name, err)
+			continue
+		}
+		troubleshootSpecs := GetEmbeddedTroubleshootSpecs(ctx, files)
+		for _, tsSpec := range troubleshootSpecs {
+			yamlFiles = append(yamlFiles, SpecFile{
+				Name:     tsSpec.Name,
+				Path:     tsSpec.Path,
+				Content:  tsSpec.Content,
+				DocIndex: len(yamlFiles),
+			})
 		}
 	}
 

@@ -1,0 +1,15 @@
+---
+apiVersion: kots.io/v1beta1
+kind: Config
+metadata:
+  name: config-sample
+spec:
+  groups:
+  - name: example_settings
+    title: My Example Config
+    description: Configuration to serve as an example for creating your own. See [https://kots.io/reference/v1beta1/config/](https://kots.io/reference/v1beta1/config/) for configuration docs. In this case, we provide example fields for configuring an Nginx welcome page.
+    items:
+    - name: command_delay_seconds
+      title: Command Delay Seconds
+      type: text
+      default: "10"

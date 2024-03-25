@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,8 +38,10 @@ type LintReleaseResponse struct {
 func LintRelease(c *gin.Context) {
 	log.Infof("Received lint request with content-length=%s, content-type=%s, client-ip=%s", c.GetHeader("content-length"), c.ContentType(), c.ClientIP())
 
+	ctx := c.Request.Context()
+
 	// read before binding to check if body is a tar stream
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
 	if err != nil {
 		log.Errorf("failed to read request body: %v", err)
@@ -58,7 +60,7 @@ func LintRelease(c *gin.Context) {
 		specFiles = f
 	} else {
 		// restore request body to its original state to be able to bind it
-		c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
 
 		var request LintReleaseParameters
 		if err := c.Bind(&request.Body); err != nil {
@@ -74,7 +76,7 @@ func LintRelease(c *gin.Context) {
 		}
 	}
 
-	lintExpressions, isComplete, err := kots.LintSpecFiles(specFiles)
+	lintExpressions, isComplete, err := kots.LintSpecFiles(ctx, specFiles)
 	if err != nil {
 		fmt.Printf("failed to lint spec files: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
