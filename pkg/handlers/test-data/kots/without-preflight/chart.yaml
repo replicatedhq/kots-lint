@@ -1,8 +1,0 @@
-apiVersion: kots.io/v1beta2
-kind: HelmChart
-metadata:
-  name: testchart-with-labels
-spec:
-  chart:
-    name: testchart-with-labels
-    chartVersion: 16.2.2

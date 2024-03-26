@@ -47,7 +47,8 @@ files[output] {
     "name": file.name,
     "path": file.path,
     "content": yaml.unmarshal(file.content),
-    "docIndex": object.get(file, "docIndex", 0)
+    "docIndex": object.get(file, "docIndex", 0),
+    "allowDuplicates": object.get(file, "allowDuplicates", false)
   }
 }
 
@@ -146,7 +147,8 @@ kots_kinds[output] {
     "apiVersion": file.content.apiVersion,
     "kind": file.content.kind,
     "filePath": file.path,
-    "docIndex": file.docIndex
+    "docIndex": file.docIndex,
+    "allowDuplicates": file.allowDuplicates
   }
 }
 
@@ -487,6 +489,8 @@ lint[output] {
   kki := kots_kinds[i]
   kkj := kots_kinds[j]
   i != j
+  not kki.allowDuplicates
+  not kkj.allowDuplicates
   is_same_kots_kind(kki, kkj)
   output := {
     "rule": rule_name,

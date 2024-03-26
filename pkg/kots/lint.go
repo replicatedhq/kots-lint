@@ -154,10 +154,11 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 	troubleshootSpecs := GetEmbeddedTroubleshootSpecs(ctx, yamlFiles)
 	for _, tsSpec := range troubleshootSpecs {
 		yamlFiles = append(yamlFiles, SpecFile{
-			Name:     tsSpec.Name,
-			Path:     tsSpec.Path,
-			Content:  tsSpec.Content,
-			DocIndex: len(yamlFiles),
+			Name:            tsSpec.Name,
+			Path:            tsSpec.Path,
+			Content:         tsSpec.Content,
+			DocIndex:        len(yamlFiles),
+			AllowDuplicates: tsSpec.AllowDuplicates,
 		})
 	}
 
@@ -176,10 +177,11 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 		troubleshootSpecs := GetEmbeddedTroubleshootSpecs(ctx, files)
 		for _, tsSpec := range troubleshootSpecs {
 			yamlFiles = append(yamlFiles, SpecFile{
-				Name:     tsSpec.Name,
-				Path:     tsSpec.Path,
-				Content:  tsSpec.Content,
-				DocIndex: len(yamlFiles),
+				Name:            tsSpec.Name,
+				Path:            tsSpec.Path,
+				Content:         tsSpec.Content,
+				DocIndex:        len(yamlFiles),
+				AllowDuplicates: tsSpec.AllowDuplicates,
 			})
 		}
 	}

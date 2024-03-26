@@ -65,14 +65,9 @@ func Test_LintRelease(t *testing.T) {
 		{
 			name: "one valid chart without kotskinds",
 			chartReader: func(t *testing.T) io.ReadCloser {
-				yamlFiles, err := testdata.ReadDir("test-data/kots/without-preflight")
-				assert.NoError(t, err)
-
 				files := []string{
 					"test-data/builders/testchart-with-labels-16.2.2.tgz",
-				}
-				for _, f := range yamlFiles {
-					files = append(files, filepath.Join("test-data/kots/without-preflight", f.Name()))
+					"test-data/kots/chart-crds/testchart-with-labels-16.2.2.yaml",
 				}
 
 				return io.NopCloser(getTarReader(files))
@@ -112,16 +107,11 @@ func Test_LintRelease(t *testing.T) {
 			},
 		},
 		{
-			name: "one valid chart without kotskinds but with preflights",
+			name: "one valid chart with preflights but without kotskinds in release",
 			chartReader: func(t *testing.T) io.ReadCloser {
-				yamlFiles, err := testdata.ReadDir("test-data/kots/with-preflight")
-				assert.NoError(t, err)
-
 				files := []string{
 					"test-data/builders/testchart-with-labels-with-preflightspec-in-secret-16.2.2.tgz",
-				}
-				for _, f := range yamlFiles {
-					files = append(files, filepath.Join("test-data/kots/with-preflight", f.Name()))
+					"test-data/kots/chart-crds/testchart-with-labels-with-preflightspec-in-secret-16.2.2.yaml",
 				}
 
 				return io.NopCloser(getTarReader(files))
@@ -154,16 +144,52 @@ func Test_LintRelease(t *testing.T) {
 			},
 		},
 		{
-			name: "one valid chart with kotskinds but without preflights",
+			name: "one valid chart without preflights but with kotskinds in release",
 			chartReader: func(t *testing.T) io.ReadCloser {
-				yamlFiles, err := testdata.ReadDir("test-data/kots/with-kots-kinds")
+				yamlFiles, err := testdata.ReadDir("test-data/kots/kots-kinds")
 				assert.NoError(t, err)
 
 				files := []string{
 					"test-data/builders/testchart-with-labels-16.2.2.tgz",
+					"test-data/kots/chart-crds/testchart-with-labels-16.2.2.yaml",
 				}
 				for _, f := range yamlFiles {
-					files = append(files, filepath.Join("test-data/kots/with-kots-kinds", f.Name()))
+					files = append(files, filepath.Join("test-data/kots/kots-kinds", f.Name()))
+				}
+
+				return io.NopCloser(getTarReader(files))
+			},
+			contentType: "application/tar",
+			want: resultType{
+				LintExpressions: []kots.LintExpression{
+					{
+						Rule:    "application-statusInformers",
+						Type:    "warn",
+						Message: "Missing application statusInformers",
+						Path:    "kots-app.yaml",
+						Positions: []kots.LintExpressionItemPosition{
+							{
+								Start: kots.LintExpressionItemLinePosition{
+									Line: 5,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "one valid chart with preflights and with kotskinds in release",
+			chartReader: func(t *testing.T) io.ReadCloser {
+				yamlFiles, err := testdata.ReadDir("test-data/kots/kots-kinds")
+				assert.NoError(t, err)
+
+				files := []string{
+					"test-data/builders/testchart-with-labels-with-preflightspec-in-secret-16.2.2.tgz",
+					"test-data/kots/chart-crds/testchart-with-labels-with-preflightspec-in-secret-16.2.2.yaml",
+				}
+				for _, f := range yamlFiles {
+					files = append(files, filepath.Join("test-data/kots/kots-kinds", f.Name()))
 				}
 
 				return io.NopCloser(getTarReader(files))

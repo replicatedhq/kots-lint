@@ -18,11 +18,12 @@ import (
 type SpecFiles []SpecFile
 
 type SpecFile struct {
-	Name     string    `json:"name"`
-	Path     string    `json:"path"`
-	Content  string    `json:"content"`
-	DocIndex int       `json:"docIndex,omitempty"`
-	Children SpecFiles `json:"children"`
+	Name            string    `json:"name"`
+	Path            string    `json:"path"`
+	Content         string    `json:"content"`
+	DocIndex        int       `json:"docIndex,omitempty"`
+	AllowDuplicates bool      `json:"allowDuplicates"` // kotskinds can be duplicated if they are coming from secrets or configmaps
+	Children        SpecFiles `json:"children"`
 }
 
 type GVKDoc struct {
@@ -94,6 +95,10 @@ func (fs SpecFiles) separate() (SpecFiles, error) {
 				Path:     file.Path, // keep original path to be able to link it back
 				Content:  doc,
 				DocIndex: index,
+				// Split files inherit the original file's AllowDuplicates.
+				// This will only be set for KotsKinds extracted from Secrets and ConfigMaps, so this works.
+				// But also there is no good way to allow split docs to have their own flag.
+				AllowDuplicates: file.AllowDuplicates,
 			}
 
 			separatedSpecFiles = append(separatedSpecFiles, separatedSpecFile)

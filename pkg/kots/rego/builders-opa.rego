@@ -7,7 +7,8 @@ files[output] {
     "name": file.name,
     "path": file.path,
     "content": yaml.unmarshal(file.content),
-    "docIndex": object.get(file, "docIndex", 0)
+    "docIndex": object.get(file, "docIndex", 0),
+    "allowDuplicates": object.get(file, "allowDuplicates", false)
   }
 }
 
