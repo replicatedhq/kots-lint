@@ -35,7 +35,7 @@ func Run() {
 		cors.Middleware(cors.Options{
 			AllowOrigins:  []string{"*"},
 			AllowMethods:  []string{"GET", "POST", "OPTIONS"},
-			AllowHeaders:  []string{"Origin", "Accept", "Content-Type", "X-Datadog-Trace-Id", "X-Datadog-Parent-Id", "X-Datadog-Sampling-Priority", "X-Datadog-Origin"},
+			AllowHeaders:  []string{"Origin", "Accept", "Content-Type", "X-Datadog-Trace-Id", "X-Datadog-Parent-Id", "X-Datadog-Sampling-Priority", "X-Datadog-Origin", "Traceparent"},
 			ExposeHeaders: []string{"Content-Length"},
 		}),
 	)
