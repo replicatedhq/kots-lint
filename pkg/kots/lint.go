@@ -17,6 +17,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
+	embeddedclusterv1beta1 "github.com/replicatedhq/embedded-cluster-kinds/apis/v1beta1"
 	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsoperatortypes "github.com/replicatedhq/kots/pkg/operator/types"
@@ -39,6 +40,7 @@ var kurlLinter *kurllint.Linter
 func init() {
 	kurlLinter = kurllint.New()
 	kotsscheme.AddToScheme(scheme.Scheme)
+	embeddedclusterv1beta1.AddToScheme(scheme.Scheme)
 	kotsVersions = make(map[string]bool)
 }
 
