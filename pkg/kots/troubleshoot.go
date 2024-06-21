@@ -47,7 +47,7 @@ func findTroubleshootSpecs(ctx context.Context, fileData string) SpecFiles {
 	for _, srcDoc := range srcDocs {
 		obj, _, err := decoder.Decode([]byte(srcDoc), nil, nil)
 		if err != nil {
-			log.Debugf("failed to decode raw spec: %s", srcDoc)
+			log.Debugf("failed to decode raw spec test: %s", srcDoc)
 			continue
 		}
 
