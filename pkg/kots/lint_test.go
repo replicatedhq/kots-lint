@@ -1642,6 +1642,29 @@ spec:
 			},
 			expect: []LintExpression{},
 		},
+		{
+			name: "embedded cluster no errors",
+			specFiles: SpecFiles{
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "1.2.2+k8s-1.29"
+  roles:
+    controller:
+      name: management
+      labels:
+        management: "true"
+    custom:
+    - name: app
+      labels:
+       app: "true"`,
+				},
+			},
+			expect: []LintExpression{},
+		},
 	}
 
 	for _, test := range tests {
