@@ -25,7 +25,6 @@ import (
 	kotsoperatortypes "github.com/replicatedhq/kots/pkg/operator/types"
 	kotsv1beta1 "github.com/replicatedhq/kotskinds/apis/kots/v1beta1"
 	kotsv1beta2 "github.com/replicatedhq/kotskinds/apis/kots/v1beta2"
-	kotsscheme "github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
 	"github.com/replicatedhq/kotskinds/pkg/helmchart"
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
@@ -43,7 +42,6 @@ func init() {
 	kurlLinter = &kurl.KurlLinter{
 		Linter: kurllint.New(),
 	}
-	kotsscheme.AddToScheme(scheme.Scheme)
 	kotsVersions = make(map[string]bool)
 }
 

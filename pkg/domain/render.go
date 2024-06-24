@@ -13,7 +13,12 @@ import (
 	registrytypes "github.com/replicatedhq/kots/pkg/registry/types"
 	"github.com/replicatedhq/kots/pkg/template"
 	kotsv1beta1 "github.com/replicatedhq/kotskinds/apis/kots/v1beta1"
+	kotsscheme "github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
 )
+
+func init() {
+	kotsscheme.AddToScheme(scheme.Scheme)
+}
 
 type RenderTemplateError struct {
 	message string
