@@ -35,6 +35,7 @@ import (
 var kotsVersions map[string]bool
 var rwMutex sync.RWMutex
 var kurlLinter *kurllint.Linter
+var ecLinter *eclint.Linter
 
 func init() {
 	kurlLinter = kurllint.New()
@@ -263,6 +264,11 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 		return nil, false, errors.Wrap(err, "failed to lint kurl installer")
 	}
 
+	embeddedClusterLintExpressions, err := lintEmbeddedClusterInstaller(ecLinter, yamlFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint ec installer")
+	}
+
 	allLintExpressions := []LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
@@ -270,6 +276,7 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 	allLintExpressions = append(allLintExpressions, renderContentLintExpressions...)
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
 	allLintExpressions = append(allLintExpressions, installerLintExpressions...)
+	allLintExpressions = append(allLintExpressions, embeddedClusterLintExpressions...)
 
 	return allLintExpressions, true, nil
 }
