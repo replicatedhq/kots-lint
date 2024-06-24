@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	log "github.com/sirupsen/logrus"
 )
@@ -29,7 +30,7 @@ type EnterpriseLintReleaseResponse struct {
 	// Required: true
 	// In: body
 	Body struct {
-		LintExpressions []kots.LintExpression `json:"lintExpressions"`
+		LintExpressions []domain.LintExpression `json:"lintExpressions"`
 	}
 }
 
@@ -42,7 +43,7 @@ func EnterpriseLintRelease(c *gin.Context) {
 		return
 	}
 
-	specFiles := kots.SpecFiles{}
+	specFiles := domain.SpecFiles{}
 	if err := json.Unmarshal([]byte(request.Body.Spec), &specFiles); err != nil {
 		log.Errorf("failed to unmarshal spec: %v", err)
 		c.AbortWithError(http.StatusInternalServerError, err)

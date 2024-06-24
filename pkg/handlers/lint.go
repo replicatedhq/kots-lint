@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	log "github.com/sirupsen/logrus"
@@ -29,8 +30,8 @@ type LintReleaseResponse struct {
 	// Required: true
 	// In: body
 	Body struct {
-		LintExpressions   []kots.LintExpression `json:"lintExpressions"`
-		IsLintingComplete bool                  `json:"isLintingComplete"`
+		LintExpressions   []domain.LintExpression `json:"lintExpressions"`
+		IsLintingComplete bool                    `json:"isLintingComplete"`
 	}
 }
 
@@ -49,9 +50,9 @@ func LintRelease(c *gin.Context) {
 		return
 	}
 
-	specFiles := kots.SpecFiles{}
+	specFiles := domain.SpecFiles{}
 	if util.IsTarFile(data) {
-		f, err := kots.SpecFilesFromTar(bytes.NewReader(data))
+		f, err := domain.SpecFilesFromTar(bytes.NewReader(data))
 		if err != nil {
 			log.Errorf("failed to get spec files from tar file: %v", err)
 			c.AbortWithError(http.StatusInternalServerError, err)

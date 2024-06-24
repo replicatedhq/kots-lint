@@ -8,6 +8,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/replicatedhq/kots-lint/pkg/domain" // Add this import
+
 	"gopkg.in/stretchr/testify.v1/assert"
 )
 
@@ -19,7 +21,7 @@ func TestLintBuilders(t *testing.T) {
 		name         string
 		chartReader  func() io.Reader
 		isValidChart bool
-		want         []LintExpression
+		want         []domain.LintExpression
 	}{
 		{
 			name: "chart with all recommended labels present",
@@ -31,7 +33,7 @@ func TestLintBuilders(t *testing.T) {
 				return f
 			},
 			isValidChart: true,
-			want: []LintExpression{
+			want: []domain.LintExpression{
 				{
 					Rule:      "preflight-spec",
 					Type:      "warn",
@@ -51,7 +53,7 @@ func TestLintBuilders(t *testing.T) {
 				return f
 			},
 			isValidChart: true,
-			want: []LintExpression{
+			want: []domain.LintExpression{
 				{
 					Rule:      "informers-labels-not-found",
 					Type:      "warn",
@@ -78,7 +80,7 @@ func TestLintBuilders(t *testing.T) {
 				return f
 			},
 			isValidChart: true,
-			want: []LintExpression{
+			want: []domain.LintExpression{
 				{
 					Rule:      "informers-labels-not-found",
 					Type:      "warn",
@@ -98,7 +100,7 @@ func TestLintBuilders(t *testing.T) {
 				return f
 			},
 			isValidChart: true,
-			want: []LintExpression{
+			want: []domain.LintExpression{
 				{
 					Rule:      "informers-labels-not-found",
 					Type:      "warn",
@@ -139,8 +141,8 @@ func TestLintBuilders(t *testing.T) {
 			got, err := LintBuilders(context.Background(), gotFiles)
 			assert.NoError(t, err)
 
-			sort.Sort(LintExpressionsByRule(tt.want))
-			sort.Sort(LintExpressionsByRule(got))
+			sort.Sort(domain.LintExpressionsByRule(tt.want))
+			sort.Sort(domain.LintExpressionsByRule(got))
 			assert.Equal(t, tt.want, got)
 		})
 	}

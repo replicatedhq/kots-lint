@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/replicatedhq/kots-lint/pkg/kots"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/stretchr/testify.v1/assert"
 )
@@ -20,7 +20,7 @@ import (
 func Test_LintRelease(t *testing.T) {
 
 	type resultType struct {
-		LintExpressions []kots.LintExpression `json:"lintExpressions"`
+		LintExpressions []domain.LintExpression `json:"lintExpressions"`
 	}
 
 	getTarReader := func(filesNames []string) io.Reader {
@@ -74,7 +74,7 @@ func Test_LintRelease(t *testing.T) {
 			},
 			contentType: "application/tar",
 			want: resultType{
-				LintExpressions: []kots.LintExpression{
+				LintExpressions: []domain.LintExpression{
 					{
 						Rule:      "preflight-spec",
 						Type:      "warn",
@@ -118,7 +118,7 @@ func Test_LintRelease(t *testing.T) {
 			},
 			contentType: "application/tar",
 			want: resultType{
-				LintExpressions: []kots.LintExpression{
+				LintExpressions: []domain.LintExpression{
 					{
 						Rule:      "application-spec",
 						Type:      "warn",
@@ -161,15 +161,15 @@ func Test_LintRelease(t *testing.T) {
 			},
 			contentType: "application/tar",
 			want: resultType{
-				LintExpressions: []kots.LintExpression{
+				LintExpressions: []domain.LintExpression{
 					{
 						Rule:    "application-statusInformers",
 						Type:    "warn",
 						Message: "Missing application statusInformers",
 						Path:    "kots-app.yaml",
-						Positions: []kots.LintExpressionItemPosition{
+						Positions: []domain.LintExpressionItemPosition{
 							{
-								Start: kots.LintExpressionItemLinePosition{
+								Start: domain.LintExpressionItemLinePosition{
 									Line: 5,
 								},
 							},
@@ -196,15 +196,15 @@ func Test_LintRelease(t *testing.T) {
 			},
 			contentType: "application/tar",
 			want: resultType{
-				LintExpressions: []kots.LintExpression{
+				LintExpressions: []domain.LintExpression{
 					{
 						Rule:    "application-statusInformers",
 						Type:    "warn",
 						Message: "Missing application statusInformers",
 						Path:    "kots-app.yaml",
-						Positions: []kots.LintExpressionItemPosition{
+						Positions: []domain.LintExpressionItemPosition{
 							{
-								Start: kots.LintExpressionItemLinePosition{
+								Start: domain.LintExpressionItemLinePosition{
 									Line: 5,
 								},
 							},

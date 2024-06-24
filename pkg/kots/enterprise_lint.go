@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 )
 
 //go:embed rego/enterprise-opa-prepend.rego
@@ -17,35 +18,35 @@ type EnterprisePolicy struct {
 	Policy string `json:"policy"`
 }
 
-func EnterpriseLintSpecFiles(specFiles SpecFiles, policies []EnterprisePolicy) ([]LintExpression, error) {
-	unnestedFiles := specFiles.unnest()
+func EnterpriseLintSpecFiles(specFiles domain.SpecFiles, policies []EnterprisePolicy) ([]domain.LintExpression, error) {
+	unnestedFiles := specFiles.Unnest()
 
-	filteredFiles := SpecFiles{}
+	filteredFiles := domain.SpecFiles{}
 	for _, file := range unnestedFiles {
-		if file.isYAML() {
+		if file.IsYAML() {
 			filteredFiles = append(filteredFiles, file)
 		}
 	}
 
-	separatedSpecFiles, err := filteredFiles.separate()
+	separatedSpecFiles, err := filteredFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	config, _, err := separatedSpecFiles.findAndValidateConfig()
+	config, _, err := separatedSpecFiles.FindAndValidateConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find config")
 	}
 
-	builder, err := getTemplateBuilder(config)
+	builder, err := domain.GetTemplateBuilder(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get template builder")
 	}
 
 	// get the rendered version of the spec files before linting
-	renderedFiles := SpecFiles{}
+	renderedFiles := domain.SpecFiles{}
 	for _, file := range separatedSpecFiles {
-		renderedContent, err := file.renderContent(builder)
+		renderedContent, err := file.RenderContent(builder)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to render spec file content")
 		}
@@ -53,7 +54,7 @@ func EnterpriseLintSpecFiles(specFiles SpecFiles, policies []EnterprisePolicy) (
 		renderedFiles = append(renderedFiles, file)
 	}
 
-	lintExpressions := []LintExpression{}
+	lintExpressions := []domain.LintExpression{}
 	for _, policy := range policies {
 		expressions, err := lintWithOPAPolicy(renderedFiles, policy.Policy)
 		if err != nil {
@@ -65,7 +66,7 @@ func EnterpriseLintSpecFiles(specFiles SpecFiles, policies []EnterprisePolicy) (
 	return lintExpressions, nil
 }
 
-func lintWithOPAPolicy(specFiles SpecFiles, policy string) ([]LintExpression, error) {
+func lintWithOPAPolicy(specFiles domain.SpecFiles, policy string) ([]domain.LintExpression, error) {
 	ctx := context.Background()
 
 	query, err := rego.New(
@@ -82,15 +83,15 @@ func lintWithOPAPolicy(specFiles SpecFiles, policy string) ([]LintExpression, er
 		return nil, errors.Wrap(err, "failed to evaluate query")
 	}
 	if len(results) == 0 {
-		return []LintExpression{}, nil
+		return []domain.LintExpression{}, nil
 	}
 
 	result := results[0]
 	if len(result.Expressions) == 0 {
-		return []LintExpression{}, nil
+		return []domain.LintExpression{}, nil
 	}
 
-	var lintExpressions []LintExpression
+	var lintExpressions []domain.LintExpression
 	if err := mapstructure.Decode(result.Expressions[0].Value, &lintExpressions); err != nil {
 		return nil, errors.Wrap(err, "failed to mapstructure lint expressions")
 	}

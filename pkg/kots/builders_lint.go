@@ -6,9 +6,10 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 )
 
-func LintBuilders(ctx context.Context, files SpecFiles) ([]LintExpression, error) {
+func LintBuilders(ctx context.Context, files domain.SpecFiles) ([]domain.LintExpression, error) {
 	opaResults, err := buildersRegoQuery.Eval(ctx, rego.EvalInput(files))
 
 	if err != nil {

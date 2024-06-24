@@ -1,4 +1,4 @@
-package kots
+package domain
 
 import (
 	"testing"
@@ -230,7 +230,7 @@ spec:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			renderedFiles, err := tt.files.render()
+			renderedFiles, err := tt.files.Render()
 			require.NoError(t, err)
 			assert.ElementsMatch(t, renderedFiles, tt.want)
 		})
@@ -461,17 +461,17 @@ spec:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config, path, err := tt.files.findAndValidateConfig()
+			config, path, err := tt.files.FindAndValidateConfig()
 
 			require.NoError(t, err)
 			assert.Equal(t, path, tt.configPath)
 
-			builder, err := getTemplateBuilder(config)
+			builder, err := GetTemplateBuilder(config)
 			require.NoError(t, err)
 
 			renderedFiles := SpecFiles{}
 			for _, file := range tt.files {
-				renderedContent, err := file.renderContent(builder)
+				renderedContent, err := file.RenderContent(builder)
 				require.NoError(t, err)
 				file.Content = string(renderedContent)
 				renderedFiles = append(renderedFiles, file)
@@ -523,7 +523,7 @@ spec:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config, path, err := tt.files.findAndValidateConfig()
+			config, path, err := tt.files.FindAndValidateConfig()
 			assert.Equal(t, err.Error(), tt.wantErr)
 			assert.Equal(t, path, tt.configPath)
 			assert.NotNil(t, config)
@@ -606,10 +606,10 @@ spec:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			builder, err := getTemplateBuilder(nil)
+			builder, err := GetTemplateBuilder(nil)
 			require.NoError(t, err)
 
-			_, err = tt.file.renderContent(builder)
+			_, err = tt.file.RenderContent(builder)
 
 			renderTemplateError, ok := errors.Cause(err).(RenderTemplateError)
 			assert.True(t, ok)

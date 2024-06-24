@@ -9,11 +9,12 @@ import (
 	"github.com/instrumenta/kubeval/kubeval"
 	"github.com/pkg/errors"
 	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	goyaml "gopkg.in/yaml.v2"
 )
 
-func TroubleshootLintSpec(spec string) ([]LintExpression, error) {
+func TroubleshootLintSpec(spec string) ([]domain.LintExpression, error) {
 	// if there are yaml errors, end early there
 	yamlLintExpressions := lintSpecHasValidYAML(spec)
 	if lintExpressionsHaveErrors(yamlLintExpressions) {
@@ -25,19 +26,19 @@ func TroubleshootLintSpec(spec string) ([]LintExpression, error) {
 		return nil, errors.Wrap(err, "failed to lint spec with Kubeval")
 	}
 
-	allLintExpressions := []LintExpression{}
+	allLintExpressions := []domain.LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
 
 	return allLintExpressions, nil
 }
 
-func lintSpecWithKubeval(spec string) ([]LintExpression, error) {
+func lintSpecWithKubeval(spec string) ([]domain.LintExpression, error) {
 	return lintSpecWithKubevalSchema(spec, fmt.Sprintf("file://%s", kjs.KubernetesJsonSchemaDir))
 }
 
-func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
+func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 
 	kubevalConfig := kubeval.Config{
 		SchemaLocation:    schemaLocation,
@@ -47,16 +48,16 @@ func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpres
 
 	results, err := kubeval.Validate([]byte(spec), &kubevalConfig)
 	if err != nil {
-		var lintExpression LintExpression
+		var lintExpression domain.LintExpression
 
 		if strings.Contains(err.Error(), "Failed initalizing schema") && strings.Contains(err.Error(), "no such file or directory") {
-			lintExpression = LintExpression{
+			lintExpression = domain.LintExpression{
 				Rule:    "kubeval-schema-not-found",
 				Type:    "warn",
 				Message: "We currently have no matching schema to lint this type of file",
 			}
 		} else {
-			lintExpression = LintExpression{
+			lintExpression = domain.LintExpression{
 				Rule:    "kubeval-error",
 				Type:    "error",
 				Message: err.Error(),
@@ -70,7 +71,7 @@ func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpres
 
 	for _, validationResult := range results {
 		for _, validationError := range validationResult.Errors {
-			lintExpression := LintExpression{
+			lintExpression := domain.LintExpression{
 				Rule:    validationError.Type(),
 				Type:    "warn",
 				Message: validationError.Description(),
@@ -83,9 +84,9 @@ func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpres
 				continue
 			}
 
-			lintExpression.Positions = []LintExpressionItemPosition{
+			lintExpression.Positions = []domain.LintExpressionItemPosition{
 				{
-					Start: LintExpressionItemLinePosition{
+					Start: domain.LintExpressionItemLinePosition{
 						Line: line,
 					},
 				},
@@ -98,8 +99,8 @@ func lintSpecWithKubevalSchema(spec string, schemaLocation string) ([]LintExpres
 	return lintExpressions, nil
 }
 
-func lintSpecHasValidYAML(spec string) []LintExpression {
-	lintExpressions := []LintExpression{}
+func lintSpecHasValidYAML(spec string) []domain.LintExpression {
+	lintExpressions := []domain.LintExpression{}
 
 	reader := bytes.NewReader([]byte(spec))
 	decoder := goyaml.NewDecoder(reader)
@@ -117,7 +118,7 @@ func lintSpecHasValidYAML(spec string) []LintExpression {
 			break
 		}
 
-		lintExpression := LintExpression{
+		lintExpression := domain.LintExpression{
 			Rule:    "invalid-yaml",
 			Type:    "error",
 			Message: err.Error(),
@@ -125,9 +126,9 @@ func lintSpecHasValidYAML(spec string) []LintExpression {
 
 		line, err := util.TryGetLineNumberFromValue(err.Error())
 		if err == nil && line > -1 {
-			lintExpression.Positions = []LintExpressionItemPosition{
+			lintExpression.Positions = []domain.LintExpressionItemPosition{
 				{
-					Start: LintExpressionItemLinePosition{
+					Start: domain.LintExpressionItemLinePosition{
 						Line: line,
 					},
 				},
