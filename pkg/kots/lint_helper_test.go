@@ -1,7 +1,9 @@
 package kots
 
+import "github.com/replicatedhq/kots-lint/pkg/domain"
+
 var (
-	validKotsAppSpec = SpecFile{
+	validKotsAppSpec = domain.SpecFile{
 		Name: "kots-app.yaml",
 		Path: "kots-app.yaml",
 		Content: `apiVersion: kots.io/v1beta1
@@ -12,28 +14,28 @@ spec:
     - deployment/example-nginx`,
 	}
 
-	validPreflightSpec = SpecFile{
+	validPreflightSpec = domain.SpecFile{
 		Name: "app-preflight.yaml",
 		Path: "app-preflight.yaml",
 		Content: `apiVersion: troubleshoot.sh/v1beta2
 kind: Preflight`,
 	}
 
-	validSupportBundleSpec = SpecFile{
+	validSupportBundleSpec = domain.SpecFile{
 		Name: "app-supportbundle.yaml",
 		Path: "app-supportbundle.yaml",
 		Content: `apiVersion: troubleshoot.sh/v1beta2
 kind: SupportBundle`,
 	}
 
-	validConfigSpec = SpecFile{
+	validConfigSpec = domain.SpecFile{
 		Name: "app-config.yaml",
 		Path: "app-config.yaml",
 		Content: `apiVersion: kots.io/v1beta1
 kind: Config`,
 	}
 
-	validExampleNginxDeploymentSpecFile = SpecFile{
+	validExampleNginxDeploymentSpecFile = domain.SpecFile{
 		Name: "deployment.yaml",
 		Path: "deployment.yaml",
 		Content: `apiVersion: apps/v1
@@ -66,7 +68,7 @@ kind: Config`,
 				cpu: '500m'`,
 	}
 
-	validRegexValidationConfigSpec = SpecFile{
+	validRegexValidationConfigSpec = domain.SpecFile{
 		Name: "app-config.yaml",
 		Path: "app-config.yaml",
 		Content: `apiVersion: kots.io/v1beta1

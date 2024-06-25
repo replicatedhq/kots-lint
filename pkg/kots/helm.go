@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
@@ -15,7 +16,7 @@ import (
 // GetFilesFromChartReader will render chart templates and return the resulting files
 // This function will ignore missing required values.
 // This function will also not validate value types.
-func GetFilesFromChartReader(ctx context.Context, r io.Reader) (SpecFiles, error) {
+func GetFilesFromChartReader(ctx context.Context, r io.Reader) (domain.SpecFiles, error) {
 	chart, err := loader.LoadArchive(r)
 	if err != nil {
 		return nil, errors.Wrap(err, "load chart archive")
@@ -44,13 +45,13 @@ func GetFilesFromChartReader(ctx context.Context, r io.Reader) (SpecFiles, error
 		return nil, errors.Wrap(err, "render templates")
 	}
 
-	specFiles := SpecFiles{}
+	specFiles := domain.SpecFiles{}
 	for fileName, fileData := range renderedTemplates {
 		if ext := filepath.Ext(fileName); ext != ".yaml" && ext != ".yml" {
 			continue
 		}
 
-		specFile := SpecFile{
+		specFile := domain.SpecFile{
 			Name:     fileName,
 			Path:     filepath.Dir(fileName),
 			Content:  fileData,

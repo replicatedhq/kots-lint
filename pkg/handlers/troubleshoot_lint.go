@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,7 +26,7 @@ type TroubleshootLintSpecResponse struct {
 	// Required: true
 	// In: body
 	Body struct {
-		LintExpressions []kots.LintExpression `json:"lintExpressions"`
+		LintExpressions []domain.LintExpression `json:"lintExpressions"`
 	}
 }
 

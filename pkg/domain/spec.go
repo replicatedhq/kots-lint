@@ -1,4 +1,4 @@
-package kots
+package domain
 
 import (
 	"archive/tar"
@@ -37,11 +37,11 @@ type GVKMetadata struct {
 	Namespace string `yaml:"namespace" json:"namespace"`
 }
 
-func (f SpecFile) isTarGz() bool {
+func (f SpecFile) IsTarGz() bool {
 	return strings.HasSuffix(f.Path, ".tgz") || strings.HasSuffix(f.Path, ".tar.gz")
 }
 
-func (f SpecFile) isYAML() bool {
+func (f SpecFile) IsYAML() bool {
 	return strings.HasSuffix(f.Path, ".yaml") || strings.HasSuffix(f.Path, ".yml")
 }
 
@@ -49,11 +49,11 @@ func (f SpecFile) hasContent() bool {
 	return util.CleanUpYaml(f.Content) != ""
 }
 
-func (fs SpecFiles) unnest() SpecFiles {
+func (fs SpecFiles) Unnest() SpecFiles {
 	unnestedFiles := SpecFiles{}
 	for _, file := range fs {
 		if len(file.Children) > 0 {
-			unnestedFiles = append(unnestedFiles, file.Children.unnest()...)
+			unnestedFiles = append(unnestedFiles, file.Children.Unnest()...)
 		} else {
 			unnestedFiles = append(unnestedFiles, file)
 		}
@@ -61,7 +61,7 @@ func (fs SpecFiles) unnest() SpecFiles {
 	return unnestedFiles
 }
 
-func (fs SpecFiles) getFile(path string) (*SpecFile, error) {
+func (fs SpecFiles) GetFile(path string) (*SpecFile, error) {
 	for _, file := range fs {
 		if file.Path == path {
 			return &file, nil
@@ -70,11 +70,11 @@ func (fs SpecFiles) getFile(path string) (*SpecFile, error) {
 	return nil, fmt.Errorf("spec file not found for path %s", path)
 }
 
-func (fs SpecFiles) separate() (SpecFiles, error) {
+func (fs SpecFiles) Separate() (SpecFiles, error) {
 	separatedSpecFiles := SpecFiles{}
 
 	for _, file := range fs {
-		if !file.isYAML() {
+		if !file.IsYAML() {
 			separatedSpecFiles = append(separatedSpecFiles, file)
 			continue
 		}

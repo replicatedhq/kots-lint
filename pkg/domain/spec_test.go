@@ -1,4 +1,4 @@
-package kots
+package domain
 
 import (
 	"testing"
@@ -138,7 +138,7 @@ func Test_unnestSpecFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			unnestedFiles := tt.files.unnest()
+			unnestedFiles := tt.files.Unnest()
 			assert.ElementsMatch(t, unnestedFiles, tt.want)
 		})
 	}
@@ -296,7 +296,7 @@ key2: value2`,
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			separatedFiles, err := tt.files.separate()
+			separatedFiles, err := tt.files.Separate()
 			require.NoError(t, err)
 			assert.ElementsMatch(t, separatedFiles, tt.want)
 		})

@@ -18,11 +18,13 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/pkg/errors"
 	kjs "github.com/replicatedhq/kots-lint/kubernetes_json_schema"
+	"github.com/replicatedhq/kots-lint/pkg/domain"
+	"github.com/replicatedhq/kots-lint/pkg/ec"
+	"github.com/replicatedhq/kots-lint/pkg/kurl"
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsoperatortypes "github.com/replicatedhq/kots/pkg/operator/types"
 	kotsv1beta1 "github.com/replicatedhq/kotskinds/apis/kots/v1beta1"
 	kotsv1beta2 "github.com/replicatedhq/kotskinds/apis/kots/v1beta2"
-	kotsscheme "github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
 	"github.com/replicatedhq/kotskinds/pkg/helmchart"
 	kurllint "github.com/replicatedhq/kurlkinds/pkg/lint"
 	log "github.com/sirupsen/logrus"
@@ -32,46 +34,15 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 )
 
+var kurlLinter *kurl.KurlLinter
 var kotsVersions map[string]bool
 var rwMutex sync.RWMutex
-var kurlLinter *kurllint.Linter
 
 func init() {
-	kurlLinter = kurllint.New()
-	kotsscheme.AddToScheme(scheme.Scheme)
+	kurlLinter = &kurl.KurlLinter{
+		Linter: kurllint.New(),
+	}
 	kotsVersions = make(map[string]bool)
-}
-
-type LintExpression struct {
-	Rule      string                       `json:"rule"`
-	Type      string                       `json:"type"`
-	Message   string                       `json:"message"`
-	Path      string                       `json:"path"`
-	Positions []LintExpressionItemPosition `json:"positions"`
-}
-
-type LintExpressionsByRule []LintExpression
-
-func (a LintExpressionsByRule) Len() int           { return len(a) }
-func (a LintExpressionsByRule) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a LintExpressionsByRule) Less(i, j int) bool { return a[i].Rule < a[j].Rule }
-
-type OPALintExpression struct {
-	Rule     string `json:"rule"`
-	Type     string `json:"type"`
-	Message  string `json:"message"`
-	Path     string `json:"path"`
-	DocIndex int    `json:"docIndex"`
-	Field    string `json:"field"`
-	Match    string `json:"match"`
-}
-
-type LintExpressionItemPosition struct {
-	Start LintExpressionItemLinePosition `json:"start"`
-}
-
-type LintExpressionItemLinePosition struct {
-	Line int `json:"line"`
 }
 
 var (
@@ -136,16 +107,16 @@ func InitOPALinting() error {
 	return nil
 }
 
-func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, bool, error) {
-	unnestedFiles := specFiles.unnest()
+func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.LintExpression, bool, error) {
+	unnestedFiles := specFiles.Unnest()
 
-	tarGzFiles := SpecFiles{}
-	yamlFiles := SpecFiles{}
+	tarGzFiles := domain.SpecFiles{}
+	yamlFiles := domain.SpecFiles{}
 	for _, file := range unnestedFiles {
-		if file.isTarGz() {
+		if file.IsTarGz() {
 			tarGzFiles = append(tarGzFiles, file)
 		}
-		if file.isYAML() {
+		if file.IsYAML() {
 			yamlFiles = append(yamlFiles, file)
 		}
 	}
@@ -153,7 +124,7 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 	// Extract troubleshoot specs from ConfigMaps and Secrets, which may also be in Helm charts
 	troubleshootSpecs := GetEmbeddedTroubleshootSpecs(ctx, yamlFiles)
 	for _, tsSpec := range troubleshootSpecs {
-		yamlFiles = append(yamlFiles, SpecFile{
+		yamlFiles = append(yamlFiles, domain.SpecFile{
 			Name:            tsSpec.Name,
 			Path:            tsSpec.Path,
 			Content:         tsSpec.Content,
@@ -176,7 +147,7 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 		}
 		troubleshootSpecs := GetEmbeddedTroubleshootSpecs(ctx, files)
 		for _, tsSpec := range troubleshootSpecs {
-			yamlFiles = append(yamlFiles, SpecFile{
+			yamlFiles = append(yamlFiles, domain.SpecFile{
 				Name:            tsSpec.Name,
 				Path:            tsSpec.Path,
 				Content:         tsSpec.Content,
@@ -258,26 +229,32 @@ func LintSpecFiles(ctx context.Context, specFiles SpecFiles) ([]LintExpression, 
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
 
-	installerLintExpressions, err := lintKurlInstaller(kurlLinter, yamlFiles)
+	installerLintExpressions, err := kurlLinter.LintKurlInstaller(yamlFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint kurl installer")
 	}
 
-	allLintExpressions := []LintExpression{}
+	embeddedClusterLintExpressions, err := ec.LintEmbeddedClusterVersion(yamlFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint ec installer version")
+	}
+
+	allLintExpressions := []domain.LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaRenderedLintExpressions...)
 	allLintExpressions = append(allLintExpressions, renderContentLintExpressions...)
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
 	allLintExpressions = append(allLintExpressions, installerLintExpressions...)
+	allLintExpressions = append(allLintExpressions, embeddedClusterLintExpressions...)
 
 	return allLintExpressions, true, nil
 }
 
 // InitOPALinting needs to be called first in order for this function to run successfully
 // This function will lint using the prepared query for NON-rendered files
-func lintWithOPANonRendered(specFiles SpecFiles) ([]LintExpression, error) {
-	separatedSpecFiles, err := specFiles.separate()
+func lintWithOPANonRendered(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	separatedSpecFiles, err := specFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
@@ -295,7 +272,7 @@ func lintWithOPANonRendered(specFiles SpecFiles) ([]LintExpression, error) {
 // This function will lint using the prepared query for RENDERED files
 // renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
 // originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
-func lintWithOPARendered(renderedFiles SpecFiles, originalFiles SpecFiles) ([]LintExpression, error) {
+func lintWithOPARendered(renderedFiles domain.SpecFiles, originalFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	ctx := context.Background()
 	results, err := renderedRegoQuery.Eval(ctx, rego.EvalInput(renderedFiles))
 	if err != nil {
@@ -304,8 +281,8 @@ func lintWithOPARendered(renderedFiles SpecFiles, originalFiles SpecFiles) ([]Li
 	return opaResultsToLintExpressions(results, originalFiles)
 }
 
-func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
+func opaResultsToLintExpressions(results rego.ResultSet, specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 
 	if len(results) == 0 {
 		return lintExpressions, nil
@@ -316,14 +293,14 @@ func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([
 		return lintExpressions, nil
 	}
 
-	var opaLintExpressions []OPALintExpression
+	var opaLintExpressions []domain.OPALintExpression
 	if err := mapstructure.Decode(result.Expressions[0].Value, &opaLintExpressions); err != nil {
 		return nil, errors.Wrap(err, "failed to mapstructure opa lint expressions")
 	}
 
 	// map opa lint expressions to standard lint expressions
 	for _, opaLintExpression := range opaLintExpressions {
-		lintExpression := LintExpression{
+		lintExpression := domain.LintExpression{
 			Rule:    opaLintExpression.Rule,
 			Type:    opaLintExpression.Type,
 			Message: opaLintExpression.Message,
@@ -337,7 +314,7 @@ func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([
 		lintExpression.Path = opaLintExpression.Path
 
 		// we need to get the line number for the original file content not the separated document nor the rendered one
-		foundSpecFile, err := specFiles.getFile(opaLintExpression.Path)
+		foundSpecFile, err := specFiles.GetFile(opaLintExpression.Path)
 		if err != nil {
 			lintExpressions = append(lintExpressions, lintExpression)
 			continue
@@ -357,9 +334,9 @@ func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([
 			continue
 		}
 
-		lintExpression.Positions = []LintExpressionItemPosition{
+		lintExpression.Positions = []domain.LintExpressionItemPosition{
 			{
-				Start: LintExpressionItemLinePosition{
+				Start: domain.LintExpressionItemLinePosition{
 					Line: line,
 				},
 			},
@@ -373,14 +350,14 @@ func opaResultsToLintExpressions(results rego.ResultSet, specFiles SpecFiles) ([
 
 // renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
 // originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
-func lintWithKubeval(renderedFiles SpecFiles, originalFiles SpecFiles) ([]LintExpression, error) {
+func lintWithKubeval(renderedFiles domain.SpecFiles, originalFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	return lintWithKubevalSchema(renderedFiles, originalFiles, fmt.Sprintf("file://%s", kjs.KubernetesJsonSchemaDir))
 }
 
 // renderedFiles are the rendered files to be linted (we don't render on the fly because it is an expensive process)
 // originalFiles are the non-rendered non-separated files, which are needed to find the actual line number
-func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, schemaLocation string) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
+func lintWithKubevalSchema(renderedFiles domain.SpecFiles, originalFiles domain.SpecFiles, schemaLocation string) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 
 	kubevalConfig := kubeval.Config{
 		SchemaLocation:    schemaLocation,
@@ -391,17 +368,17 @@ func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, sch
 		kubevalConfig.FileName = renderedFile.Path
 		results, err := kubeval.Validate([]byte(renderedFile.Content), &kubevalConfig)
 		if err != nil {
-			var lintExpression LintExpression
+			var lintExpression domain.LintExpression
 
 			if strings.Contains(err.Error(), "Failed initalizing schema") && strings.Contains(err.Error(), "no such file or directory") {
-				lintExpression = LintExpression{
+				lintExpression = domain.LintExpression{
 					Rule:    "kubeval-schema-not-found",
 					Type:    "warn",
 					Path:    renderedFile.Path,
 					Message: "We currently have no matching schema to lint this type of file",
 				}
 			} else {
-				lintExpression = LintExpression{
+				lintExpression = domain.LintExpression{
 					Rule:    "kubeval-error",
 					Type:    "error",
 					Path:    renderedFile.Path,
@@ -416,7 +393,7 @@ func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, sch
 
 		for _, validationResult := range results {
 			for _, validationError := range validationResult.Errors {
-				lintExpression := LintExpression{
+				lintExpression := domain.LintExpression{
 					Rule:    validationError.Type(),
 					Type:    "warn",
 					Path:    renderedFile.Path,
@@ -426,7 +403,7 @@ func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, sch
 				// we need to get the line number for the original file content
 				// not the rendered version of it, and not the separated document
 				yamlPath := validationError.Field()
-				foundSpecFile, err := originalFiles.getFile(renderedFile.Path)
+				foundSpecFile, err := originalFiles.GetFile(renderedFile.Path)
 				if err != nil {
 					lintExpressions = append(lintExpressions, lintExpression)
 					continue
@@ -438,9 +415,9 @@ func lintWithKubevalSchema(renderedFiles SpecFiles, originalFiles SpecFiles, sch
 					continue
 				}
 
-				lintExpression.Positions = []LintExpressionItemPosition{
+				lintExpression.Positions = []domain.LintExpressionItemPosition{
 					{
-						Start: LintExpressionItemLinePosition{
+						Start: domain.LintExpressionItemLinePosition{
 							Line: line,
 						},
 					},
@@ -474,7 +451,7 @@ func checkIfKotsVersionExists(version string) (bool, error) {
 		}
 		req.Header.Set("Authorization", bearer)
 		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, _ := client.Do(req)
 		if resp.StatusCode == 404 {
 			return false, nil
 		} else if resp.StatusCode == 200 {
@@ -489,10 +466,10 @@ func checkIfKotsVersionExists(version string) (bool, error) {
 	return true, nil
 }
 
-func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
+func lintTargetMinKotsVersions(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 	// separate multi docs because the manifest can be a part of a multi doc yaml file
-	separatedSpecFiles, err := specFiles.separate()
+	separatedSpecFiles, err := specFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
@@ -522,7 +499,7 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 				return nil, errors.Wrap(err, "failed to check if kots version exists")
 			}
 			if !exists {
-				targetVersionlintExpression := LintExpression{
+				targetVersionlintExpression := domain.LintExpression{
 					Rule:    "non-existent-target-kots-version",
 					Type:    "error",
 					Path:    spec.Path,
@@ -538,7 +515,7 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 				return nil, errors.Wrap(err, "failed to check if kots version exists")
 			}
 			if !exists {
-				minVersionlintExpression := LintExpression{
+				minVersionlintExpression := domain.LintExpression{
 					Rule:    "non-existent-min-kots-version",
 					Type:    "error",
 					Path:    spec.Path,
@@ -552,10 +529,10 @@ func lintTargetMinKotsVersions(specFiles SpecFiles) ([]LintExpression, error) {
 	return lintExpressions, nil
 }
 
-func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
+func lintResourceAnnotations(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 
-	separatedSpecFiles, err := specFiles.separate()
+	separatedSpecFiles, err := specFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
@@ -582,7 +559,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 				// check that the value is a parsable integer between -9999 and 9999
 				parsed, err := strconv.ParseInt(value, 10, 64)
 				if err != nil {
-					lintExpression := LintExpression{
+					lintExpression := domain.LintExpression{
 						Rule:    "deployment-phase-annotation",
 						Type:    "error",
 						Path:    spec.Path,
@@ -590,7 +567,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 					}
 					lintExpressions = append(lintExpressions, lintExpression)
 				} else if parsed < -9999 || parsed > 9999 {
-					lintExpression := LintExpression{
+					lintExpression := domain.LintExpression{
 						Rule:    "deployment-phase-annotation",
 						Type:    "error",
 						Path:    spec.Path,
@@ -602,7 +579,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 				// check that the value is a comma separated list of key=value pairs
 				// where the key is a valid jsonpath and the value is not empty
 				if value == "" {
-					lintExpression := LintExpression{
+					lintExpression := domain.LintExpression{
 						Rule:    "wait-for-properties-annotation",
 						Type:    "error",
 						Path:    spec.Path,
@@ -615,7 +592,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 				for _, property := range strings.Split(value, ",") {
 					parts := strings.SplitN(property, "=", 2)
 					if len(parts) != 2 {
-						lintExpression := LintExpression{
+						lintExpression := domain.LintExpression{
 							Rule:    "wait-for-properties-annotation",
 							Type:    "error",
 							Path:    spec.Path,
@@ -625,7 +602,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 						break
 					}
 					if parts[0] == "" {
-						lintExpression := LintExpression{
+						lintExpression := domain.LintExpression{
 							Rule:    "wait-for-properties-annotation",
 							Type:    "error",
 							Path:    spec.Path,
@@ -635,7 +612,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 						break
 					}
 					if parts[1] == "" {
-						lintExpression := LintExpression{
+						lintExpression := domain.LintExpression{
 							Rule:    "wait-for-properties-annotation",
 							Type:    "error",
 							Path:    spec.Path,
@@ -645,7 +622,7 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 						break
 					}
 					if _, err := jsonpath.Parse("lint-jsonpath", fmt.Sprintf("{ %s }", parts[0])); err != nil {
-						lintExpression := LintExpression{
+						lintExpression := domain.LintExpression{
 							Rule:    "wait-for-properties-annotation",
 							Type:    "error",
 							Path:    spec.Path,
@@ -662,53 +639,18 @@ func lintResourceAnnotations(specFiles SpecFiles) ([]LintExpression, error) {
 	return lintExpressions, nil
 }
 
-// lintKurlInstaller searches installer yamls for errors or misconfigurations.
-func lintKurlInstaller(linter *kurllint.Linter, specFiles SpecFiles) ([]LintExpression, error) {
-	separated, err := specFiles.separate()
-	if err != nil {
-		return nil, errors.Wrap(err, "error separating spec files")
-	}
+func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, domain.SpecFiles, error) {
+	lintExpressions := []domain.LintExpression{}
 
-	var expressions []LintExpression
-	for _, file := range separated {
-		if !file.isYAML() {
-			continue
-		}
-
-		output, err := linter.ValidateMarshaledYAML(context.Background(), file.Content)
-		if err != nil {
-			if err != kurllint.ErrNotInstaller {
-				return nil, errors.Wrap(err, "unable to lint installer")
-			}
-			continue
-		}
-
-		for _, out := range output {
-			expressions = append(
-				expressions, LintExpression{
-					Rule:    fmt.Sprintf("kubernetes-installer-%s", out.Type),
-					Type:    "error",
-					Path:    file.Path,
-					Message: out.Message,
-				},
-			)
-		}
-	}
-	return expressions, nil
-}
-
-func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error) {
-	lintExpressions := []LintExpression{}
-
-	separatedSpecFiles, err := specFiles.separate()
+	separatedSpecFiles, err := specFiles.Separate()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
 	// check if config is valid
-	config, path, err := separatedSpecFiles.findAndValidateConfig()
+	config, path, err := separatedSpecFiles.FindAndValidateConfig()
 	if err != nil {
-		lintExpression := LintExpression{
+		lintExpression := domain.LintExpression{
 			Rule:    "config-is-invalid",
 			Type:    "error",
 			Path:    path,
@@ -717,25 +659,25 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 		lintExpressions = append(lintExpressions, lintExpression)
 	}
 
-	builder, err := getTemplateBuilder(config)
+	builder, err := domain.GetTemplateBuilder(config)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to get template builder")
 	}
 
 	// rendering files is an expensive process, store and return the rendered files
 	// from this function so that they can be used later instead of rendering again on the fly
-	renderedFiles := SpecFiles{}
+	renderedFiles := domain.SpecFiles{}
 
 	for _, file := range separatedSpecFiles {
-		renderedContent, err := file.renderContent(builder)
+		renderedContent, err := file.RenderContent(builder)
 		if err == nil {
 			file.Content = string(renderedContent)
 			renderedFiles = append(renderedFiles, file)
 			continue
 		}
 		// check if the error is coming from kots RenderTemplate function
-		if renderErr, ok := errors.Cause(err).(RenderTemplateError); ok {
-			lintExpression := LintExpression{
+		if renderErr, ok := errors.Cause(err).(domain.RenderTemplateError); ok {
+			lintExpression := domain.LintExpression{
 				Rule:    "unable-to-render",
 				Type:    "error",
 				Path:    file.Path,
@@ -744,7 +686,7 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 
 			if renderErr.Match() != "" {
 				// we need to get the line number for the original file content not the separated document
-				foundSpecFile, err := specFiles.getFile(file.Path)
+				foundSpecFile, err := specFiles.GetFile(file.Path)
 				if err != nil {
 					lintExpressions = append(lintExpressions, lintExpression)
 					continue
@@ -755,9 +697,9 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 					lintExpressions = append(lintExpressions, lintExpression)
 					continue
 				}
-				lintExpression.Positions = []LintExpressionItemPosition{
+				lintExpression.Positions = []domain.LintExpressionItemPosition{
 					{
-						Start: LintExpressionItemLinePosition{
+						Start: domain.LintExpressionItemLinePosition{
 							Line: line,
 						},
 					},
@@ -774,11 +716,11 @@ func lintRenderContent(specFiles SpecFiles) ([]LintExpression, SpecFiles, error)
 	return lintExpressions, renderedFiles, nil
 }
 
-func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpression, error) {
-	lintExpressions := []LintExpression{}
+func lintHelmCharts(renderedFiles domain.SpecFiles, tarGzFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 
 	// separate multi docs because the manifest can be a part of a multi doc yaml file
-	separatedSpecFiles, err := renderedFiles.separate()
+	separatedSpecFiles, err := renderedFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
@@ -792,7 +734,7 @@ func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpres
 		}
 
 		if !archiveExists {
-			lintExpression := LintExpression{
+			lintExpression := domain.LintExpression{
 				Rule:    "helm-archive-missing",
 				Type:    "error",
 				Message: fmt.Sprintf("Could not find helm archive for chart '%s' version '%s'", helmChart.GetChartName(), helmChart.GetChartVersion()),
@@ -803,7 +745,7 @@ func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpres
 
 	// check if all archives have corresponding helm chart manifests
 	for _, specFile := range tarGzFiles {
-		if !specFile.isTarGz() {
+		if !specFile.IsTarGz() {
 			continue
 		}
 
@@ -813,7 +755,7 @@ func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpres
 		}
 
 		if !chartExists {
-			lintExpression := LintExpression{
+			lintExpression := domain.LintExpression{
 				Rule:    "helm-chart-missing",
 				Type:    "error",
 				Message: fmt.Sprintf("Could not find helm chart manifest for archive '%s'", specFile.Path),
@@ -825,8 +767,8 @@ func lintHelmCharts(renderedFiles SpecFiles, tarGzFiles SpecFiles) ([]LintExpres
 	return lintExpressions, nil
 }
 
-func lintIsValidYAML(specFiles SpecFiles) []LintExpression {
-	lintExpressions := []LintExpression{}
+func lintIsValidYAML(specFiles domain.SpecFiles) []domain.LintExpression {
+	lintExpressions := []domain.LintExpression{}
 
 	// all files must be valid YAML, so without a schema, attempt to parse them
 	// we do this separately because it's really hard to get kubeval to
@@ -840,8 +782,8 @@ func lintIsValidYAML(specFiles SpecFiles) []LintExpression {
 	return lintExpressions
 }
 
-func lintFileHasValidYAML(file SpecFile) []LintExpression {
-	lintExpressions := []LintExpression{}
+func lintFileHasValidYAML(file domain.SpecFile) []domain.LintExpression {
+	lintExpressions := []domain.LintExpression{}
 
 	reader := bytes.NewReader([]byte(file.Content))
 	decoder := yaml.NewDecoder(reader)
@@ -859,7 +801,7 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 			break
 		}
 
-		lintExpression := LintExpression{
+		lintExpression := domain.LintExpression{
 			Rule:    "invalid-yaml",
 			Type:    "error",
 			Path:    file.Path,
@@ -868,9 +810,9 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 
 		line, err := util.TryGetLineNumberFromValue(err.Error())
 		if err == nil && line > -1 {
-			lintExpression.Positions = []LintExpressionItemPosition{
+			lintExpression.Positions = []domain.LintExpressionItemPosition{
 				{
-					Start: LintExpressionItemLinePosition{
+					Start: domain.LintExpressionItemLinePosition{
 						Line: line,
 					},
 				},
@@ -885,8 +827,8 @@ func lintFileHasValidYAML(file SpecFile) []LintExpression {
 	return lintExpressions
 }
 
-func lintRenderedFilesYAMLValidity(renderedFiles SpecFiles) []LintExpression {
-	var lintExpressions []LintExpression
+func lintRenderedFilesYAMLValidity(renderedFiles domain.SpecFiles) []domain.LintExpression {
+	var lintExpressions []domain.LintExpression
 	for _, renderedFile := range renderedFiles {
 		var doc interface{}
 		err := yaml.Unmarshal([]byte(renderedFile.Content), &doc)
@@ -903,7 +845,7 @@ func lintRenderedFilesYAMLValidity(renderedFiles SpecFiles) []LintExpression {
 				}
 			}
 
-			lintExpression := LintExpression{
+			lintExpression := domain.LintExpression{
 				Rule:    "invalid-rendered-yaml",
 				Type:    "error",
 				Path:    renderedFile.Path,
@@ -916,7 +858,7 @@ func lintRenderedFilesYAMLValidity(renderedFiles SpecFiles) []LintExpression {
 	return lintExpressions
 }
 
-func lintExpressionsHaveErrors(lintExpressions []LintExpression) bool {
+func lintExpressionsHaveErrors(lintExpressions []domain.LintExpression) bool {
 	for _, lintExpression := range lintExpressions {
 		if lintExpression.Type == "error" {
 			return true
@@ -927,14 +869,14 @@ func lintExpressionsHaveErrors(lintExpressions []LintExpression) bool {
 
 // archiveForHelmChartExists iterates through all files, looking for a helm chart archive
 // that matches the chart name and version specified in the kotsHelmChart parameter
-func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart helmchart.HelmChartInterface) (bool, error) {
+func archiveForHelmChartExists(specFiles domain.SpecFiles, kotsHelmChart helmchart.HelmChartInterface) (bool, error) {
 	for _, specFile := range specFiles {
-		if !specFile.isTarGz() {
+		if !specFile.IsTarGz() {
 			continue
 		}
 
 		// We treat all .tar.gz archives as helm charts
-		files, err := SpecFilesFromTarGz(specFile)
+		files, err := domain.SpecFilesFromTarGz(specFile)
 		if err != nil {
 			return false, errors.Wrap(err, "failed to read chart archive")
 		}
@@ -960,8 +902,8 @@ func archiveForHelmChartExists(specFiles SpecFiles, kotsHelmChart helmchart.Helm
 
 // helmChartForArchiveExists iterates through all existing helm charts, looking for a helm chart manifest
 // that matches the chart name and version specified in the Chart.yaml file in the archive
-func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface, archive SpecFile) (bool, error) {
-	files, err := SpecFilesFromTarGz(archive)
+func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface, archive domain.SpecFile) (bool, error) {
+	files, err := domain.SpecFilesFromTarGz(archive)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to read chart archive")
 	}
@@ -988,7 +930,7 @@ func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface,
 	return false, nil
 }
 
-func findAllKotsHelmCharts(specFiles SpecFiles) []helmchart.HelmChartInterface {
+func findAllKotsHelmCharts(specFiles domain.SpecFiles) []helmchart.HelmChartInterface {
 	kotsHelmCharts := []helmchart.HelmChartInterface{}
 	for _, specFile := range specFiles {
 		kotsHelmChart := tryParsingAsHelmChartGVK([]byte(specFile.Content))

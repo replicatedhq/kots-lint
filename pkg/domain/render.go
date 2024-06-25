@@ -1,18 +1,24 @@
-package kots
+package domain
 
 import (
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
+	"k8s.io/kubectl/pkg/scheme"
+
 	"github.com/replicatedhq/kots-lint/pkg/util"
 	kotsconfig "github.com/replicatedhq/kots/pkg/config"
 	registrytypes "github.com/replicatedhq/kots/pkg/registry/types"
 	"github.com/replicatedhq/kots/pkg/template"
 	kotsv1beta1 "github.com/replicatedhq/kotskinds/apis/kots/v1beta1"
-	"github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
-	"gopkg.in/yaml.v2"
+	kotsscheme "github.com/replicatedhq/kotskinds/client/kotsclientset/scheme"
 )
+
+func init() {
+	kotsscheme.AddToScheme(scheme.Scheme)
+}
 
 type RenderTemplateError struct {
 	message string
@@ -27,20 +33,20 @@ func (r RenderTemplateError) Match() string {
 	return r.match
 }
 
-func (files SpecFiles) render() (SpecFiles, error) {
-	config, _, err := files.findAndValidateConfig()
+func (files SpecFiles) Render() (SpecFiles, error) {
+	config, _, err := files.FindAndValidateConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to find and validate config")
 	}
 
-	builder, err := getTemplateBuilder(config)
+	builder, err := GetTemplateBuilder(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get template builder")
 	}
 
 	renderedFiles := SpecFiles{}
 	for _, file := range files {
-		renderedContent, err := file.renderContent(builder)
+		renderedContent, err := file.RenderContent(builder)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to render spec file %s", file.Path)
 		}
@@ -51,8 +57,8 @@ func (files SpecFiles) render() (SpecFiles, error) {
 	return renderedFiles, nil
 }
 
-func (f SpecFile) renderContent(builder *template.Builder) ([]byte, error) {
-	if !f.isYAML() {
+func (f SpecFile) RenderContent(builder *template.Builder) ([]byte, error) {
+	if !f.IsYAML() {
 		return nil, errors.New("not a yaml file")
 	}
 
@@ -78,7 +84,7 @@ func (f SpecFile) renderContent(builder *template.Builder) ([]byte, error) {
 	return []byte(rendered), nil
 }
 
-func (files SpecFiles) findAndValidateConfig() (*kotsv1beta1.Config, string, error) {
+func (files SpecFiles) FindAndValidateConfig() (*kotsv1beta1.Config, string, error) {
 	var config *kotsv1beta1.Config
 	var path string
 
@@ -146,7 +152,7 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	return b, nil
 }
 
-func getTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {
+func GetTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {
 	localRegistry := registrytypes.RegistrySettings{}
 	templateContextValues := make(map[string]template.ItemValue)
 

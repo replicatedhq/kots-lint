@@ -3,6 +3,7 @@ package kots
 import (
 	"testing"
 
+	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,7 +12,7 @@ func Test_lintSpecHasValidYAML(t *testing.T) {
 	tests := []struct {
 		name   string
 		spec   string
-		expect []LintExpression
+		expect []domain.LintExpression
 	}{
 		{
 			name: "single no errors",
@@ -21,7 +22,7 @@ metadata:
   name: example_config
 data:
   ENV_VAR_1: "fake"`,
-			expect: []LintExpression{},
+			expect: []domain.LintExpression{},
 		},
 		{
 			name: "single with errors",
@@ -32,14 +33,14 @@ metadata:
 data:
   ENV_VAR_1: "fake"
   ENV_VAR_2: kind: test`,
-			expect: []LintExpression{
+			expect: []domain.LintExpression{
 				{
 					Rule:    "invalid-yaml",
 					Type:    "error",
 					Message: "yaml: line 7: mapping values are not allowed in this context",
-					Positions: []LintExpressionItemPosition{
+					Positions: []domain.LintExpressionItemPosition{
 						{
-							Start: LintExpressionItemLinePosition{
+							Start: domain.LintExpressionItemLinePosition{
 								Line: 7,
 							},
 						},
@@ -63,7 +64,7 @@ metadata:
   name: example_config
 data:
   ENV_VAR_1: "fake"`,
-			expect: []LintExpression{},
+			expect: []domain.LintExpression{},
 		},
 		{
 			name: "multi with errors in first",
@@ -82,14 +83,14 @@ metadata:
   name: example_config
 data:
   ENV_VAR_1: "fake"`,
-			expect: []LintExpression{
+			expect: []domain.LintExpression{
 				{
 					Rule:    "invalid-yaml",
 					Type:    "error",
 					Message: "yaml: line 8: mapping values are not allowed in this context",
-					Positions: []LintExpressionItemPosition{
+					Positions: []domain.LintExpressionItemPosition{
 						{
-							Start: LintExpressionItemLinePosition{
+							Start: domain.LintExpressionItemLinePosition{
 								Line: 8,
 							},
 						},
@@ -114,14 +115,14 @@ metadata:
 data:
   ENV_VAR_1: "fake"
   ENV_VAR_2: kind: test`,
-			expect: []LintExpression{
+			expect: []domain.LintExpression{
 				{
 					Rule:    "invalid-yaml",
 					Type:    "error",
 					Message: "yaml: line 15: mapping values are not allowed in this context",
-					Positions: []LintExpressionItemPosition{
+					Positions: []domain.LintExpressionItemPosition{
 						{
-							Start: LintExpressionItemLinePosition{
+							Start: domain.LintExpressionItemLinePosition{
 								Line: 15,
 							},
 						},
@@ -138,7 +139,7 @@ metadata:
 data:
   HTTP_PROXY: "{{repl HTTPProxy }}"
   NO_PROXY: "{{repl NoProxy }}"`,
-			expect: []LintExpression{},
+			expect: []domain.LintExpression{},
 		},
 	}
 
@@ -154,7 +155,7 @@ func Test_lintSpecWithKubeval(t *testing.T) {
 	tests := []struct {
 		name   string
 		spec   string
-		expect []LintExpression
+		expect []domain.LintExpression
 	}{
 		{
 			name: "preflight-no-errors",
@@ -176,7 +177,7 @@ spec:
               message: This application recommends at last 6 nodes.
           - pass:
               message: This cluster has enough nodes.`,
-			expect: []LintExpression{},
+			expect: []domain.LintExpression{},
 		},
 		{
 			name: "preflight-type-warning",
@@ -198,14 +199,14 @@ spec:
               message: This application recommends at last 6 nodes.
           - pass:
               message: This cluster has enough nodes.`,
-			expect: []LintExpression{
+			expect: []domain.LintExpression{
 				{
 					Rule:    "invalid_type",
 					Type:    "warn",
 					Message: "Invalid type. Expected: string, given: integer",
-					Positions: []LintExpressionItemPosition{
+					Positions: []domain.LintExpressionItemPosition{
 						{
-							Start: LintExpressionItemLinePosition{
+							Start: domain.LintExpressionItemLinePosition{
 								Line: 12,
 							},
 						},
@@ -233,7 +234,7 @@ spec:
               message: This application recommends at last 6 nodes.
           - pass:
               message: This cluster has enough nodes.`,
-			expect: []LintExpression{},
+			expect: []domain.LintExpression{},
 		},
 		{
 			name: "supportbundle-type-warning",
@@ -255,14 +256,14 @@ spec:
               message: This application recommends at last 6 nodes.
           - pass:
               message: This cluster has enough nodes.`,
-			expect: []LintExpression{
+			expect: []domain.LintExpression{
 				{
 					Rule:    "invalid_type",
 					Type:    "warn",
 					Message: "Invalid type. Expected: string, given: integer",
-					Positions: []LintExpressionItemPosition{
+					Positions: []domain.LintExpressionItemPosition{
 						{
-							Start: LintExpressionItemLinePosition{
+							Start: domain.LintExpressionItemLinePosition{
 								Line: 15,
 							},
 						},

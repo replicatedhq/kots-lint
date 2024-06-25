@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/replicatedhq/kots-lint/pkg/domain" // Add this line
 	"github.com/replicatedhq/kots-lint/pkg/kots"
 	log "github.com/sirupsen/logrus"
 )
@@ -20,7 +21,7 @@ type LintBuildersReleaseResponse struct {
 	// Required: true
 	// In: body
 	Body struct {
-		LintExpressions []kots.LintExpression `json:"lintExpressions"`
+		LintExpressions []domain.LintExpression `json:"lintExpressions"`
 	}
 }
 
@@ -30,11 +31,11 @@ func LintBuildersRelease(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	specFiles := kots.SpecFiles{}
+	specFiles := domain.SpecFiles{}
 	numChartsRendered := 0
 
 	// Include rendering errors in the lint results (even though pedantically they're not lint expressions)
-	var lintExpressions []kots.LintExpression
+	var lintExpressions []domain.LintExpression
 	if c.ContentType() == "application/tar" {
 		tarReader := tar.NewReader(c.Request.Body)
 		for {
@@ -56,7 +57,7 @@ func LintBuildersRelease(c *gin.Context) {
 			files, err := kots.GetFilesFromChartReader(ctx, tarReader)
 			if err != nil {
 				log.Infof("failed to get files from chart %s: %v", header.Name, err)
-				lintExpressions = append(lintExpressions, kots.LintExpression{
+				lintExpressions = append(lintExpressions, domain.LintExpression{
 					Rule:    "rendering",
 					Type:    "error",
 					Message: err.Error(),
@@ -75,7 +76,7 @@ func LintBuildersRelease(c *gin.Context) {
 		files, err := kots.GetFilesFromChartReader(ctx, c.Request.Body)
 		if err != nil {
 			log.Infof("failed to get files from request: %v", err)
-			lintExpressions = append(lintExpressions, kots.LintExpression{
+			lintExpressions = append(lintExpressions, domain.LintExpression{
 				Rule:    "rendering",
 				Type:    "error",
 				Message: err.Error(),
