@@ -3197,6 +3197,57 @@ spec:
 			},
 		},
 		{
+			name: "missing required version for Helm extension in embedded cluster config",
+			specFiles: domain.SpecFiles{
+				validPreflightSpec,
+				validConfigSpec,
+				validSupportBundleSpec,
+				validKotsAppSpec,
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v1.2.2+k8s-1.29"
+  roles:
+    controller:
+      name: management
+      labels:
+        management: "true"
+    custom:
+    - name: app
+      labels:
+       app: "true"
+  extensions:
+    helm:
+      repositories:
+        - name: ingress-nginx
+          url: https://kubernetes.github.io/ingress-nginx
+      charts:
+        - name: ingress-nginx
+          chartname: ingress-nginx/ingress-nginx
+          namespace: ingress-nginx
+`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "ec-helm-extension-version-required",
+					Path:    "ec-config.yaml",
+					Type:    "error",
+					Message: "Missing version for Helm Chart extension",
+					Positions: []domain.LintExpressionItemPosition{
+						{
+							Start: domain.LintExpressionItemLinePosition{
+								Line: 20,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "duplicate kots kinds in release",
 			specFiles: domain.SpecFiles{
 				validExampleNginxDeploymentSpecFile,

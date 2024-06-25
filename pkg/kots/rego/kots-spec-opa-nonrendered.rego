@@ -424,6 +424,25 @@ lint[output] {
   }
 }
 
+# Check if helm charts in the embedded cluster config contain a version
+lint[output] {
+  rule_name := "ec-helm-extension-version-required"
+  rule_config := lint_rule_config(rule_name, "error")
+  not rule_config.off
+  spec := specs[_]
+  chart := spec.spec.extensions.helm.charts[index]
+  not chart.version
+  field := concat(".", [spec.field, "extensions.helm.charts", string(index)])
+  output := {
+    "rule": rule_name,
+    "type": rule_config.level,
+    "message": "Missing version for Helm Chart extension",
+    "path": spec.path,
+    "field": field,
+    "docIndex": spec.docIndex
+  }
+}
+
 # Check if the kubernetes installer addons versions are valid
 is_kubernetes_installer(file) {
   is_kubernetes_installer_api_version(file.content.apiVersion)
