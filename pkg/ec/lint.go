@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -67,10 +66,6 @@ func checkIfECVersionExists(version string) (bool, error) {
 	url := "http://api.github.com/repos/replicatedhq/embedded-cluster/releases/tags/%s"
 	token := os.Getenv("GITHUB_API_TOKEN")
 	var bearer = "Bearer " + token
-
-	if !strings.HasPrefix(version, "v") {
-		version = "v" + version
-	}
 
 	rwMutex.RLock()
 	verIsCached := ecVersions[version]

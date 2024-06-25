@@ -2,7 +2,7 @@ export GO111MODULE=on
 
 PROJECT_NAME ?= kots-lint
 VERSION_PACKAGE = github.com/replicatedhq/kots-lint/pkg/version
-VERSION ?= local
+VERSION ?=`git describe --tags --dirty`
 DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
 BUILDTAGS = containers_image_ostree_stub exclude_graphdriver_devicemapper exclude_graphdriver_btrfs containers_image_openpgp
 
@@ -26,7 +26,7 @@ endif
 define LDFLAGS
 -ldflags "\
 	-X ${VERSION_PACKAGE}.version=${VERSION} \
-	-X ${VERSION_PACKAGE}.gitSHA=${VERSION} \
+	-X ${VERSION_PACKAGE}.gitSHA=${GIT_SHA} \
 	-X ${VERSION_PACKAGE}.buildTime=${DATE} \
 "
 endef
