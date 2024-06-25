@@ -53,7 +53,7 @@ func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpres
 					Rule:    "non-existent-ec-version",
 					Type:    "error",
 					Path:    spec.Path,
-					Message: "Target Embedded Cluster version not found",
+					Message: "Embedded Cluster version not found",
 				}
 				lintExpressions = append(lintExpressions, ecVersionlintExpression)
 			}
