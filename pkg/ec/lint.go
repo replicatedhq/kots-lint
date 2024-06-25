@@ -37,24 +37,30 @@ func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpres
 			if spec, ok := doc["spec"].(map[interface{}]interface{}); ok {
 				version, versionExists = spec["version"].(string)
 			}
-		}
-
-		// if no version exists, continue to next file
-		if !versionExists {
-			continue
-		} else {
-			exists, err := checkIfECVersionExists(version)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to check if ec version exists")
-			}
-			if !exists {
+			// if no version is defined, return error version is required
+			if !versionExists {
 				ecVersionlintExpression := domain.LintExpression{
-					Rule:    "non-existent-ec-version",
+					Rule:    "ec-version-required",
 					Type:    "error",
 					Path:    spec.Path,
-					Message: "Embedded Cluster version not found",
+					Message: "Embedded Cluster version is required",
 				}
 				lintExpressions = append(lintExpressions, ecVersionlintExpression)
+			} else {
+				// version is defined, check if it is valid.
+				exists, err := checkIfECVersionExists(version)
+				if err != nil {
+					return nil, errors.Wrap(err, "failed to check if ec version exists")
+				}
+				if !exists {
+					ecVersionlintExpression := domain.LintExpression{
+						Rule:    "non-existent-ec-version",
+						Type:    "error",
+						Path:    spec.Path,
+						Message: "Embedded Cluster version not found",
+					}
+					lintExpressions = append(lintExpressions, ecVersionlintExpression)
+				}
 			}
 		}
 	}
