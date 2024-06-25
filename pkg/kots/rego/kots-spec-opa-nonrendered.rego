@@ -432,7 +432,7 @@ lint[output] {
   spec := specs[_]
   chart := spec.spec.extensions.helm.charts[index]
   not chart.version
-  field := concat(".", [spec.field, "version", string(index)])
+  field := concat(".", [spec.field, "extensions.helm.charts", string(index)])
   output := {
     "rule": rule_name,
     "type": rule_config.level,
