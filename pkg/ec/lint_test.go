@@ -23,7 +23,7 @@ func Test_LintEmbeddedClusterVersion(t *testing.T) {
 					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
 kind: Config
 spec:
-  version: "1.2.2+k8s-1.29"`,
+  version: "v1.2.2+k8s-1.29"`,
 				},
 			},
 			expect: []domain.LintExpression{},
