@@ -4104,6 +4104,42 @@ spec:
 				validRegexValidationConfigSpec,
 			},
 			expect: []domain.LintExpression{},
+		}, {
+			name: "radio-and-dropdown-config-item-types",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				{
+					Name: "app-config.yaml",
+					Path: "app-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Config
+spec:
+  groups:
+  - name: example_settings
+    title: My Example Config
+    items:
+    - name: authentication_type
+      title: Authentication Type
+      default: authentication_type_anonymous
+      type: radio
+      items:
+      - name: authentication_type_anonymous
+        title: Anonymous
+      - name: authentication_type_password
+        title: Password
+    - name: version
+      title: Version
+      default: version_latest
+      type: dropdown
+      items:
+      - name: version_latest
+        title: latest
+      - name: version_123
+        title: 1.2.3`},
+			},
+			expect: []domain.LintExpression{},
 		},
 	}
 

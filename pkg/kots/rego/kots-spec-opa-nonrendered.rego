@@ -910,7 +910,7 @@ lint[output] {
   item := config_option.item
   item.type
   is_string(item.type)
-  not re_match("^(text|label|password|file|bool|select_one|select_many|textarea|select|heading)$", item.type)
+  not re_match("^(text|label|password|file|bool|select_one|select_many|textarea|select|heading|radio|dropdown)$", item.type)
   field := concat(".", [config_option.field, "type"])
   message := sprintf("Config option \"%s\" has an invalid type", [string(item.name)])
   output := {
