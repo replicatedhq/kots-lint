@@ -474,6 +474,23 @@ func lintTargetMinKotsVersions(specFiles domain.SpecFiles) ([]domain.LintExpress
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
+	lintConfig, err := findLintConfig(separatedSpecFiles)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find lint config")
+	}
+
+	tvLintOff, mnLintOff := false, false
+	if lintConfig != nil {
+		for _, rule := range lintConfig.Spec.Rules {
+			if rule.Name == "non-existent-target-kots-version" {
+				tvLintOff = rule.Level == "off"
+			}
+			if rule.Name == "non-existent-min-kots-version" {
+				mnLintOff = rule.Level == "off"
+			}
+		}
+	}
+
 	for _, spec := range separatedSpecFiles {
 		var tv, mv string
 		var tvExists, mvExists bool
@@ -498,7 +515,7 @@ func lintTargetMinKotsVersions(specFiles domain.SpecFiles) ([]domain.LintExpress
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check if kots version exists")
 			}
-			if !exists {
+			if !exists && !tvLintOff {
 				targetVersionlintExpression := domain.LintExpression{
 					Rule:    "non-existent-target-kots-version",
 					Type:    "error",
@@ -514,7 +531,7 @@ func lintTargetMinKotsVersions(specFiles domain.SpecFiles) ([]domain.LintExpress
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check if kots version exists")
 			}
-			if !exists {
+			if !exists && !mnLintOff {
 				minVersionlintExpression := domain.LintExpression{
 					Rule:    "non-existent-min-kots-version",
 					Type:    "error",
@@ -962,4 +979,26 @@ func tryParsingAsHelmChartGVK(content []byte) helmchart.HelmChartInterface {
 	}
 
 	return nil
+}
+
+func findLintConfig(specFiles domain.SpecFiles) (*kotsv1beta1.LintConfig, error) {
+	var config *kotsv1beta1.LintConfig
+	for _, file := range specFiles {
+		document := &domain.GVKDoc{}
+		if err := yaml.Unmarshal([]byte(file.Content), document); err != nil {
+			continue
+		}
+		if document.APIVersion != "kots.io/v1beta1" || document.Kind != "LintConfig" {
+			continue
+		}
+		decode := scheme.Codecs.UniversalDeserializer().Decode
+		obj, gvk, err := decode([]byte(file.Content), nil, nil)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to decode lint config content")
+		}
+		if gvk.Group == "kots.io" && gvk.Version == "v1beta1" && gvk.Kind == "LintConfig" {
+			config = obj.(*kotsv1beta1.LintConfig)
+		}
+	}
+	return config, nil
 }
