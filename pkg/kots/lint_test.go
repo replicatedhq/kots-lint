@@ -185,7 +185,7 @@ func Test_lintTargetMinKotsVersions(t *testing.T) {
 			name: "valid target and min version with 'v' prefix",
 			specFiles: domain.SpecFiles{
 				{
-					Path: "",
+					Path: "replicated-app.yaml",
 					Content: `apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
@@ -201,7 +201,7 @@ spec:
 			name: "valid target and min version without 'v' prefix",
 			specFiles: domain.SpecFiles{
 				{
-					Path: "",
+					Path: "replicated-app.yaml",
 					Content: `apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
@@ -240,7 +240,7 @@ applicationUrl: "http://example-nginx"`,
 			name: "invalid target version",
 			specFiles: domain.SpecFiles{
 				{
-					Path: "",
+					Path: "replicated-app.yaml",
 					Content: `apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
@@ -256,6 +256,7 @@ spec:
 					Rule:    "non-existent-target-kots-version",
 					Type:    "error",
 					Message: "Target KOTS version not found",
+					Path:    "replicated-app.yaml",
 				},
 			},
 		},
@@ -263,11 +264,11 @@ spec:
 			name: "invalid min version",
 			specFiles: domain.SpecFiles{
 				{
-					Path: "",
+					Path: "replicated-app.yaml",
 					Content: `apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
-  name: invalidTargetVersion
+  name: invalidMinVersion
 spec:
   targetKotsVersion: "1.64.0"
   minKotsVersion: "1000.0.0"
@@ -279,6 +280,7 @@ spec:
 					Rule:    "non-existent-min-kots-version",
 					Type:    "error",
 					Message: "Minimum KOTS version not found",
+					Path:    "replicated-app.yaml",
 				},
 			},
 		},
@@ -286,11 +288,11 @@ spec:
 			name: "invalid target and min version",
 			specFiles: domain.SpecFiles{
 				{
-					Path: "",
+					Path: "replicated-app.yaml",
 					Content: `apiVersion: kots.io/v1beta1
 kind: Application
 metadata:
-  name: invalidTargetVersion
+  name: invalidTargetAndMinVersions
 spec:
   targetKotsVersion: "1000.0.0"
   minKotsVersion: "1000.0.0"
@@ -302,12 +304,45 @@ spec:
 					Rule:    "non-existent-target-kots-version",
 					Type:    "error",
 					Message: "Target KOTS version not found",
+					Path:    "replicated-app.yaml",
 				}, {
 					Rule:    "non-existent-min-kots-version",
 					Type:    "error",
 					Message: "Minimum KOTS version not found",
+					Path:    "replicated-app.yaml",
 				},
 			},
+		},
+		{
+			name: "lint off for invalid target and min version",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "replicated-app.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: Application
+metadata:
+  name: invalidTargetAndMinVersions
+spec:
+  targetKotsVersion: "1000.0.0"
+  minKotsVersion: "1000.0.0"
+`,
+				},
+				{
+					Path: "lint-config.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: LintConfig
+metadata:
+  name: lint-config
+spec:
+  rules:
+    - name: non-existent-target-kots-version
+      level: "off"
+    - name: non-existent-min-kots-version
+      level: "off"
+`,
+				},
+			},
+			expect: []domain.LintExpression{},
 		},
 	}
 
