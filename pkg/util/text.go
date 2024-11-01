@@ -232,6 +232,11 @@ func CleanUpYaml(value string) string {
 	lines := []string{}
 	scanner := bufio.NewScanner(strings.NewReader(value))
 
+	// Accomodate long lines that can be embedded in secrets and configmaps
+	const maxCapacity = 1024 * 1024 // 1MB
+	buf := make([]byte, 0, maxCapacity)
+	scanner.Buffer(buf, maxCapacity)
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if IsLineEmpty(line) {
