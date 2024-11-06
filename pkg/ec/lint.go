@@ -92,7 +92,6 @@ func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, erro
 	rwMutex.RUnlock()
 
 	if found {
-		// if it is cached then it is not a pre-release.
 		return &ecVersion, true, nil
 	}
 
