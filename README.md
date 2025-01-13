@@ -80,3 +80,5 @@ git clone git@github.com:yannh/kubernetes-json-schema.git
 cp <kubernetes-json-schema>/<desired-version>-standalone-strict/*.json <kots-lint root>/kubernetes_json_schema/schema/<desired-version>-standalone-strict/
 rm -rf <kots-lint root>/kubernetes_json_schema/schema/<previous-version>-standalone-strict/
 ```
+
+Finally, update the `KUBERNETES_LINT_VERSION` constant in the `kubernetes_json_schema/schema.go` file.

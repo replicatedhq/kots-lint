@@ -2,6 +2,7 @@ package kubernetes_json_schema
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 )
+
+const KUBERNETES_LINT_VERSION = "1.31.4"
 
 //go:embed schema/**/*.json
 var kubernetesJsonSchemaFS embed.FS
@@ -42,10 +45,11 @@ func initKubernetesJsonSchemaDir(schemaFS embed.FS) (string, error) {
 		}
 
 		parts := strings.Split(path, string(os.PathSeparator))
-		if len(parts) < 2 {
+		if len(parts) < 3 {
 			return nil
 		}
-		destPath := filepath.Join(parts[1:]...) // trim root directory
+		destPath := filepath.Join(parts[2:]...) // trim root directory
+		destPath = filepath.Join(fmt.Sprintf("v%s-standalone-strict", KUBERNETES_LINT_VERSION), destPath)
 
 		destDir := filepath.Dir(filepath.Join(tempDir, destPath))
 		if err := os.MkdirAll(destDir, 0755); err != nil {
