@@ -22,7 +22,7 @@ func InitKubernetesJsonSchemaDir() (string, error) {
 }
 
 func initKubernetesJsonSchemaDir(schemaFS embed.FS) (string, error) {
-	tempDir, err := ioutil.TempDir("", "kubernetesjsonschema")
+	tempDir, err := os.MkdirTemp("", "kubernetesjsonschema")
 	if err != nil {
 		return "", errors.Wrap(err, "failed to create temp dir")
 	}
