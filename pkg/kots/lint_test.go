@@ -1224,7 +1224,7 @@ spec:
 				{
 					Name: "cronjob.yaml",
 					Path: "cronjob.yaml",
-					Content: `apiVersion: batch/v1beta1
+					Content: `apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: hello
@@ -1385,38 +1385,6 @@ data:
   sentry-secret: secret123
   smtp-password: password_secret
   user-password: password123`,
-				},
-				{
-					Name: "ingress-extensions-v1beta1.yaml",
-					Path: "ingress-extensions-v1beta1.yaml",
-					Content: `apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: example-nginx-ingress
-spec:
-  rules:
-  - http:
-      paths:
-        - path: /
-          backend:
-            serviceName: example-nginx
-            servicePort: 80`,
-				},
-				{
-					Name: "ingress-networking-v1beta1.yaml",
-					Path: "ingress-networking-v1beta1.yaml",
-					Content: `apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: example-nginx-ingress
-spec:
-  rules:
-  - http:
-      paths:
-        - path: /
-          backend:
-            serviceName: example-nginx
-            servicePort: 80`,
 				},
 				{
 					Name: "ingress-networking-v1.yaml",
