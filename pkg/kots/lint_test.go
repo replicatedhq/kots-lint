@@ -1387,6 +1387,38 @@ data:
   user-password: password123`,
 				},
 				{
+					Name: "ingress-extensions-v1beta1.yaml",
+					Path: "ingress-extensions-v1beta1.yaml",
+					Content: `apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            serviceName: example-nginx
+            servicePort: 80`,
+				},
+				{
+					Name: "ingress-networking-v1beta1.yaml",
+					Path: "ingress-networking-v1beta1.yaml",
+					Content: `apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: example-nginx-ingress
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            serviceName: example-nginx
+            servicePort: 80`,
+				},
+				{
 					Name: "ingress-networking-v1.yaml",
 					Path: "ingress-networking-v1.yaml",
 					Content: `apiVersion: networking.k8s.io/v1
