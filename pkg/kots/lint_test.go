@@ -1641,6 +1641,16 @@ metadata:
 spec: {}`,
 				},
 				{
+					Name: "restore.yaml",
+					Path: "restore.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: restore
+spec: 
+  backupName: backup`,
+				},
+				{
 					Name: "identity.yaml",
 					Path: "identity.yaml",
 					Content: `apiVersion: kots.io/v1beta1
