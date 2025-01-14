@@ -64,11 +64,21 @@ File names should match, but since projects will change independently, care shou
 ### Troubleshoot
 
 ```
-cp <troubleshoot root>/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/v1.23.6-standalone-strict/
+cp <troubleshoot root>/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/troubleshoot/
 ```
 
 ### KOTS
 
 ```
-cp <kots root>/kotskinds/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/v1.23.6-standalone-strict/
+cp <kots root>/kotskinds/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/kots/
 ```
+
+### Kubernetes
+
+```
+git clone git@github.com:yannh/kubernetes-json-schema.git
+cp <kubernetes-json-schema>/<desired-version>-standalone-strict/*.json <kots-lint root>/kubernetes_json_schema/schema/<desired-version>-standalone-strict/
+rm -rf <kots-lint root>/kubernetes_json_schema/schema/<previous-version>-standalone-strict/
+```
+
+Finally, update the `KUBERNETES_LINT_VERSION` constant in the `kubernetes_json_schema/schema.go` file.

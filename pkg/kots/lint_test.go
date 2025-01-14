@@ -2,9 +2,11 @@ package kots
 
 import (
 	_ "embed"
+	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1222,7 +1224,7 @@ spec:
 				{
 					Name: "cronjob.yaml",
 					Path: "cronjob.yaml",
-					Content: `apiVersion: batch/v1beta1
+					Content: `apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: hello
@@ -1738,7 +1740,10 @@ spec:
 			renderedFiles, err := separatedSpecFiles.Render()
 			require.NoError(t, err)
 
-			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, "file://../../kubernetes_json_schema/schema")
+			val, err := kubernetes_json_schema.InitKubernetesJsonSchemaDir()
+			require.NoError(t, err)
+
+			actual, err := lintWithKubevalSchema(renderedFiles, test.specFiles, fmt.Sprintf("file://%s", val))
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
