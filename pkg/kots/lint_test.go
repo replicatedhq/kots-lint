@@ -1641,6 +1641,16 @@ metadata:
 spec: {}`,
 				},
 				{
+					Name: "restore.yaml",
+					Path: "restore.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: restore
+spec: 
+  backupName: backup`,
+				},
+				{
 					Name: "identity.yaml",
 					Path: "identity.yaml",
 					Content: `apiVersion: kots.io/v1beta1
@@ -4178,6 +4188,56 @@ spec:
         title: latest
       - name: version_123
         title: 1.2.3`},
+			},
+			expect: []domain.LintExpression{},
+		},
+		{
+			name: "cannot have restore without backup",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "restore.yaml",
+					Path: "restore.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Restore`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "backup-resource-required-when-restore-exists",
+					Type:    "error",
+					Message: "A velero backup resource is required when a velero restore resource is included",
+					Path:    "restore.yaml",
+					Positions: []domain.LintExpressionItemPosition{
+						{
+							domain.LintExpressionItemLinePosition{Line: 1},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "can have restore with backup",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validPreflightSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "restore.yaml",
+					Path: "restore.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Restore`,
+				},
+				{
+					Name: "backup.yaml",
+					Path: "backup.yaml",
+					Content: `apiVersion: velero.io/v1
+kind: Backup`,
+				},
 			},
 			expect: []domain.LintExpression{},
 		},

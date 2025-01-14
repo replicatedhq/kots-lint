@@ -131,6 +131,9 @@ is_kots_kind(file) {
   file.content.apiVersion == "velero.io/v1"
   file.content.kind == "Backup"
 } else {
+  file.content.apiVersion == "velero.io/v1"
+  file.content.kind == "Restore"
+} else {
   is_kubernetes_installer_api_version(file.content.apiVersion)
   file.content.kind == "Installer"
 } else {
@@ -1163,6 +1166,40 @@ lint[output] {
     "path": config_file_path,
     "field": field,
     "docIndex": config_data.docIndex
+  }
+}
+
+# A function to check that a backup resource exists
+v1_backup_spec_exists {
+  file := files[_]
+  file.content.kind == "Backup"
+  file.content.apiVersion == "velero.io/v1"
+}
+# A function to check that a restore resource exists
+v1_restore_spec_exists {
+  file := files[_]
+  file.content.kind == "Restore"
+  file.content.apiVersion == "velero.io/v1"
+}
+# A rule that returns the restore file path
+restore_file_path = file.path {
+  file := files[_]
+  file.content.kind == "Restore"
+  file.content.apiVersion == "velero.io/v1"
+}
+
+# Validate that a velero backup resource exists when a velero restore resource is present
+lint[output] {
+  rule_name := "backup-resource-required-when-restore-exists"
+  rule_config := lint_rule_config(rule_name, "error")
+  not rule_config.off
+  not v1_backup_spec_exists
+  v1_restore_spec_exists
+  output := {
+    "rule": rule_name,
+    "type": rule_config.level,
+    "message": "A velero backup resource is required when a velero restore resource is included",
+    "path": restore_file_path,
   }
 }
 
