@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	kjs.KubernetesJsonSchemaDir = "../../kubernetes_json_schema/schema"
+	kjs.InitKubernetesJsonSchemaDir()
 	kots.InitOPALinting()
 }
 

@@ -4,7 +4,6 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,7 +55,7 @@ func initKubernetesJsonSchemaDir(schemaFS embed.FS) (string, error) {
 			return errors.Wrapf(err, "failed to create dir %s", destDir)
 		}
 
-		if err := ioutil.WriteFile(filepath.Join(tempDir, destPath), data, 0755); err != nil {
+		if err := os.WriteFile(filepath.Join(tempDir, destPath), data, 0755); err != nil {
 			return errors.Wrap(err, "failed to write file")
 		}
 

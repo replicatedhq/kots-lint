@@ -1,8 +1,10 @@
 package kots
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/replicatedhq/kots-lint/kubernetes_json_schema"
 	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -275,7 +277,9 @@ spec:
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := lintSpecWithKubevalSchema(test.spec, "file://../../kubernetes_json_schema/schema")
+			val, err := kubernetes_json_schema.InitKubernetesJsonSchemaDir()
+			require.NoError(t, err)
+			actual, err := lintSpecWithKubevalSchema(test.spec, fmt.Sprintf("file://%s", val))
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
