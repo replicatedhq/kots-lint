@@ -3,11 +3,11 @@
   "type": "object",
   "properties": {
     "apiVersion": {
-      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
       "type": "string"
     },
     "kind": {
-      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
       "type": "string"
     },
     "metadata": {
@@ -30,6 +30,38 @@
         },
         "channelName": {
           "type": "string"
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "channelID"
+            ],
+            "properties": {
+              "channelID": {
+                "type": "string"
+              },
+              "channelName": {
+                "type": "string"
+              },
+              "channelSlug": {
+                "type": "string"
+              },
+              "endpoint": {
+                "type": "string"
+              },
+              "isDefault": {
+                "type": "boolean"
+              },
+              "isSemverRequired": {
+                "type": "boolean"
+              },
+              "replicatedProxyDomain": {
+                "type": "string"
+              }
+            }
+          }
         },
         "customerEmail": {
           "type": "string"
@@ -66,6 +98,12 @@
         "isAirgapSupported": {
           "type": "boolean"
         },
+        "isDisasterRecoverySupported": {
+          "type": "boolean"
+        },
+        "isEmbeddedClusterDownloadEnabled": {
+          "type": "boolean"
+        },
         "isGeoaxisSupported": {
           "type": "boolean"
         },
@@ -92,6 +130,9 @@
           "format": "int64"
         },
         "licenseType": {
+          "type": "string"
+        },
+        "replicatedProxyDomain": {
           "type": "string"
         },
         "signature": {

@@ -17,15 +17,17 @@
       "description": "ConfigSpec defines the desired state of Config",
       "type": "object",
       "properties": {
+        "binaryOverrideUrl": {
+          "type": "string"
+        },
         "extensions": {
           "type": "object",
           "properties": {
             "helm": {
-              "description": "HelmExtensions specifies settings for cluster helm based extensions",
+              "description": "Helm contains helm extension settings",
               "type": "object",
               "properties": {
                 "charts": {
-                  "description": "ChartsSettings charts settings",
                   "type": "array",
                   "items": {
                     "description": "Chart single helm addon",
@@ -33,6 +35,10 @@
                     "properties": {
                       "chartname": {
                         "type": "string"
+                      },
+                      "forceUpgrade": {
+                        "description": "ForceUpgrade when set to false, disables the use of the \"--force\" flag when upgrading the the chart (default: true).",
+                        "type": "boolean"
                       },
                       "name": {
                         "type": "string"
@@ -44,7 +50,7 @@
                         "type": "integer"
                       },
                       "timeout": {
-                        "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
+                        "description": "Timeout specifies the timeout for how long to wait for the chart installation to finish.",
                         "type": "integer",
                         "format": "int64"
                       },
@@ -61,10 +67,8 @@
                   "type": "integer"
                 },
                 "repositories": {
-                  "description": "RepositoriesSettings repository settings",
                   "type": "array",
                   "items": {
-                    "description": "Repository describes single repository entry. Fields map to the CLI flags for the \"helm add\" command",
                     "type": "object",
                     "properties": {
                       "caFile": {
@@ -97,6 +101,9 @@
               }
             }
           }
+        },
+        "metadataOverrideUrl": {
+          "type": "string"
         },
         "roles": {
           "description": "Roles is the various roles in the cluster.",
