@@ -58,27 +58,21 @@ $ make test
 
 ## Updating specs
 
-Generated specs can be copied from the source project directly.
-File names should match, but since projects will change independently, care should be taken when copying.
+The `make schemas` command can be used to automatically update all Replicated schemas:
 
-### Troubleshoot
-
-```
-cp <troubleshoot root>/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/troubleshoot/
+```shell
+$ make schemas
 ```
 
-### KOTS
+This will update schemas for:
+- KOTS (github.com/replicatedhq/kotskinds)
+- Troubleshoot (github.com/replicatedhq/troubleshoot)
+- Embedded Cluster (github.com/replicatedhq/embedded-cluster)
 
-```
-cp <kots root>/kotskinds/schemas/*.json <kots-lint root>/kubernetes_json_schema/schema/kots/
-```
+## Updating Kubernetes specs
 
-### Kubernetes
-
-```
-git clone git@github.com:yannh/kubernetes-json-schema.git
-cp <kubernetes-json-schema>/<desired-version>-standalone-strict/*.json <kots-lint root>/kubernetes_json_schema/schema/<desired-version>-standalone-strict/
-rm -rf <kots-lint root>/kubernetes_json_schema/schema/<previous-version>-standalone-strict/
+```shell
+make schemas-kubernetes
 ```
 
-Finally, update the `KUBERNETES_LINT_VERSION` constant in the `kubernetes_json_schema/schema.go` file.
+This will update the schemas for the Kubernetes VERSION specified in the Makefile.

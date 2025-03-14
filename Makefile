@@ -67,3 +67,12 @@ debug-build:
 .PHONY: debug
 debug: debug-build
 	dlv --listen=:2345 --headless=true --api-version=2 exec ./bin/kots-lint-debug
+
+.PHONY: schemas
+schemas:
+	./scripts/schemas.sh
+
+.PHONY: schemas-kubernetes
+schemas-kubernetes: VERSION=v1.31.4
+schemas-kubernetes:
+	./scripts/schemas-kubernetes.sh $(VERSION)

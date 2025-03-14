@@ -17,15 +17,31 @@
       "description": "ConfigSpec defines the desired state of Config",
       "type": "object",
       "properties": {
+        "binaryOverrideUrl": {
+          "type": "string"
+        },
+        "domains": {
+          "type": "object",
+          "properties": {
+            "proxyRegistryDomain": {
+              "type": "string"
+            },
+            "replicatedAppDomain": {
+              "type": "string"
+            },
+            "replicatedRegistryDomain": {
+              "type": "string"
+            }
+          }
+        },
         "extensions": {
           "type": "object",
           "properties": {
             "helm": {
-              "description": "HelmExtensions specifies settings for cluster helm based extensions",
+              "description": "Helm contains helm extension settings",
               "type": "object",
               "properties": {
                 "charts": {
-                  "description": "ChartsSettings charts settings",
                   "type": "array",
                   "items": {
                     "description": "Chart single helm addon",
@@ -33,6 +49,10 @@
                     "properties": {
                       "chartname": {
                         "type": "string"
+                      },
+                      "forceUpgrade": {
+                        "description": "ForceUpgrade when set to false, disables the use of the \"--force\" flag when upgrading the the chart (default: true).",
+                        "type": "boolean"
                       },
                       "name": {
                         "type": "string"
@@ -44,9 +64,9 @@
                         "type": "integer"
                       },
                       "timeout": {
-                        "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
-                        "type": "integer",
-                        "format": "int64"
+                        "description": "Timeout specifies the timeout for how long to wait for the chart installation to finish.\nA duration string is a sequence of decimal numbers, each with optional fraction and a unit suffix, such as \"300ms\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".",
+                        "type": "string",
+                        "x-kubernetes-int-or-string": true
                       },
                       "values": {
                         "type": "string"
@@ -61,34 +81,41 @@
                   "type": "integer"
                 },
                 "repositories": {
-                  "description": "RepositoriesSettings repository settings",
                   "type": "array",
                   "items": {
                     "description": "Repository describes single repository entry. Fields map to the CLI flags for the \"helm add\" command",
                     "type": "object",
                     "properties": {
                       "caFile": {
+                        "description": "CA bundle file to use when verifying HTTPS-enabled servers.",
                         "type": "string"
                       },
                       "certFile": {
+                        "description": "The TLS certificate file to use for HTTPS client authentication.",
                         "type": "string"
                       },
                       "insecure": {
+                        "description": "Whether to skip TLS certificate checks when connecting to the repository.",
                         "type": "boolean"
                       },
                       "keyfile": {
+                        "description": "The TLS key file to use for HTTPS client authentication.",
                         "type": "string"
                       },
                       "name": {
+                        "description": "The repository name.",
                         "type": "string"
                       },
                       "password": {
+                        "description": "Password for Basic HTTP authentication.",
                         "type": "string"
                       },
                       "url": {
+                        "description": "The repository URL.",
                         "type": "string"
                       },
                       "username": {
+                        "description": "Username for Basic HTTP authentication.",
                         "type": "string"
                       }
                     }
@@ -97,6 +124,9 @@
               }
             }
           }
+        },
+        "metadataOverrideUrl": {
+          "type": "string"
         },
         "roles": {
           "description": "Roles is the various roles in the cluster.",
