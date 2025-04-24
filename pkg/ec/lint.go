@@ -84,8 +84,6 @@ func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpres
 
 func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, error) {
 	url := githubAPIURL + "/repos/replicatedhq/embedded-cluster/releases/tags/%s"
-	token := os.Getenv("GITHUB_API_TOKEN")
-	var bearer = "Bearer " + token
 
 	rwMutex.RLock()
 	ecVersion, found := ecVersions[version]
@@ -99,7 +97,12 @@ func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, erro
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to create new request")
 	}
-	req.Header.Set("Authorization", bearer)
+
+	if os.Getenv("GITHUB_API_TOKEN") != "" {
+		token := os.Getenv("GITHUB_API_TOKEN")
+		var bearer = "Bearer " + token
+		req.Header.Set("Authorization", bearer)
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
