@@ -10,7 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
 	github.com/replicatedhq/kots v1.114.0
-	github.com/replicatedhq/kotskinds v0.0.0-20240718194123-1018dd404e95
+	github.com/replicatedhq/kotskinds v0.0.0-20250520172441-bf26a0109d54
 	github.com/replicatedhq/kurlkinds v1.5.0
 	github.com/replicatedhq/troubleshoot v0.95.1
 	github.com/sirupsen/logrus v1.9.3
