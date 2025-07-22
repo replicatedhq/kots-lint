@@ -227,6 +227,39 @@ spec:
 				},
 			},
 		},
+		{
+			name: "private-ca-cert",
+			files: SpecFiles{
+				{
+					Name: "secret.yaml",
+					Path: "secret.yaml",
+					Content: `apiVersion: v1
+kind: Secret
+metadata:
+  name: ca-certificate
+  namespace: default
+type: Opaque
+data:
+  ca.crt: '{{repl PrivateCACert }}'
+`,
+				},
+			},
+			want: SpecFiles{
+				{
+					Name: "secret.yaml",
+					Path: "secret.yaml",
+					Content: `apiVersion: v1
+kind: Secret
+metadata:
+  name: ca-certificate
+  namespace: default
+type: Opaque
+data:
+  ca.crt: ''
+`,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
