@@ -1,4 +1,4 @@
-FROM golang:1.22 AS builder
+FROM golang:1.24 AS builder
 
 ADD . /go/src/github.com/replicatedhq/kots-lint
 WORKDIR /go/src/github.com/replicatedhq/kots-lint
@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/replicatedhq/kots-lint
 RUN make build
 
 
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update -y && \
     apt-get install -y ca-certificates && \
