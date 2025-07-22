@@ -39,7 +39,7 @@ jobs:
       - uses: docker/build-push-action@v4
         with:
           push: false
-          tags: replicated/kots-lint:${{ github.ref_name }}
+          tags: replicated/kots-lint:ci-test
 
   goreleaser:
     runs-on: ubuntu-latest
