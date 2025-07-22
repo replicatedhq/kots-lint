@@ -18,7 +18,7 @@ require (
 	github.com/tommy351/gin-cors v0.0.0-20150617141853-dc91dec6313a
 	gopkg.in/stretchr/testify.v1 v1.2.2
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.17.3
+	helm.sh/helm/v3 v3.17.4
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.33.1
 	k8s.io/client-go v0.32.3
