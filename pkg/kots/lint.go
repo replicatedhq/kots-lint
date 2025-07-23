@@ -433,8 +433,6 @@ func lintWithKubevalSchema(renderedFiles domain.SpecFiles, originalFiles domain.
 
 func checkIfKotsVersionExists(version string) (bool, error) {
 	url := "http://api.github.com/repos/replicatedhq/kots/releases/tags/%s"
-	token := os.Getenv("GITHUB_API_TOKEN")
-	var bearer = "Bearer " + token
 
 	if !strings.HasPrefix(version, "v") {
 		version = "v" + version
@@ -449,7 +447,10 @@ func checkIfKotsVersionExists(version string) (bool, error) {
 		if err != nil {
 			return false, errors.Wrap(err, "failed to create new request")
 		}
-		req.Header.Set("Authorization", bearer)
+		if token := os.Getenv("GITHUB_API_TOKEN"); token != "" {
+			var bearer = "Bearer " + token
+			req.Header.Set("Authorization", bearer)
+		}
 		client := &http.Client{}
 		resp, _ := client.Do(req)
 		if resp.StatusCode == 404 {

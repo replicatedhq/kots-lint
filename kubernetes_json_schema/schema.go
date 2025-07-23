@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const KUBERNETES_LINT_VERSION = "1.31.4"
+const KUBERNETES_LINT_VERSION = "1.33.3"
 
 //go:embed schema/**/*.json
 var kubernetesJsonSchemaFS embed.FS

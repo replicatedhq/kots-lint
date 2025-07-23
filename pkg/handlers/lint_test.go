@@ -13,8 +13,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/replicatedhq/kots-lint/pkg/domain"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/stretchr/testify.v1/assert"
 )
 
 func Test_LintRelease(t *testing.T) {

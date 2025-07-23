@@ -10,7 +10,7 @@ import (
 
 	"github.com/replicatedhq/kots-lint/pkg/domain" // Add this import
 
-	"gopkg.in/stretchr/testify.v1/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 //go:embed test-data/*

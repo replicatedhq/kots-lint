@@ -108,6 +108,10 @@
           "type": "string",
           "format": "byte"
         },
+        "uncompressedSize": {
+          "type": "integer",
+          "format": "int64"
+        },
         "updateCursor": {
           "type": "string"
         },
