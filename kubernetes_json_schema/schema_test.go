@@ -17,7 +17,7 @@ func TestInitKubernetesJsonSchemaDir(t *testing.T) {
 		return
 	}
 
-	content, err := os.ReadFile(filepath.Join(schemaDir, "v1.31.4-standalone-strict", "configmap.json"))
+	content, err := os.ReadFile(filepath.Join(schemaDir, "v1.33.3-standalone-strict", "configmap.json"))
 	if err != nil {
 		t.Errorf("InitKubernetesJsonSchemaDir() failed to read configmap.json")
 		return
@@ -27,7 +27,7 @@ func TestInitKubernetesJsonSchemaDir(t *testing.T) {
 		return
 	}
 
-	content, err = os.ReadFile(filepath.Join(schemaDir, "v1.31.4-standalone-strict", "configmap-v1.json"))
+	content, err = os.ReadFile(filepath.Join(schemaDir, "v1.33.3-standalone-strict", "configmap-v1.json"))
 	if err != nil {
 		t.Errorf("InitKubernetesJsonSchemaDir() failed to read configmap-v1.json")
 		return
@@ -37,7 +37,7 @@ func TestInitKubernetesJsonSchemaDir(t *testing.T) {
 		return
 	}
 
-	content, err = os.ReadFile(filepath.Join(schemaDir, "v1.31.4-standalone-strict", "airgap-kots-v1beta1.json"))
+	content, err = os.ReadFile(filepath.Join(schemaDir, "v1.33.3-standalone-strict", "airgap-kots-v1beta1.json"))
 	if err != nil {
 		t.Errorf("InitKubernetesJsonSchemaDir() failed to read airgap-kots-v1beta1.json")
 		return

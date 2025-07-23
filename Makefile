@@ -73,6 +73,6 @@ schemas:
 	./scripts/schemas.sh
 
 .PHONY: schemas-kubernetes
-schemas-kubernetes: VERSION=v1.31.4
+schemas-kubernetes: VERSION=v1.33.3
 schemas-kubernetes:
 	./scripts/schemas-kubernetes.sh $(VERSION)
