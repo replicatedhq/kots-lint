@@ -276,7 +276,7 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	github.com/ulikunitz/xz v0.5.12 // indirect
+	github.com/ulikunitz/xz v0.5.14 // indirect
 	github.com/vbatts/tar-split v0.11.7 // indirect
 	github.com/vbauerster/mpb/v8 v8.9.1 // indirect
 	github.com/vishvananda/netlink v1.3.0 // indirect
