@@ -953,8 +953,8 @@ github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41 h1:Wk4CD6DHA
 github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41/go.mod h1:ae2LAb6COZAKb9oI4bgh52xrq17Ql4lqXfPXHZpGwPQ=
 github.com/replicatedhq/embedded-cluster/kinds v1.15.1-0.20250729184643-f055e67a064d h1:Wl0fHoWTcrveqbWmDVEPFoa/K3EzyROC8tjHZxzwg3Q=
 github.com/replicatedhq/embedded-cluster/kinds v1.15.1-0.20250729184643-f055e67a064d/go.mod h1:gZdtXCAVJt0a5Ry64Jlaeph7qh+IGsAkq4P0PE6XiZI=
-github.com/replicatedhq/kots v1.129.4-0.20260123145907-13683db72f69 h1:deHovAV8YrXEWnEsPMmkXdjN2uzz3wxoNQ2g6xCWGLk=
-github.com/replicatedhq/kots v1.129.4-0.20260123145907-13683db72f69/go.mod h1:rM2FK/d7PLJ4FgohHFgNI7qYTbIPHA6ZzRkaofzbSP4=
+github.com/replicatedhq/kots v1.129.4-0.20260123160346-543461a77857 h1:KP7YkFKA+BZyePtXUqosyzRg0D3F7OEgSRmMHVUtu1E=
+github.com/replicatedhq/kots v1.129.4-0.20260123160346-543461a77857/go.mod h1:rM2FK/d7PLJ4FgohHFgNI7qYTbIPHA6ZzRkaofzbSP4=
 github.com/replicatedhq/kotskinds v0.0.0-20251219184143-fc5e03d7bbc6 h1:2xmBPZQTdytaQUfSpNi2XgsLgH1aD1YFsJPX0ltC+Zc=
 github.com/replicatedhq/kotskinds v0.0.0-20251219184143-fc5e03d7bbc6/go.mod h1:hpR1pZ3mEtbMrl/tmuqNjK+cSBcmb8F7A1EPhXwssfI=
 github.com/replicatedhq/kurlkinds v1.5.0 h1:zZ0PKNeh4kXvSzVGkn62DKTo314GxhXg1TSB3azURMc=

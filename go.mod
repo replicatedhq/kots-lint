@@ -9,7 +9,7 @@ require (
 	github.com/open-policy-agent/opa v1.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/replicatedcom/saaskit v0.0.0-20220510221831-0ff4f30f9a41
-	github.com/replicatedhq/kots v1.129.4-0.20260123145907-13683db72f69
+	github.com/replicatedhq/kots v1.129.4-0.20260123160346-543461a77857
 	github.com/replicatedhq/kotskinds v0.0.0-20251219184143-fc5e03d7bbc6
 	github.com/replicatedhq/kurlkinds v1.5.0
 	github.com/replicatedhq/troubleshoot v0.123.17

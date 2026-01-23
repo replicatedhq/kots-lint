@@ -526,7 +526,7 @@ func Test_findAndValidateConfig(t *testing.T) {
 		{
 			name:       "invalid config",
 			configPath: "config.yaml",
-			wantErr:    "failed to render config: failed to template config objects: failed to template config: failed to render config template: failed to get template: template: config:20: bad character U+0022 '\"'",
+			wantErr:    "failed to render config: failed to template config objects: failed to template config: failed to render config template: failed to get template: template: config:19: bad character U+0022 '\"'",
 			files: SpecFiles{
 				{
 					Name: "config.yaml",
