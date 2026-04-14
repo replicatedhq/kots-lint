@@ -79,7 +79,7 @@ spec:
 					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
 kind: Config
 spec:
-  version: "v3.0.0+k8s-1.29"`,
+  version: "3.0.0-alpha-31+k8s-1.34"`,
 				},
 				{
 					Path: "preflight.yaml",
@@ -102,7 +102,7 @@ spec:
 					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
 kind: Config
 spec:
-  version: "v3.0.0+k8s-1.29"`,
+  version: "3.0.0-alpha-31+k8s-1.34"`,
 				},
 				{
 					Path: "preflight.yaml",
@@ -132,7 +132,7 @@ spec:
 					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
 kind: Config
 spec:
-  version: "v3.0.0+k8s-1.29"`,
+  version: "3.0.0-alpha-31+k8s-1.34"`,
 				},
 			},
 			expect:    []domain.LintExpression{},
@@ -146,7 +146,7 @@ spec:
 					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
 kind: Config
 spec:
-  version: "v3.0.0+k8s-1.29"`,
+  version: "3.0.0-alpha-31+k8s-1.34"`,
 				},
 				{
 					Path: "preflight.yaml",

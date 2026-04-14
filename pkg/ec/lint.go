@@ -54,7 +54,7 @@ func Lint(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	}
 	lintExpressions = append(lintExpressions, versionExpressions...)
 
-	if strings.HasPrefix(ecVersion, "v3.") {
+	if strings.HasPrefix(ecVersion, "3.") {
 		preflightExpressions, err := lintV3Preflight(separatedSpecFiles)
 		if err != nil {
 			return nil, err
