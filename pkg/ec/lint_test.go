@@ -71,6 +71,96 @@ spec:
 			},
 			apiResult: []byte(`{"prerelease": true}`),
 		},
+		{
+			name: "v3 preflight with correct v1beta3 apiVersion",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v3.0.0+k8s-1.29"`,
+				},
+				{
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta3
+kind: Preflight
+metadata:
+  name: preflight-sample
+spec:
+  analyzers: []`,
+				},
+			},
+			expect:    []domain.LintExpression{},
+			apiResult: []byte(`{}`),
+		},
+		{
+			name: "v3 preflight with wrong v1beta2 apiVersion",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v3.0.0+k8s-1.29"`,
+				},
+				{
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+metadata:
+  name: preflight-sample
+spec:
+  analyzers: []`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "ec-v3-preflight-api-version",
+					Type:    "error",
+					Path:    "preflight.yaml",
+					Message: "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
+				},
+			},
+			apiResult: []byte(`{}`),
+		},
+		{
+			name: "v3 with no preflight",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v3.0.0+k8s-1.29"`,
+				},
+			},
+			expect:    []domain.LintExpression{},
+			apiResult: []byte(`{}`),
+		},
+		{
+			name: "v2 preflight with v1beta2 apiVersion no error",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v2.0.0+k8s-1.29"`,
+				},
+				{
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+metadata:
+  name: preflight-sample
+spec:
+  analyzers: []`,
+				},
+			},
+			expect:    []domain.LintExpression{},
+			apiResult: []byte(`{}`),
+		},
 	}
 
 	for _, test := range tests {
