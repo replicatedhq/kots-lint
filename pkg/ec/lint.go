@@ -119,7 +119,27 @@ func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, 
 }
 
 func lintV3Preflight(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, error) {
-	return []domain.LintExpression{}, nil
+	lintExpressions := []domain.LintExpression{}
+
+	for _, spec := range separatedSpecFiles {
+		doc := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+			continue
+		}
+		if doc["kind"] == "Preflight" {
+			apiVersion, _ := doc["apiVersion"].(string)
+			if apiVersion != "troubleshoot.sh/v1beta3" {
+				lintExpressions = append(lintExpressions, domain.LintExpression{
+					Rule:    "ec-v3-preflight-api-version",
+					Type:    "error",
+					Path:    spec.Path,
+					Message: "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
+				})
+			}
+		}
+	}
+
+	return lintExpressions, nil
 }
 
 func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, error) {
