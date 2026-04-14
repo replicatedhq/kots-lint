@@ -97,6 +97,8 @@ is_troubleshoot_api_version(apiVersion) {
   apiVersion == "troubleshoot.replicated.com/v1beta1"
 } else {
   apiVersion == "troubleshoot.sh/v1beta2"
+} else {
+  apiVersion == "troubleshoot.sh/v1beta3"
 }
 is_kubernetes_installer_api_version(apiVersion) {
   apiVersion == "cluster.kurl.sh/v1beta1"
@@ -265,12 +267,18 @@ v1beta2_preflight_spec_exists {
   file.content.kind == "Preflight"
   file.content.apiVersion == "troubleshoot.sh/v1beta2"
 }
+v1beta3_preflight_spec_exists {
+  file := files[_]
+  file.content.kind == "Preflight"
+  file.content.apiVersion == "troubleshoot.sh/v1beta3"
+}
 lint[output] {
   rule_name := "preflight-spec"
   rule_config := lint_rule_config(rule_name, "warn")
   not rule_config.off
   not v1beta1_preflight_spec_exists
   not v1beta2_preflight_spec_exists
+  not v1beta3_preflight_spec_exists
   output := {
     "rule": rule_name,
     "type": rule_config.level,
@@ -1200,6 +1208,30 @@ lint[output] {
     "type": rule_config.level,
     "message": "A velero backup resource is required when a velero restore resource is included",
     "path": restore_file_path,
+  }
+}
+
+# Check if an Embedded Cluster version is v3.x (with or without leading "v")
+is_ec_v3_version(version) { startswith(version, "3.") }
+is_ec_v3_version(version) { startswith(version, "v3.") }
+
+# Preflight specs must use troubleshoot.sh/v1beta3 when Embedded Cluster v3 is configured
+lint[output] {
+  ec_file := files[_]
+  ec_file.content.apiVersion == "embeddedcluster.replicated.com/v1beta1"
+  ec_file.content.kind == "Config"
+  is_ec_v3_version(ec_file.content.spec.version)
+
+  preflight_file := files[_]
+  preflight_file.content.kind == "Preflight"
+  preflight_file.content.apiVersion != "troubleshoot.sh/v1beta3"
+
+  output := {
+    "rule": "ec-v3-preflight-api-version",
+    "type": "error",
+    "message": "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
+    "path": preflight_file.path,
+    "docIndex": preflight_file.docIndex,
   }
 }
 

@@ -24,13 +24,17 @@ func init() {
 	ecVersions = make(map[string]EmbeddedClusterVersion)
 }
 
-func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
-	lintExpressions := []domain.LintExpression{}
-	// separate multi docs because the manifest can be a part of a multi doc yaml file
+func Lint(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	separatedSpecFiles, err := specFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
+
+	return lintVersion(separatedSpecFiles)
+}
+
+func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
 
 	for _, spec := range separatedSpecFiles {
 		var version string
@@ -81,6 +85,7 @@ func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpres
 
 	return lintExpressions, nil
 }
+
 
 func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, error) {
 	url := githubAPIURL + "/repos/replicatedhq/embedded-cluster/releases/tags/%s"

@@ -4241,6 +4241,141 @@ kind: Backup`,
 			},
 			expect: []domain.LintExpression{},
 		},
+		{
+			name: "ec v3 preflight with correct v1beta3 apiVersion",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0-alpha-31+k8s-1.34"`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta3
+kind: Preflight`,
+				},
+			},
+			expect: []domain.LintExpression{},
+		},
+		{
+			name: "ec v3 preflight with wrong v1beta2 apiVersion",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0-alpha-31+k8s-1.34"`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "ec-v3-preflight-api-version",
+					Type:    "error",
+					Message: "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
+					Path:    "preflight.yaml",
+					Positions: []domain.LintExpressionItemPosition{
+						{Start: domain.LintExpressionItemLinePosition{Line: 1}},
+					},
+				},
+			},
+		},
+		{
+			name: "ec v3 with v prefix preflight with wrong v1beta2 apiVersion",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v3.0.0+k8s-1.34"`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "ec-v3-preflight-api-version",
+					Type:    "error",
+					Message: "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
+					Path:    "preflight.yaml",
+					Positions: []domain.LintExpressionItemPosition{
+						{Start: domain.LintExpressionItemLinePosition{Line: 1}},
+					},
+				},
+			},
+		},
+		{
+			name: "ec v3 with no preflight",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0-alpha-31+k8s-1.34"`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "preflight-spec",
+					Type:    "warn",
+					Message: "Missing preflight spec",
+				},
+			},
+		},
+		{
+			name: "ec v2 preflight with v1beta2 apiVersion no error",
+			specFiles: domain.SpecFiles{
+				validKotsAppSpec,
+				validSupportBundleSpec,
+				validRegexValidationConfigSpec,
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v2.0.0+k8s-1.29"`,
+				},
+				{
+					Name: "preflight.yaml",
+					Path: "preflight.yaml",
+					Content: `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight`,
+				},
+			},
+			expect: []domain.LintExpression{},
+		},
 	}
 
 	err := InitOPALinting()
