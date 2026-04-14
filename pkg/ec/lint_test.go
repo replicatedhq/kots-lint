@@ -139,6 +139,35 @@ spec:
 			apiResult: []byte(`{}`),
 		},
 		{
+			name: "v3 preflight with no apiVersion",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "v3.0.0+k8s-1.29"`,
+				},
+				{
+					Path: "preflight.yaml",
+					Content: `kind: Preflight
+metadata:
+  name: preflight-sample
+spec:
+  analyzers: []`,
+				},
+			},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "ec-v3-preflight-api-version",
+					Type:    "error",
+					Path:    "preflight.yaml",
+					Message: "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
+				},
+			},
+			apiResult: []byte(`{}`),
+		},
+		{
 			name: "v2 preflight with v1beta2 apiVersion no error",
 			specFiles: domain.SpecFiles{
 				{
@@ -166,7 +195,12 @@ spec:
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			oldURL := githubAPIURL
-			defer func() { githubAPIURL = oldURL }()
+			oldVersions := ecVersions
+			defer func() {
+				githubAPIURL = oldURL
+				ecVersions = oldVersions
+			}()
+			ecVersions = make(map[string]EmbeddedClusterVersion)
 
 			server := httptest.NewServer(
 				http.HandlerFunc(
