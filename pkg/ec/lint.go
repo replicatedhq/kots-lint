@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -26,43 +25,12 @@ func init() {
 }
 
 func Lint(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
-	lintExpressions := []domain.LintExpression{}
-
 	separatedSpecFiles, err := specFiles.Separate()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	var ecVersion string
-	for _, spec := range separatedSpecFiles {
-		doc := map[string]interface{}{}
-		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
-			continue
-		}
-		if doc["apiVersion"] == "embeddedcluster.replicated.com/v1beta1" && doc["kind"] == "Config" {
-			if specMap, ok := doc["spec"].(map[interface{}]interface{}); ok {
-				if v, ok := specMap["version"].(string); ok {
-					ecVersion = v
-				}
-			}
-		}
-	}
-
-	versionExpressions, err := lintVersion(separatedSpecFiles)
-	if err != nil {
-		return nil, err
-	}
-	lintExpressions = append(lintExpressions, versionExpressions...)
-
-	if strings.HasPrefix(strings.TrimPrefix(ecVersion, "v"), "3.") {
-		preflightExpressions, err := lintV3Preflight(separatedSpecFiles)
-		if err != nil {
-			return nil, err
-		}
-		lintExpressions = append(lintExpressions, preflightExpressions...)
-	}
-
-	return lintExpressions, nil
+	return lintVersion(separatedSpecFiles)
 }
 
 func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, error) {
@@ -118,29 +86,6 @@ func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, 
 	return lintExpressions, nil
 }
 
-func lintV3Preflight(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, error) {
-	lintExpressions := []domain.LintExpression{}
-
-	for _, spec := range separatedSpecFiles {
-		doc := map[string]interface{}{}
-		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
-			continue
-		}
-		if doc["kind"] == "Preflight" {
-			apiVersion, _ := doc["apiVersion"].(string)
-			if apiVersion != "troubleshoot.sh/v1beta3" {
-				lintExpressions = append(lintExpressions, domain.LintExpression{
-					Rule:    "ec-v3-preflight-api-version",
-					Type:    "error",
-					Path:    spec.Path,
-					Message: "Preflight spec must use apiVersion troubleshoot.sh/v1beta3 with Embedded Cluster v3",
-				})
-			}
-		}
-	}
-
-	return lintExpressions, nil
-}
 
 func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, error) {
 	url := githubAPIURL + "/repos/replicatedhq/embedded-cluster/releases/tags/%s"
