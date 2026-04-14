@@ -48,14 +48,14 @@ func Lint(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 		}
 	}
 
-	versionExpressions, err := lintVersion(specFiles)
+	versionExpressions, err := lintVersion(separatedSpecFiles)
 	if err != nil {
 		return nil, err
 	}
 	lintExpressions = append(lintExpressions, versionExpressions...)
 
 	if strings.HasPrefix(ecVersion, "v3.") {
-		preflightExpressions, err := lintV3Preflight(specFiles)
+		preflightExpressions, err := lintV3Preflight(separatedSpecFiles)
 		if err != nil {
 			return nil, err
 		}
@@ -65,13 +65,8 @@ func Lint(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	return lintExpressions, nil
 }
 
-func lintVersion(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	lintExpressions := []domain.LintExpression{}
-	// separate multi docs because the manifest can be a part of a multi doc yaml file
-	separatedSpecFiles, err := specFiles.Separate()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to separate multi docs")
-	}
 
 	for _, spec := range separatedSpecFiles {
 		var version string
@@ -123,7 +118,7 @@ func lintVersion(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	return lintExpressions, nil
 }
 
-func lintV3Preflight(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+func lintV3Preflight(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	return []domain.LintExpression{}, nil
 }
 
