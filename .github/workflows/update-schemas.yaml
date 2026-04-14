@@ -1,0 +1,25 @@
+name: Update Schemas
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Daily at 8am UTC
+  workflow_dispatch: {}
+
+jobs:
+  update-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: make schemas
+
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Update schemas from upstream projects"
+          title: "Update schemas from upstream projects"
+          branch: automation/update-schemas
+          body: |
+            Automated schema update from:
+            - [replicatedhq/kotskinds](https://github.com/replicatedhq/kotskinds)
+            - [replicatedhq/embedded-cluster](https://github.com/replicatedhq/embedded-cluster)
+            - [replicatedhq/troubleshoot](https://github.com/replicatedhq/troubleshoot)
