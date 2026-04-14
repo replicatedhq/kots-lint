@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -24,7 +25,47 @@ func init() {
 	ecVersions = make(map[string]EmbeddedClusterVersion)
 }
 
-func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+func Lint(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	lintExpressions := []domain.LintExpression{}
+
+	separatedSpecFiles, err := specFiles.Separate()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to separate multi docs")
+	}
+
+	var ecVersion string
+	for _, spec := range separatedSpecFiles {
+		doc := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(spec.Content), &doc); err != nil {
+			continue
+		}
+		if doc["apiVersion"] == "embeddedcluster.replicated.com/v1beta1" && doc["kind"] == "Config" {
+			if specMap, ok := doc["spec"].(map[interface{}]interface{}); ok {
+				if v, ok := specMap["version"].(string); ok {
+					ecVersion = v
+				}
+			}
+		}
+	}
+
+	versionExpressions, err := lintVersion(specFiles)
+	if err != nil {
+		return nil, err
+	}
+	lintExpressions = append(lintExpressions, versionExpressions...)
+
+	if strings.HasPrefix(ecVersion, "v3.") {
+		preflightExpressions, err := lintV3Preflight(specFiles)
+		if err != nil {
+			return nil, err
+		}
+		lintExpressions = append(lintExpressions, preflightExpressions...)
+	}
+
+	return lintExpressions, nil
+}
+
+func lintVersion(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
 	lintExpressions := []domain.LintExpression{}
 	// separate multi docs because the manifest can be a part of a multi doc yaml file
 	separatedSpecFiles, err := specFiles.Separate()
@@ -80,6 +121,10 @@ func LintEmbeddedClusterVersion(specFiles domain.SpecFiles) ([]domain.LintExpres
 	}
 
 	return lintExpressions, nil
+}
+
+func lintV3Preflight(specFiles domain.SpecFiles) ([]domain.LintExpression, error) {
+	return []domain.LintExpression{}, nil
 }
 
 func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, error) {

@@ -234,7 +234,7 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return nil, false, errors.Wrap(err, "failed to lint kurl installer")
 	}
 
-	embeddedClusterLintExpressions, err := ec.LintEmbeddedClusterVersion(yamlFiles)
+	embeddedClusterLintExpressions, err := ec.Lint(yamlFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint ec installer version")
 	}

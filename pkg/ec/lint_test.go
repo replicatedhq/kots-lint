@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_LintEmbeddedClusterVersion(t *testing.T) {
+func Test_Lint(t *testing.T) {
 
 	tests := []struct {
 		name      string
@@ -93,7 +93,7 @@ spec:
 			defer server.Close()
 
 			githubAPIURL = server.URL
-			actual, err := LintEmbeddedClusterVersion(test.specFiles)
+			actual, err := Lint(test.specFiles)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, actual, test.expect)
 		})
