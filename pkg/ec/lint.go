@@ -57,6 +57,9 @@ func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, 
 				}
 				lintExpressions = append(lintExpressions, ecVersionlintExpression)
 			} else {
+				if IsECV3Version(version) {
+					continue
+				}
 				// version is defined, check if it is valid.
 				ecVersion, exists, err := checkIfECVersionExists(version)
 				if err != nil {
