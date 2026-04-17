@@ -801,6 +801,13 @@ func lintIsValidYAML(specFiles domain.SpecFiles) []domain.LintExpression {
 }
 
 func lintFileHasValidYAML(file domain.SpecFile) []domain.LintExpression {
+	// v1beta3 Preflight files may contain Helm template syntax which is not valid YAML.
+	// They will be rendered later; skip static YAML validation for them.
+	if strings.Contains(file.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+		strings.Contains(file.Content, "kind: Preflight") {
+		return []domain.LintExpression{}
+	}
+
 	lintExpressions := []domain.LintExpression{}
 
 	reader := bytes.NewReader([]byte(file.Content))

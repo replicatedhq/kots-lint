@@ -166,6 +166,29 @@ data:
 			},
 			expect: []domain.LintExpression{},
 		},
+		{
+			name: "v1beta3 preflight with helm template syntax is skipped",
+			specFile: domain.SpecFile{
+				Path: "preflight.yaml",
+				Content: `apiVersion: troubleshoot.sh/v1beta3
+kind: Preflight
+metadata:
+  name: vendor-app-preflight
+spec:
+  analyzers:
+    {{- if .Values.client.enabled }}
+    - nodeResources:
+        checkName: Cluster Memory
+        outcomes:
+          - fail:
+              when: "sum(memoryCapacity) < 2Gi"
+              message: The cluster requires at least 2Gi of memory.
+          - pass:
+              message: The cluster has sufficient memory.
+    {{- end }}`,
+			},
+			expect: []domain.LintExpression{},
+		},
 	}
 
 	for _, test := range tests {
