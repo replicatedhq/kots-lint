@@ -163,7 +163,7 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return yamlLintExpressions, false, nil
 	}
 
-	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(yamlFiles)
+	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(stubHelmTemplatePreflights(yamlFiles))
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA non-rendered")
 	}
@@ -660,6 +660,21 @@ func lintResourceAnnotations(specFiles domain.SpecFiles) ([]domain.LintExpressio
 	}
 
 	return lintExpressions, nil
+}
+
+// stubHelmTemplatePreflights replaces v1beta3 Preflight files that contain Helm template
+// syntax with a minimal parseable stub so that OPA can detect their kind/apiVersion.
+func stubHelmTemplatePreflights(files domain.SpecFiles) domain.SpecFiles {
+	out := domain.SpecFiles{}
+	for _, f := range files {
+		if strings.Contains(f.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+			strings.Contains(f.Content, "kind: Preflight") &&
+			strings.Contains(f.Content, "{{") {
+			f.Content = "apiVersion: troubleshoot.sh/v1beta3\nkind: Preflight"
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 // filterHelmTemplatePreflights removes v1beta3 Preflight files that may contain Helm
