@@ -89,7 +89,6 @@ func lintVersion(separatedSpecFiles domain.SpecFiles) ([]domain.LintExpression, 
 	return lintExpressions, nil
 }
 
-
 func checkIfECVersionExists(version string) (*EmbeddedClusterVersion, bool, error) {
 	url := githubAPIURL + "/repos/replicatedhq/embedded-cluster/releases/tags/%s"
 
