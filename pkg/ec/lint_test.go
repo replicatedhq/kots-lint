@@ -71,6 +71,20 @@ spec:
 			},
 			apiResult: []byte(`{"prerelease": true}`),
 		},
+		{
+			name: "ec v3 version skips github check",
+			specFiles: domain.SpecFiles{
+				{
+					Path: "cluster-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0+k8s-1.34"`,
+				},
+			},
+			expect:    []domain.LintExpression{},
+			apiResult: nil, // server returns 404; must not be reached
+		},
 	}
 
 	for _, test := range tests {
