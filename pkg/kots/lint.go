@@ -197,7 +197,12 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return helmChartsLintExpressions, false, nil
 	}
 
-	targetMinLintExpressions, err := lintTargetMinKotsVersions(yamlFiles)
+	// Some steps cannot handle files with Helm template syntax (unparseable YAML).
+	// v1beta3 Preflight files are excluded from these steps; OPA non-rendered already
+	// validated them above.
+	parsableYAMLFiles := filterHelmTemplatePreflights(yamlFiles)
+
+	targetMinLintExpressions, err := lintTargetMinKotsVersions(parsableYAMLFiles)
 	if err != nil {
 		log.Warn(errors.Wrap(err, "failed to lint target and min KOTS versions").Error())
 	}
@@ -229,12 +234,12 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
 
-	installerLintExpressions, err := kurlLinter.LintKurlInstaller(yamlFiles)
+	installerLintExpressions, err := kurlLinter.LintKurlInstaller(parsableYAMLFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint kurl installer")
 	}
 
-	embeddedClusterLintExpressions, err := ec.Lint(yamlFiles)
+	embeddedClusterLintExpressions, err := ec.Lint(parsableYAMLFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint ec installer version")
 	}
@@ -655,6 +660,20 @@ func lintResourceAnnotations(specFiles domain.SpecFiles) ([]domain.LintExpressio
 	}
 
 	return lintExpressions, nil
+}
+
+// filterHelmTemplatePreflights removes v1beta3 Preflight files that may contain Helm
+// template syntax (unparseable as YAML) from the set, for steps that cannot handle them.
+func filterHelmTemplatePreflights(files domain.SpecFiles) domain.SpecFiles {
+	out := domain.SpecFiles{}
+	for _, f := range files {
+		if strings.Contains(f.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+			strings.Contains(f.Content, "kind: Preflight") {
+			continue
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 // isReleaseECV3 returns true if specFiles contains an Embedded Cluster v3 Config resource.
