@@ -725,6 +725,12 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 	renderedFiles := domain.SpecFiles{}
 
 	for _, file := range separatedSpecFiles {
+		// v1beta3 Preflight files may contain Helm template syntax that cannot be
+		// YAML-parsed or KOTS-rendered; skip them entirely from the rendering pipeline.
+		if strings.Contains(file.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+			strings.Contains(file.Content, "kind: Preflight") {
+			continue
+		}
 		renderedContent, err := file.RenderContent(builder)
 		if err == nil {
 			file.Content = string(renderedContent)
