@@ -2160,6 +2160,58 @@ spec:
 				},
 			},
 		},
+		{
+			name: "ec v3 release ignores ReplicatedImageName and ReplicatedImageRegistry errors",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "cluster-config.yaml",
+					Path: "cluster-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0+k8s-1.34"
+  extensions:
+    helm:
+      charts:
+        - chartname: myapp
+          values: |
+            image: '{{repl ReplicatedImageName "myapp" }}'
+            registry: '{{repl ReplicatedImageRegistry "myapp" }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{},
+			expect:        []domain.LintExpression{},
+		},
+		{
+			name: "non-ec-v3 release still errors on ReplicatedImageName",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "2.0.0+k8s-1.29"
+  name: '{{repl ReplicatedImageName "myapp" }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "ec-config.yaml",
+					Message: `function "ReplicatedImageName" not defined`,
+					Positions: []domain.LintExpressionItemPosition{
+						{
+							Start: domain.LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

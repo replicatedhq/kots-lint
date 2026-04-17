@@ -657,6 +657,42 @@ func lintResourceAnnotations(specFiles domain.SpecFiles) ([]domain.LintExpressio
 	return lintExpressions, nil
 }
 
+// isReleaseECV3 returns true if specFiles contains an Embedded Cluster v3 Config resource.
+func isReleaseECV3(specFiles domain.SpecFiles) bool {
+	for _, file := range specFiles {
+		doc := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(file.Content), &doc); err != nil {
+			continue
+		}
+		if doc["apiVersion"] != "embeddedcluster.replicated.com/v1beta1" || doc["kind"] != "Config" {
+			continue
+		}
+		spec, ok := doc["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+		version, ok := spec["version"].(string)
+		if !ok {
+			continue
+		}
+		if ec.IsECV3Version(version) {
+			return true
+		}
+	}
+	return false
+}
+
+// isECV3IgnoredFunctionError returns true when err is a "not defined" error for a
+// template function that only exists in EC v3 runtime contexts.
+func isECV3IgnoredFunctionError(err string) bool {
+	for _, fn := range []string{"ReplicatedImageName", "ReplicatedImageRegistry"} {
+		if strings.Contains(err, fmt.Sprintf(`function "%s" not defined`, fn)) {
+			return true
+		}
+	}
+	return false
+}
+
 func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, domain.SpecFiles, error) {
 	lintExpressions := []domain.LintExpression{}
 
@@ -664,6 +700,8 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to separate multi docs")
 	}
+
+	releaseIsECV3 := isReleaseECV3(specFiles)
 
 	// check if config is valid
 	config, path, err := separatedSpecFiles.FindAndValidateConfig()
@@ -695,6 +733,9 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 		}
 		// check if the error is coming from kots RenderTemplate function
 		if renderErr, ok := errors.Cause(err).(domain.RenderTemplateError); ok {
+			if releaseIsECV3 && isECV3IgnoredFunctionError(renderErr.Error()) {
+				continue
+			}
 			lintExpression := domain.LintExpression{
 				Rule:    "unable-to-render",
 				Type:    "error",
