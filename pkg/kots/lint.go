@@ -163,7 +163,7 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return yamlLintExpressions, false, nil
 	}
 
-	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(yamlFiles)
+	opaNonRenderedLintExpressions, err := lintWithOPANonRendered(stubHelmTemplatePreflights(yamlFiles))
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint with OPA non-rendered")
 	}
@@ -197,7 +197,12 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return helmChartsLintExpressions, false, nil
 	}
 
-	targetMinLintExpressions, err := lintTargetMinKotsVersions(yamlFiles)
+	// Some steps cannot handle files with Helm template syntax (unparseable YAML).
+	// v1beta3 Preflight files are excluded from these steps; OPA non-rendered already
+	// validated them above.
+	parsableYAMLFiles := filterHelmTemplatePreflights(yamlFiles)
+
+	targetMinLintExpressions, err := lintTargetMinKotsVersions(parsableYAMLFiles)
 	if err != nil {
 		log.Warn(errors.Wrap(err, "failed to lint target and min KOTS versions").Error())
 	}
@@ -229,12 +234,12 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return nil, false, errors.Wrap(err, "failed to lint with Kubeval")
 	}
 
-	installerLintExpressions, err := kurlLinter.LintKurlInstaller(yamlFiles)
+	installerLintExpressions, err := kurlLinter.LintKurlInstaller(parsableYAMLFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint kurl installer")
 	}
 
-	embeddedClusterLintExpressions, err := ec.Lint(yamlFiles)
+	embeddedClusterLintExpressions, err := ec.Lint(parsableYAMLFiles)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to lint ec installer version")
 	}
@@ -657,6 +662,71 @@ func lintResourceAnnotations(specFiles domain.SpecFiles) ([]domain.LintExpressio
 	return lintExpressions, nil
 }
 
+// stubHelmTemplatePreflights replaces v1beta3 Preflight files that contain Helm template
+// syntax with a minimal parseable stub so that OPA can detect their kind/apiVersion.
+func stubHelmTemplatePreflights(files domain.SpecFiles) domain.SpecFiles {
+	out := domain.SpecFiles{}
+	for _, f := range files {
+		if strings.Contains(f.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+			strings.Contains(f.Content, "kind: Preflight") &&
+			strings.Contains(f.Content, "{{") {
+			f.Content = "apiVersion: troubleshoot.sh/v1beta3\nkind: Preflight"
+		}
+		out = append(out, f)
+	}
+	return out
+}
+
+// filterHelmTemplatePreflights removes v1beta3 Preflight files that may contain Helm
+// template syntax (unparseable as YAML) from the set, for steps that cannot handle them.
+func filterHelmTemplatePreflights(files domain.SpecFiles) domain.SpecFiles {
+	out := domain.SpecFiles{}
+	for _, f := range files {
+		if strings.Contains(f.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+			strings.Contains(f.Content, "kind: Preflight") {
+			continue
+		}
+		out = append(out, f)
+	}
+	return out
+}
+
+// isReleaseECV3 returns true if specFiles contains an Embedded Cluster v3 Config resource.
+func isReleaseECV3(specFiles domain.SpecFiles) bool {
+	for _, file := range specFiles {
+		doc := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(file.Content), &doc); err != nil {
+			continue
+		}
+		if doc["apiVersion"] != "embeddedcluster.replicated.com/v1beta1" || doc["kind"] != "Config" {
+			continue
+		}
+		spec, ok := doc["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+		version, ok := spec["version"].(string)
+		if !ok {
+			continue
+		}
+		if ec.IsECV3Version(version) {
+			return true
+		}
+	}
+	return false
+}
+
+// isECV3IgnoredFunctionError returns true when err is a "not defined" error for a
+// template function that only exists in EC v3 runtime contexts.
+func isECV3IgnoredFunctionError(err string) bool {
+	for _, fn := range []string{"ReplicatedImageName", "ReplicatedImageRegistry"} {
+		if strings.Contains(err, fmt.Sprintf(`function "%s" not defined`, fn)) {
+			return true
+		}
+	}
+	return false
+}
+
 func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, domain.SpecFiles, error) {
 	lintExpressions := []domain.LintExpression{}
 
@@ -664,6 +734,8 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to separate multi docs")
 	}
+
+	releaseIsECV3 := isReleaseECV3(specFiles)
 
 	// check if config is valid
 	config, path, err := separatedSpecFiles.FindAndValidateConfig()
@@ -687,6 +759,12 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 	renderedFiles := domain.SpecFiles{}
 
 	for _, file := range separatedSpecFiles {
+		// v1beta3 Preflight files may contain Helm template syntax that cannot be
+		// YAML-parsed or KOTS-rendered; skip them entirely from the rendering pipeline.
+		if strings.Contains(file.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+			strings.Contains(file.Content, "kind: Preflight") {
+			continue
+		}
 		renderedContent, err := file.RenderContent(builder)
 		if err == nil {
 			file.Content = string(renderedContent)
@@ -695,6 +773,9 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 		}
 		// check if the error is coming from kots RenderTemplate function
 		if renderErr, ok := errors.Cause(err).(domain.RenderTemplateError); ok {
+			if releaseIsECV3 && isECV3IgnoredFunctionError(renderErr.Error()) {
+				continue
+			}
 			lintExpression := domain.LintExpression{
 				Rule:    "unable-to-render",
 				Type:    "error",
@@ -801,6 +882,13 @@ func lintIsValidYAML(specFiles domain.SpecFiles) []domain.LintExpression {
 }
 
 func lintFileHasValidYAML(file domain.SpecFile) []domain.LintExpression {
+	// v1beta3 Preflight files may contain Helm template syntax which is not valid YAML.
+	// They will be rendered later; skip static YAML validation for them.
+	if strings.Contains(file.Content, "apiVersion: troubleshoot.sh/v1beta3") &&
+		strings.Contains(file.Content, "kind: Preflight") {
+		return []domain.LintExpression{}
+	}
+
 	lintExpressions := []domain.LintExpression{}
 
 	reader := bytes.NewReader([]byte(file.Content))
