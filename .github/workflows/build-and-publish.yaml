@@ -39,7 +39,14 @@ jobs:
       - uses: docker/build-push-action@v4
         with:
           push: false
+          load: true
           tags: replicated/kots-lint:ci-test
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/*.sum"
+      - name: Run integration tests against built image
+        run: SKIP_BUILD=1 IMAGE=replicated/kots-lint:ci-test ./scripts/integration-test.sh
 
   goreleaser:
     runs-on: ubuntu-latest
