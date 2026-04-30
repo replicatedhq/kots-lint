@@ -800,6 +800,18 @@ spec:
   scope: Namespaced
   versions: []
 `
+	const supportBundleCRD = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: supportbundles.troubleshoot.sh
+spec:
+  group: troubleshoot.sh
+  names:
+    kind: SupportBundle
+    plural: supportbundles
+  scope: Namespaced
+  versions: []
+`
 	const preflightInSecret = `apiVersion: v1
 kind: Secret
 metadata:
@@ -858,6 +870,27 @@ spec:
 			"ts-chart/Chart.yaml":               chartYaml,
 			"ts-chart/templates/preflight.yaml": preflightTemplate,
 			"ts-chart/crds/preflight-crd.yaml":  preflightCRD,
+		}))
+		assertRules(t, resp.LintExpressions, nil, []string{"troubleshoot-spec-in-chart-without-crd"})
+	})
+
+	t.Run("supportbundle_with_matching_crd_does_not_warn", func(t *testing.T) {
+		resp := lintFiles(t, chartFiles(t, map[string]string{
+			"ts-chart/Chart.yaml":                   chartYaml,
+			"ts-chart/templates/supportbundle.yaml": supportBundleTemplate,
+			"ts-chart/crds/supportbundle-crd.yaml":  supportBundleCRD,
+		}))
+		assertRules(t, resp.LintExpressions, nil, []string{"troubleshoot-spec-in-chart-without-crd"})
+	})
+
+	// Some charts ship CRDs under templates/crds/ instead of the chart-level
+	// crds/ directory; the lint should pick those up via the rendered
+	// templates path too.
+	t.Run("preflight_with_crd_in_templates_does_not_warn", func(t *testing.T) {
+		resp := lintFiles(t, chartFiles(t, map[string]string{
+			"ts-chart/Chart.yaml":                   chartYaml,
+			"ts-chart/templates/preflight.yaml":     preflightTemplate,
+			"ts-chart/templates/crds/preflight.yaml": preflightCRD,
 		}))
 		assertRules(t, resp.LintExpressions, nil, []string{"troubleshoot-spec-in-chart-without-crd"})
 	})
