@@ -244,6 +244,11 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return nil, false, errors.Wrap(err, "failed to lint ec installer version")
 	}
 
+	chartTroubleshootLintExpressions, err := lintHelmChartTroubleshootCRDs(ctx, tarGzFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint chart troubleshoot specs")
+	}
+
 	allLintExpressions := []domain.LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
@@ -252,6 +257,7 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 	allLintExpressions = append(allLintExpressions, kubevalLintExpressions...)
 	allLintExpressions = append(allLintExpressions, installerLintExpressions...)
 	allLintExpressions = append(allLintExpressions, embeddedClusterLintExpressions...)
+	allLintExpressions = append(allLintExpressions, chartTroubleshootLintExpressions...)
 
 	return allLintExpressions, true, nil
 }
