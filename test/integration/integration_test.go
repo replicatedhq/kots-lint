@@ -14,6 +14,7 @@ package integration
 import (
 	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	_ "embed"
@@ -25,6 +26,31 @@ import (
 	"testing"
 	"time"
 )
+
+// buildChartTgz returns a base64-encoded helm chart tarball containing the
+// provided file map. Used inline so we can construct chart archives that
+// trigger specific lint rules without committing binary fixtures.
+func buildChartTgz(t *testing.T, files map[string]string) string {
+	t.Helper()
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gz)
+	for path, content := range files {
+		if err := tw.WriteHeader(&tar.Header{Name: path, Mode: 0644, Size: int64(len(content))}); err != nil {
+			t.Fatalf("tar header: %v", err)
+		}
+		if _, err := tw.Write([]byte(content)); err != nil {
+			t.Fatalf("tar write: %v", err)
+		}
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatalf("tar close: %v", err)
+	}
+	if err := gz.Close(); err != nil {
+		t.Fatalf("gz close: %v", err)
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes())
+}
 
 //go:embed testdata/testchart-with-labels-16.2.2.tgz
 var testChartWithLabels []byte
@@ -736,6 +762,112 @@ spec:
 	t.Run("invalid_yaml_fails", func(t *testing.T) {
 		resp := troubleshootLint(t, "this: : is not yaml\n  - bad")
 		assertRules(t, resp.LintExpressions, []string{"invalid-yaml"}, nil)
+	})
+}
+
+// TestLintChartTroubleshootCRDs exercises troubleshoot-spec-in-chart-without-crd:
+// when a helm chart packages a Preflight or SupportBundle CR template but
+// doesn't ship the matching CRD, lint should warn (because the CR install
+// will fail in clusters without the CRD already present). We construct chart
+// archives inline so we can flip individual conditions: bare CR template
+// (warn fires), CR template + CRD (warn suppressed), CR embedded in a Secret
+// — the recommended pattern (warn suppressed).
+func TestLintChartTroubleshootCRDs(t *testing.T) {
+	const chartYaml = "apiVersion: v2\nname: ts-chart\nversion: 0.1.0\n"
+	const preflightTemplate = `apiVersion: troubleshoot.sh/v1beta2
+kind: Preflight
+metadata:
+  name: my-preflight
+spec:
+  analyzers: []
+`
+	const supportBundleTemplate = `apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: my-sb
+spec:
+  collectors: []
+`
+	const preflightCRD = `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: preflights.troubleshoot.sh
+spec:
+  group: troubleshoot.sh
+  names:
+    kind: Preflight
+    plural: preflights
+  scope: Namespaced
+  versions: []
+`
+	const preflightInSecret = `apiVersion: v1
+kind: Secret
+metadata:
+  name: my-preflight
+  labels:
+    troubleshoot.sh/kind: preflight
+stringData:
+  preflight.yaml: |
+    apiVersion: troubleshoot.sh/v1beta2
+    kind: Preflight
+    metadata:
+      name: my-preflight
+    spec:
+      analyzers: []
+`
+	helmChartManifest := `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: ts-chart
+spec:
+  chart:
+    name: ts-chart
+    chartVersion: "0.1.0"
+  releaseName: ts-chart
+`
+
+	chartFiles := func(t *testing.T, contents map[string]string) []specFile {
+		return []specFile{
+			{Name: "ts-chart.yaml", Path: "ts-chart.yaml", Content: helmChartManifest},
+			{
+				Name:    "ts-chart-0.1.0.tgz",
+				Path:    "ts-chart-0.1.0.tgz",
+				Content: buildChartTgz(t, contents),
+			},
+		}
+	}
+
+	t.Run("preflight_template_without_crd_warns", func(t *testing.T) {
+		resp := lintFiles(t, chartFiles(t, map[string]string{
+			"ts-chart/Chart.yaml":                 chartYaml,
+			"ts-chart/templates/preflight.yaml":   preflightTemplate,
+		}))
+		assertRules(t, resp.LintExpressions, []string{"troubleshoot-spec-in-chart-without-crd"}, nil)
+	})
+
+	t.Run("supportbundle_template_without_crd_warns", func(t *testing.T) {
+		resp := lintFiles(t, chartFiles(t, map[string]string{
+			"ts-chart/Chart.yaml":                       chartYaml,
+			"ts-chart/templates/supportbundle.yaml":     supportBundleTemplate,
+		}))
+		assertRules(t, resp.LintExpressions, []string{"troubleshoot-spec-in-chart-without-crd"}, nil)
+	})
+
+	t.Run("preflight_with_matching_crd_does_not_warn", func(t *testing.T) {
+		resp := lintFiles(t, chartFiles(t, map[string]string{
+			"ts-chart/Chart.yaml":               chartYaml,
+			"ts-chart/templates/preflight.yaml": preflightTemplate,
+			"ts-chart/crds/preflight-crd.yaml":  preflightCRD,
+		}))
+		assertRules(t, resp.LintExpressions, nil, []string{"troubleshoot-spec-in-chart-without-crd"})
+	})
+
+	t.Run("preflight_embedded_in_secret_does_not_warn", func(t *testing.T) {
+		resp := lintFiles(t, chartFiles(t, map[string]string{
+			"ts-chart/Chart.yaml":                      chartYaml,
+			"ts-chart/templates/preflight-secret.yaml": preflightInSecret,
+		}))
+		assertRules(t, resp.LintExpressions, nil, []string{"troubleshoot-spec-in-chart-without-crd"})
 	})
 }
 
