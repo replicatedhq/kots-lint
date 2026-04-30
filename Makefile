@@ -52,6 +52,18 @@ build:
 test:
 	go test -v ./pkg/... -tags "$(BUILDTAGS)"
 
+# Build the docker image, run it, and execute the integration test suite
+# against the live HTTP API. Honors SKIP_BUILD/IMAGE/PORT/KEEP_RUNNING/GO_TEST_ARGS.
+.PHONY: test-docker
+test-docker:
+	./scripts/integration-test.sh
+
+# Run the integration test suite against an already-running kots-lint instance
+# (defaults to http://localhost:8082, override via KOTS_LINT_BASE_URL).
+.PHONY: test-integration
+test-integration:
+	go test -tags integration -timeout 5m ./test/integration/...
+
 .PHONY: example
 example:
 	go run -tags "$(BUILDTAGS)" ./example/main.go
