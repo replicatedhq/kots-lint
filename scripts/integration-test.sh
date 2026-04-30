@@ -57,5 +57,13 @@ for i in $(seq 1 60); do
 done
 
 echo ">> Running integration tests against ${BASE_URL}"
+set +e
 KOTS_LINT_BASE_URL="${BASE_URL}" \
-    go test -tags integration -timeout 5m ./test/integration/... ${GO_TEST_ARGS:-}
+    go test -v -count=1 -tags integration -timeout 5m ./test/integration/... ${GO_TEST_ARGS:-}
+TEST_EXIT=$?
+set -e
+
+echo ">> Container logs (${CONTAINER_NAME}):"
+docker logs "${CONTAINER_NAME}" 2>&1 || true
+
+exit ${TEST_EXIT}
