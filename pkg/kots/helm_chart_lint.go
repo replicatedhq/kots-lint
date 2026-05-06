@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/replicatedhq/kots-lint/pkg/domain"
 	"github.com/replicatedhq/kotskinds/pkg/helmchart"
-	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -33,11 +32,7 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 	}
 	allKotsHelmCharts := findAllKotsHelmCharts(separated)
 	if len(allKotsHelmCharts) == 0 {
-		log.Debugf("helm-lint: no HelmChart custom resources, skipping helm lint")
 		return lintExpressions, nil
-	}
-	for _, hc := range allKotsHelmCharts {
-		log.Debugf("helm-lint: HelmChart CR %s/%s helmVersion=%q", hc.GetChartName(), hc.GetChartVersion(), hc.GetHelmVersion())
 	}
 
 	for _, tarGzFile := range tarGzFiles {
@@ -48,27 +43,22 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 		content := []byte(tarGzFile.Content)
 		ch, err := loader.LoadArchive(bytes.NewReader(content))
 		if err != nil {
-			log.Debugf("helm-lint: failed to load chart archive %s: %v", tarGzFile.Path, err)
 			continue
 		}
-		log.Debugf("helm-lint: loaded archive %s as chart %s/%s", tarGzFile.Path, ch.Name(), ch.Metadata.Version)
 
 		matched := matchHelmChartCR(ch, allKotsHelmCharts)
 		if matched == nil {
 			// No matching kots HelmChart CR — that case is reported by lintHelmCharts.
-			log.Debugf("helm-lint: no matching HelmChart CR for archive %s (%s/%s), skipping", tarGzFile.Path, ch.Name(), ch.Metadata.Version)
 			continue
 		}
 
 		// Only lint Helm v3 (and later) charts. Skip explicit v2 HelmChart CRs.
 		if v := matched.GetHelmVersion(); v != "" && v != "v3" {
-			log.Infof("helm-lint: skipping chart %s/%s, helmVersion=%q is not v3", ch.Name(), ch.Metadata.Version, v)
 			continue
 		}
 
 		builderValues, err := matched.GetBuilderValues()
 		if err != nil {
-			log.Warnf("helm-lint: failed to evaluate spec.builder for %s/%s: %v", ch.Name(), ch.Metadata.Version, err)
 			lintExpressions = append(lintExpressions, domain.LintExpression{
 				Rule:    "helm-schema-violation",
 				Type:    "warn",
@@ -82,7 +72,6 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 		// HelmChart spec.builder overrides so helm lint sees both.
 		merged, err := chartutil.CoalesceValues(ch, builderValues)
 		if err != nil {
-			log.Warnf("helm-lint: failed to merge builder and default values for %s/%s: %v", ch.Name(), ch.Metadata.Version, err)
 			lintExpressions = append(lintExpressions, domain.LintExpression{
 				Rule:    "helm-schema-violation",
 				Type:    "warn",
@@ -92,16 +81,13 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 			continue
 		}
 
-		log.Infof("helm-lint: running helm lint on %s (%s/%s) with %d top-level value key(s)", tarGzFile.Path, ch.Name(), ch.Metadata.Version, len(merged.AsMap()))
 		chartLintExpressions, err := runHelmLintOnArchive(content, tarGzFile.Path, merged.AsMap())
 		if err != nil {
 			return nil, errors.Wrapf(err, "helm lint chart %s", tarGzFile.Path)
 		}
-		log.Infof("helm-lint: %s produced %d lint expression(s)", tarGzFile.Path, len(chartLintExpressions))
 		lintExpressions = append(lintExpressions, chartLintExpressions...)
 	}
 
-	log.Infof("helm-lint: complete, %d total lint expression(s)", len(lintExpressions))
 	return lintExpressions, nil
 }
 
@@ -135,19 +121,6 @@ func runHelmLintOnArchive(archive []byte, chartPath string, values map[string]in
 
 	linter := action.NewLint()
 	result := linter.Run([]string{tgzPath}, values)
-	if result != nil {
-		log.Debugf("helm-lint: %s helm-action result charts=%d messages=%d errors=%d", chartPath, result.TotalChartsLinted, len(result.Messages), len(result.Errors))
-		for _, m := range result.Messages {
-			if m.Err != nil {
-				log.Debugf("helm-lint: %s [sev=%d] %s: %s", chartPath, m.Severity, m.Path, m.Err.Error())
-			}
-		}
-		for _, e := range result.Errors {
-			if e != nil {
-				log.Debugf("helm-lint: %s top-level error: %s", chartPath, e.Error())
-			}
-		}
-	}
 
 	return helmLintResultToLintExpressions(result, chartPath), nil
 }
