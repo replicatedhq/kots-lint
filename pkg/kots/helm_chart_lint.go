@@ -2,6 +2,7 @@ package kots
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,7 +41,12 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 			continue
 		}
 
-		content := []byte(tarGzFile.Content)
+		// Tar archives may be base64-encoded (JSON transport) or raw bytes (tar
+		// stream transport). Match domain.SpecFilesFromTarGz's fallback.
+		content, err := base64.StdEncoding.DecodeString(tarGzFile.Content)
+		if err != nil {
+			content = []byte(tarGzFile.Content)
+		}
 		ch, err := loader.LoadArchive(bytes.NewReader(content))
 		if err != nil {
 			continue
