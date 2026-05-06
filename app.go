@@ -34,7 +34,7 @@ func main() {
 
 	go daemon.Run()
 
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	signal.Notify(term, syscall.SIGINT, syscall.SIGTERM)
 	<-term
 }

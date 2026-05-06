@@ -134,10 +134,11 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 	}
 
 	for _, tarGtarGzFile := range tarGzFiles {
+		// Tar archives may be base64-encoded (JSON transport) or raw bytes (tar
+		// stream transport). Match domain.SpecFilesFromTarGz's fallback.
 		content, err := base64.StdEncoding.DecodeString(tarGtarGzFile.Content)
 		if err != nil {
-			log.Debugf("failed to base64 decode tarGz content: %v", err)
-			continue
+			content = []byte(tarGtarGzFile.Content)
 		}
 
 		files, err := GetFilesFromChartReader(ctx, bytes.NewReader(content))
@@ -249,6 +250,11 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return nil, false, errors.Wrap(err, "failed to lint chart troubleshoot specs")
 	}
 
+	helmChartSchemaLintExpressions, err := lintHelmChartsWithHelmLint(renderedFiles, tarGzFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint helm charts with helm lint")
+	}
+
 	allLintExpressions := []domain.LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
@@ -258,6 +264,7 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 	allLintExpressions = append(allLintExpressions, installerLintExpressions...)
 	allLintExpressions = append(allLintExpressions, embeddedClusterLintExpressions...)
 	allLintExpressions = append(allLintExpressions, chartTroubleshootLintExpressions...)
+	allLintExpressions = append(allLintExpressions, helmChartSchemaLintExpressions...)
 
 	return allLintExpressions, true, nil
 }

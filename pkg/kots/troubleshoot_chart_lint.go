@@ -37,10 +37,11 @@ func lintHelmChartTroubleshootCRDs(ctx context.Context, tarGzFiles domain.SpecFi
 			continue
 		}
 
+		// Tar archives may be base64-encoded (JSON transport) or raw bytes (tar
+		// stream transport). Match domain.SpecFilesFromTarGz's fallback.
 		content, err := base64.StdEncoding.DecodeString(tarGzFile.Content)
 		if err != nil {
-			log.Debugf("failed to base64 decode tarGz content: %v", err)
-			continue
+			content = []byte(tarGzFile.Content)
 		}
 
 		ch, err := loader.LoadArchive(bytes.NewReader(content))
