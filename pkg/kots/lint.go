@@ -837,9 +837,12 @@ func lintHelmCharts(renderedFiles domain.SpecFiles, tarGzFiles domain.SpecFiles)
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
+	// collect all helm chart manifests from both kots HelmChart CRs and EC Config extensions
+	allHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
+	allHelmCharts = append(allHelmCharts, findAllECConfigHelmCharts(separatedSpecFiles)...)
+
 	// check if all helm charts have corresponding archives
-	allKotsHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
-	for _, helmChart := range allKotsHelmCharts {
+	for _, helmChart := range allHelmCharts {
 		archiveExists, err := archiveForHelmChartExists(tarGzFiles, helmChart)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to check if archive for helm chart exists")
@@ -861,7 +864,7 @@ func lintHelmCharts(renderedFiles domain.SpecFiles, tarGzFiles domain.SpecFiles)
 			continue
 		}
 
-		chartExists, err := helmChartForArchiveExists(allKotsHelmCharts, specFile)
+		chartExists, err := helmChartForArchiveExists(allHelmCharts, specFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to check if helm chart for archive exists")
 		}
@@ -986,9 +989,26 @@ func lintExpressionsHaveErrors(lintExpressions []domain.LintExpression) bool {
 	return false
 }
 
+// chartIdentity is a minimal interface for anything that declares a helm chart
+// name and version (kots HelmChart CRs or EC Config extensions.helmCharts entries).
+type chartIdentity interface {
+	GetChartName() string
+	GetChartVersion() string
+}
+
+// ecConfigHelmChart represents a helm chart declared inside an EC Config manifest.
+type ecConfigHelmChart struct {
+	Name    string
+	Version string
+	Path    string
+}
+
+func (c ecConfigHelmChart) GetChartName() string    { return c.Name }
+func (c ecConfigHelmChart) GetChartVersion() string { return c.Version }
+
 // archiveForHelmChartExists iterates through all files, looking for a helm chart archive
-// that matches the chart name and version specified in the kotsHelmChart parameter
-func archiveForHelmChartExists(specFiles domain.SpecFiles, kotsHelmChart helmchart.HelmChartInterface) (bool, error) {
+// that matches the chart name and version specified in the chartIdentity parameter
+func archiveForHelmChartExists(specFiles domain.SpecFiles, chartIdent chartIdentity) (bool, error) {
 	for _, specFile := range specFiles {
 		if !specFile.IsTarGz() {
 			continue
@@ -1007,8 +1027,8 @@ func archiveForHelmChartExists(specFiles domain.SpecFiles, kotsHelmChart helmcha
 					return false, errors.Wrap(err, "failed to unmarshal chart yaml")
 				}
 
-				if chartManifest.Name == kotsHelmChart.GetChartName() {
-					if chartManifest.Version == kotsHelmChart.GetChartVersion() {
+				if chartManifest.Name == chartIdent.GetChartName() {
+					if chartManifest.Version == chartIdent.GetChartVersion() {
 						return true, nil
 					}
 				}
@@ -1021,7 +1041,7 @@ func archiveForHelmChartExists(specFiles domain.SpecFiles, kotsHelmChart helmcha
 
 // helmChartForArchiveExists iterates through all existing helm charts, looking for a helm chart manifest
 // that matches the chart name and version specified in the Chart.yaml file in the archive
-func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface, archive domain.SpecFile) (bool, error) {
+func helmChartForArchiveExists(allHelmCharts []chartIdentity, archive domain.SpecFile) (bool, error) {
 	files, err := domain.SpecFilesFromTarGz(archive)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to read chart archive")
@@ -1037,9 +1057,9 @@ func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface,
 			return false, errors.Wrap(err, "failed to unmarshal chart yaml")
 		}
 
-		for _, kotsHelmChart := range allKotsHelmCharts {
-			if chartManifest.Name == kotsHelmChart.GetChartName() {
-				if chartManifest.Version == kotsHelmChart.GetChartVersion() {
+		for _, helmChart := range allHelmCharts {
+			if chartManifest.Name == helmChart.GetChartName() {
+				if chartManifest.Version == helmChart.GetChartVersion() {
 					return true, nil
 				}
 			}
@@ -1049,8 +1069,8 @@ func helmChartForArchiveExists(allKotsHelmCharts []helmchart.HelmChartInterface,
 	return false, nil
 }
 
-func findAllKotsHelmCharts(specFiles domain.SpecFiles) []helmchart.HelmChartInterface {
-	kotsHelmCharts := []helmchart.HelmChartInterface{}
+func findAllKotsHelmCharts(specFiles domain.SpecFiles) []chartIdentity {
+	kotsHelmCharts := []chartIdentity{}
 	for _, specFile := range specFiles {
 		kotsHelmChart := tryParsingAsHelmChartGVK([]byte(specFile.Content))
 		if kotsHelmChart != nil {
@@ -1059,6 +1079,54 @@ func findAllKotsHelmCharts(specFiles domain.SpecFiles) []helmchart.HelmChartInte
 	}
 
 	return kotsHelmCharts
+}
+
+// findAllECConfigHelmCharts extracts helm chart declarations from EC Config manifests.
+// It looks for apiVersion: embeddedcluster.replicated.com/v1beta1, kind: Config, and
+// walks spec.extensions.helmCharts[].chart.name / .chart.chartVersion.
+func findAllECConfigHelmCharts(specFiles domain.SpecFiles) []chartIdentity {
+	var charts []chartIdentity
+	for _, specFile := range specFiles {
+		doc := map[string]interface{}{}
+		if err := yaml.Unmarshal([]byte(specFile.Content), &doc); err != nil {
+			continue
+		}
+		if doc["apiVersion"] != "embeddedcluster.replicated.com/v1beta1" || doc["kind"] != "Config" {
+			continue
+		}
+		spec, ok := doc["spec"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+		extensions, ok := spec["extensions"].(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+		helmChartsRaw, ok := extensions["helmCharts"].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, hcRaw := range helmChartsRaw {
+			hc, ok := hcRaw.(map[interface{}]interface{})
+			if !ok {
+				continue
+			}
+			chartRaw, ok := hc["chart"].(map[interface{}]interface{})
+			if !ok {
+				continue
+			}
+			name, _ := chartRaw["name"].(string)
+			version, _ := chartRaw["chartVersion"].(string)
+			if name != "" && version != "" {
+				charts = append(charts, ecConfigHelmChart{
+					Name:    name,
+					Version: version,
+					Path:    specFile.Path,
+				})
+			}
+		}
+	}
+	return charts
 }
 
 func tryParsingAsHelmChartGVK(content []byte) helmchart.HelmChartInterface {

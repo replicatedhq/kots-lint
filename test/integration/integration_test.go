@@ -15,9 +15,9 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
-	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
@@ -661,6 +661,80 @@ spec:
 			want: []string{"helm-chart-missing"},
 		},
 		{
+			// EC Config extensions.helmCharts with matching archive.
+			name: "ec_config_helm_chart_matching_archive",
+			files: []specFile{
+				{
+					Name: "ec.yaml", Path: "ec.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+metadata:
+  name: ec
+spec:
+  version: 3.0.0
+  extensions:
+    helmCharts:
+      - chart:
+          name: ec-chart
+          chartVersion: "1.0.0"
+`,
+				},
+				{
+					Name:    "ec-chart-1.0.0.tgz",
+					Path:    "ec-chart-1.0.0.tgz",
+					Content: "H4sIAHNr+mkC/+3SsQrCQAzG8ZvvKe4FPHPadujqO7iHcmDBVrnWgm/vVVoEZxHB/2/IF5IhS2KzaU6axu1hrv6u3dl8mmRVUTwze0+Rsnz18zyEfSXGifmC2zBqyufNf9Jre4xpaC997aad7bWLtYvLU9hpXQUvXqwBAAAAAAAAAAAAAAAAAPyKBwZRnZAAKAAA",
+				},
+			},
+			forbid: []string{"helm-archive-missing", "helm-chart-missing"},
+		},
+		{
+			// EC Config extensions.helmCharts without matching archive.
+			name: "ec_config_helm_chart_missing_archive",
+			files: []specFile{{
+				Name: "ec.yaml", Path: "ec.yaml",
+				Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+metadata:
+  name: ec
+spec:
+  version: 3.0.0
+  extensions:
+    helmCharts:
+      - chart:
+          name: missing-chart
+          chartVersion: "1.0.0"
+`,
+			}},
+			want: []string{"helm-archive-missing"},
+		},
+		{
+			// Archive present with only EC Config entry (no kots HelmChart).
+			name: "archive_with_only_ec_config_helm_chart",
+			files: []specFile{
+				{
+					Name: "ec.yaml", Path: "ec.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+metadata:
+  name: ec
+spec:
+  version: 3.0.0
+  extensions:
+    helmCharts:
+      - chart:
+          name: only-ec-chart
+          chartVersion: "1.0.0"
+`,
+				},
+				{
+					Name:    "only-ec-chart-1.0.0.tgz",
+					Path:    "only-ec-chart-1.0.0.tgz",
+					Content: "H4sIAHVr+mkC/+3SsQrCMBDG8cx5irxAY5pWh66+g3soAQttImkt9O1NC0VxFhH8/4b7jrvhlouhXwrfFu3VpelwXqte3NCLDzLZqa63zN4zL+2zX+elraqjUEZ8wX2cXMrnxX9yt+7i09jF0KjZyuAG36j4+hRy3velNtpIAQAAAAAAAAAAAAAAAAD4AQ9FANXBACgAAA==",
+				},
+			},
+			forbid: []string{"helm-chart-missing"},
+		},
+		{
 			// Embedded Cluster v3 + a Preflight on the older v1beta2 apiVersion.
 			name: "ec_v3_preflight_api_version",
 			files: []specFile{
@@ -851,16 +925,16 @@ spec:
 
 	t.Run("preflight_template_without_crd_warns", func(t *testing.T) {
 		resp := lintFiles(t, chartFiles(t, map[string]string{
-			"ts-chart/Chart.yaml":                 chartYaml,
-			"ts-chart/templates/preflight.yaml":   preflightTemplate,
+			"ts-chart/Chart.yaml":               chartYaml,
+			"ts-chart/templates/preflight.yaml": preflightTemplate,
 		}))
 		assertRules(t, resp.LintExpressions, []string{"troubleshoot-spec-in-chart-without-crd"}, nil)
 	})
 
 	t.Run("supportbundle_template_without_crd_warns", func(t *testing.T) {
 		resp := lintFiles(t, chartFiles(t, map[string]string{
-			"ts-chart/Chart.yaml":                       chartYaml,
-			"ts-chart/templates/supportbundle.yaml":     supportBundleTemplate,
+			"ts-chart/Chart.yaml":                   chartYaml,
+			"ts-chart/templates/supportbundle.yaml": supportBundleTemplate,
 		}))
 		assertRules(t, resp.LintExpressions, []string{"troubleshoot-spec-in-chart-without-crd"}, nil)
 	})
@@ -888,8 +962,8 @@ spec:
 	// templates path too.
 	t.Run("preflight_with_crd_in_templates_does_not_warn", func(t *testing.T) {
 		resp := lintFiles(t, chartFiles(t, map[string]string{
-			"ts-chart/Chart.yaml":                   chartYaml,
-			"ts-chart/templates/preflight.yaml":     preflightTemplate,
+			"ts-chart/Chart.yaml":                    chartYaml,
+			"ts-chart/templates/preflight.yaml":      preflightTemplate,
 			"ts-chart/templates/crds/preflight.yaml": preflightCRD,
 		}))
 		assertRules(t, resp.LintExpressions, nil, []string{"troubleshoot-spec-in-chart-without-crd"})
