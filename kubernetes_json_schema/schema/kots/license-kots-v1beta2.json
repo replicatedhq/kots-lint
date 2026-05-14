@@ -1,5 +1,5 @@
 {
-  "description": "License is the Schema for the license API",
+  "description": "License is the Schema for the license API for v1beta2\nNOTE: No +kubebuilder:storageversion annotation - v1beta1 remains storage version",
   "type": "object",
   "properties": {
     "apiVersion": {
@@ -14,7 +14,7 @@
       "type": "object"
     },
     "spec": {
-      "description": "LicenseSpec defines the desired state of LicenseSpec",
+      "description": "LicenseSpec defines the desired state of LicenseSpec for v1beta2",
       "type": "object",
       "required": [
         "appSlug",
@@ -89,7 +89,7 @@
               "signature": {
                 "type": "object",
                 "properties": {
-                  "v1": {
+                  "v2": {
                     "type": "string",
                     "format": "byte"
                   }
@@ -99,9 +99,7 @@
                 "type": "string"
               },
               "value": {
-                "description": "RawMessage is a raw encoded JSON value.\nIt implements [Marshaler] and [Unmarshaler] and can\nbe used to delay JSON decoding or precompute a JSON encoding.",
-                "type": "string",
-                "format": "byte"
+                "type": "object"
               },
               "valueType": {
                 "type": "string"

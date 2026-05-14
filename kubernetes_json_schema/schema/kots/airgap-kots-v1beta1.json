@@ -65,6 +65,9 @@
             }
           }
         },
+        "embeddedClusterVersion": {
+          "type": "string"
+        },
         "format": {
           "type": "string"
         },
@@ -86,6 +89,9 @@
             "description": "AirgapStatus defines airgap release metadata",
             "type": "object",
             "properties": {
+              "embeddedClusterVersion": {
+                "type": "string"
+              },
               "releaseNotes": {
                 "type": "string"
               },

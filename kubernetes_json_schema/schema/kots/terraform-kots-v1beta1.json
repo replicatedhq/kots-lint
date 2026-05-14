@@ -1,0 +1,45 @@
+{
+  "description": "Terraform is the Schema for the terraform API",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "TerraformSpec defines the desired state of Terraform",
+      "type": "object",
+      "required": [
+        "filename"
+      ],
+      "properties": {
+        "docs": {
+          "description": "Docs provides documentation for various user-defined steps",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "filename": {
+          "description": "Filename references a .tgz file containing Terraform modules",
+          "type": "string"
+        },
+        "minTerraformVersion": {
+          "description": "MinTerraformVersion specifies the minimum Terraform version required",
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "description": "TerraformStatus defines the observed state of Terraform",
+      "type": "object"
+    }
+  }
+}
