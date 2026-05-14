@@ -99,13 +99,15 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 
 // matchHelmChartCR returns the HelmChart CR whose chart name and version match
 // the metadata in the chart archive, or nil if none match.
-func matchHelmChartCR(ch *chart.Chart, helmCharts []helmchart.HelmChartInterface) helmchart.HelmChartInterface {
+func matchHelmChartCR(ch *chart.Chart, helmCharts []chartIdentity) helmchart.HelmChartInterface {
 	if ch.Metadata == nil {
 		return nil
 	}
 	for _, hc := range helmCharts {
 		if hc.GetChartName() == ch.Metadata.Name && hc.GetChartVersion() == ch.Metadata.Version {
-			return hc
+			if matched, ok := hc.(helmchart.HelmChartInterface); ok {
+				return matched
+			}
 		}
 	}
 	return nil
