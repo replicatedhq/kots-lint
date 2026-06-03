@@ -75,7 +75,7 @@ func lintHelmInstallType(ctx context.Context, specFiles domain.SpecFiles) ([]dom
 			Rule:    "helm-install-type-missing-annotation",
 			Type:    "warn",
 			Path:    spec.Path,
-			Message: fmt.Sprintf("%s are raw Kubernetes resources without the kots.io/installer-only annotation. Add this annotation to the resource or remove it to enable Helm CLI install.", spec.Path),
+			Message: fmt.Sprintf("%s is a raw Kubernetes resource without the kots.io/installer-only annotation. Add this annotation to the resource or remove it to enable Helm CLI install.", spec.Path),
 		})
 	}
 
