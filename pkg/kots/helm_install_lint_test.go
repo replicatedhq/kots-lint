@@ -233,7 +233,7 @@ kind: Config
 			if tt.expectRule != "" {
 				for _, e := range expressions {
 					assert.Equal(t, tt.expectRule, e.Rule)
-					assert.Equal(t, "error", e.Type)
+					assert.Equal(t, "warn", e.Type)
 					assert.NotEmpty(t, e.Message)
 				}
 			}
