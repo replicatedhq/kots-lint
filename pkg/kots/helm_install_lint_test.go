@@ -87,6 +87,19 @@ metadata:
 			name: "resource without annotation returns lint error",
 			specFiles: domain.SpecFiles{
 				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: mychart
+spec:
+  chart:
+    name: mychart
+    chartVersion: 1.0.0
+`,
+				},
+				{
 					Name: "deployment.yaml",
 					Path: "deployment.yaml",
 					Content: `apiVersion: apps/v1
@@ -103,6 +116,19 @@ metadata:
 		{
 			name: "resource without annotation with embeddedcluster api version but different group produces error",
 			specFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: mychart
+spec:
+  chart:
+    name: mychart
+    chartVersion: 1.0.0
+`,
+				},
 				{
 					Name: "endpoints.yaml",
 					Path: "endpoints.yaml",
@@ -136,6 +162,19 @@ metadata:
 			name: "file in single subdirectory is still checked",
 			specFiles: domain.SpecFiles{
 				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: mychart
+spec:
+  chart:
+    name: mychart
+    chartVersion: 1.0.0
+`,
+				},
+				{
 					Name: "deployment.yaml",
 					Path: "base/deployment.yaml",
 					Content: `apiVersion: apps/v1
@@ -156,6 +195,15 @@ metadata:
 					Name: "resources.yaml",
 					Path: "resources.yaml",
 					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: mychart
+spec:
+  chart:
+    name: mychart
+    chartVersion: 1.0.0
+---
+apiVersion: kots.io/v1beta1
 kind: Config
 ---
 apiVersion: apps/v1
@@ -172,6 +220,19 @@ metadata:
 		{
 			name: "mixed annotated and unannotated resources",
 			specFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta1
+kind: HelmChart
+metadata:
+  name: mychart
+spec:
+  chart:
+    name: mychart
+    chartVersion: 1.0.0
+`,
+				},
 				{
 					Name: "good.yaml",
 					Path: "good.yaml",
@@ -254,6 +315,11 @@ func Test_lintHelmInstallType_contextCancel(t *testing.T) {
 	cancel()
 
 	specFiles := domain.SpecFiles{
+		{
+			Name:    "helmchart.yaml",
+			Path:    "helmchart.yaml",
+			Content: "apiVersion: kots.io/v1beta1\nkind: HelmChart\n",
+		},
 		{
 			Name:    "deployment.yaml",
 			Path:    "deployment.yaml",

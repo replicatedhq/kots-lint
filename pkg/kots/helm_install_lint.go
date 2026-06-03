@@ -40,6 +40,12 @@ func lintHelmInstallType(ctx context.Context, specFiles domain.SpecFiles) ([]dom
 		return nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
+	// no lint if there's no HelmChart CR
+	allKotsHelmCharts := findAllKotsHelmCharts(separatedSpecFiles)
+	if len(allKotsHelmCharts) == 0 {
+		return lintExpressions, nil
+	}
+
 	for _, spec := range separatedSpecFiles {
 		// stop early if the caller cancelled or the deadline passed
 		if err := ctx.Err(); err != nil {
