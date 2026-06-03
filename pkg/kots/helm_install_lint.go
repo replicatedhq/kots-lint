@@ -18,12 +18,15 @@ type helmInstallDoc struct {
 	} `yaml:"metadata"`
 }
 
+// https://docs.replicated.com/reference/custom-resource-about
 var replicatedKubernetesAPIVersions = map[string]bool{
+	"app.k8s.io/v1beta1":                     true,
 	"embeddedcluster.replicated.com/v1beta1": true,
 	"cluster.kurl.sh/v1beta1":                true,
 	"kots.io/v1beta1":                        true,
 	"kots.io/v1beta2":                        true,
 	"troubleshoot.sh/v1beta2":                true,
+	"velero.io/v1":                           true,
 }
 
 // lintHelmInstallType checks the requirements for Helm CLI install types, that are
@@ -72,7 +75,7 @@ func lintHelmInstallType(ctx context.Context, specFiles domain.SpecFiles) ([]dom
 			Rule:    "helm-install-type-missing-annotation",
 			Type:    "error",
 			Path:    spec.Path,
-			Message: fmt.Sprintf("%s %s is missing the required kots.io/installer-only annotation for Helm install type", doc.APIVersion, doc.Kind),
+			Message: fmt.Sprintf("%s are raw Kubernetes resources without the kots.io/installer-only annotation. Add this annotation to the resource or remove it to enable Helm CLI install.", spec.Path),
 		})
 	}
 
