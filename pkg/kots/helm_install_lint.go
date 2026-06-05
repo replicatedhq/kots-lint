@@ -26,6 +26,7 @@ var replicatedKubernetesAPIVersions = map[string]bool{
 	"kots.io/v1beta1":                        true,
 	"kots.io/v1beta2":                        true,
 	"troubleshoot.sh/v1beta2":                true,
+	"troubleshoot.sh/v1beta3":                true,
 	"velero.io/v1":                           true,
 }
 
