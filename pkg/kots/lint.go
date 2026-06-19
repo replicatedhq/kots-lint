@@ -255,6 +255,11 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 		return nil, false, errors.Wrap(err, "failed to lint helm charts with helm lint")
 	}
 
+	helmInstalTypeLintExpressions, err := lintHelmInstallType(ctx, renderedFiles)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "failed to lint helm install type")
+	}
+
 	allLintExpressions := []domain.LintExpression{}
 	allLintExpressions = append(allLintExpressions, yamlLintExpressions...)
 	allLintExpressions = append(allLintExpressions, opaNonRenderedLintExpressions...)
@@ -265,7 +270,7 @@ func LintSpecFiles(ctx context.Context, specFiles domain.SpecFiles) ([]domain.Li
 	allLintExpressions = append(allLintExpressions, embeddedClusterLintExpressions...)
 	allLintExpressions = append(allLintExpressions, chartTroubleshootLintExpressions...)
 	allLintExpressions = append(allLintExpressions, helmChartSchemaLintExpressions...)
-
+	allLintExpressions = append(allLintExpressions, helmInstalTypeLintExpressions...)
 	return allLintExpressions, true, nil
 }
 
