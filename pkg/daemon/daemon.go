@@ -4,18 +4,13 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/replicatedcom/saaskit/tracing/datadog"
 	"github.com/replicatedhq/kots-lint/pkg/handlers"
-	"github.com/replicatedhq/kots-lint/pkg/version"
 	log "github.com/sirupsen/logrus"
 	cors "github.com/tommy351/gin-cors"
 )
 
 // Run is the main entry point of the kots lint.
 func Run() {
-	datadog.StartTracer("kots-lint", version.GitSHA())
-	defer datadog.StopTracer()
-
 	debugMode := os.Getenv("DEBUG_MODE")
 	if debugMode != "on" {
 		gin.SetMode(gin.ReleaseMode)
@@ -27,7 +22,6 @@ func Run() {
 			SkipPaths: []string{"/livez"},
 		}),
 		gin.Recovery(),
-		datadog.GinMiddleware("kots-lint"),
 	)
 
 	r.RedirectTrailingSlash = false
@@ -35,7 +29,7 @@ func Run() {
 		cors.Middleware(cors.Options{
 			AllowOrigins:  []string{"*"},
 			AllowMethods:  []string{"GET", "POST", "OPTIONS"},
-			AllowHeaders:  []string{"Origin", "Accept", "Content-Type", "X-Datadog-Trace-Id", "X-Datadog-Parent-Id", "X-Datadog-Sampling-Priority", "X-Datadog-Origin", "Traceparent"},
+			AllowHeaders:  []string{"Origin", "Accept", "Content-Type", "Traceparent"},
 			ExposeHeaders: []string{"Content-Length"},
 		}),
 	)
