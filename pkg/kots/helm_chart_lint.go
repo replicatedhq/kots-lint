@@ -74,6 +74,24 @@ func lintHelmChartsWithHelmLint(renderedFiles domain.SpecFiles, tarGzFiles domai
 			continue
 		}
 
+		// Process dependencies before coalescing so aliased subcharts are keyed under
+		// their alias (not their real Metadata.Name) and disabled subcharts are pruned.
+		// This mirrors helm's install/upgrade pipeline (action.install uses
+		// ProcessDependenciesWithMerge before rendering) and the other lint paths in
+		// this package. Without it, a dependency whose real name collides with a
+		// top-level parent values key merges its defaults under the wrong key and
+		// produces false-positive helm-schema-violations. Mutates ch in place, which is
+		// safe: the chart is loaded fresh for each archive in this loop.
+		if err := chartutil.ProcessDependenciesWithMerge(ch, builderValues); err != nil {
+			lintExpressions = append(lintExpressions, domain.LintExpression{
+				Rule:    "helm-schema-violation",
+				Type:    "warn",
+				Path:    tarGzFile.Path,
+				Message: fmt.Sprintf("Failed to process dependencies for chart %q: %v", ch.Name(), err),
+			})
+			continue
+		}
+
 		// Merge the chart's default values (values.yaml + dependency defaults) with the
 		// HelmChart spec.builder overrides so helm lint sees both.
 		merged, err := chartutil.CoalesceValues(ch, builderValues)
