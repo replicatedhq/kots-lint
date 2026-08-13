@@ -70,6 +70,7 @@
                 "type": "boolean"
               },
               "values": {
+                "description": "Values holds the map form of the optional values. This is the form KOTS decodes at install\ntime, because templates are rendered before the manifest is unmarshalled.",
                 "type": "object",
                 "additionalProperties": {}
               },
