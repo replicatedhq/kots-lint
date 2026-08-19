@@ -91,7 +91,7 @@ require (
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
-	github.com/cilium/ebpf v0.20.0 // indirect
+	github.com/cilium/ebpf v0.22.0 // indirect
 	github.com/cncf/xds/go v0.0.0-20251210132809-ee656c7534f5 // indirect
 	github.com/containerd/cgroups/v3 v3.1.2 // indirect
 	github.com/containerd/containerd v1.7.30 // indirect
@@ -344,7 +344,7 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
