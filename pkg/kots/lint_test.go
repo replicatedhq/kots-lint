@@ -2406,6 +2406,81 @@ spec:
 				},
 			},
 		},
+		{
+			// The real EC v3 image functions accept an optional variadic
+			// noProxy bool as their second argument (see
+			// replicatedhq/ec pkg/template/image_context.go). A release that
+			// passes it must still render; a single-arg stub would raise
+			// "wrong number of args" and false-fail a valid v3 release.
+			name: "case 1: ec v3 image functions accept the variadic noProxy argument",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'repl{{ ReplicatedImageRegistry "gcr.io" true }}'
+      repository: 'repl{{ ReplicatedImageName "gcr.io/edge/operator:1.0" true }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'gcr.io'
+      repository: 'gcr.io/edge/operator:1.0'`,
+				},
+			},
+			expect: []domain.LintExpression{},
+		},
+		{
+			name: "non-ec-v3 release still errors on ReplicatedImageRegistry",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "2.0.0+k8s-1.29"
+  name: '{{repl ReplicatedImageRegistry "myapp" }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "ec-config.yaml",
+					Message: `function "ReplicatedImageRegistry" not defined`,
+					Positions: []domain.LintExpressionItemPosition{
+						{
+							Start: domain.LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

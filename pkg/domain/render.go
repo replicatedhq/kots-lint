@@ -161,12 +161,20 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 // releases because it does no template validation; registering these stubs
 // keeps `release lint` consistent with that behavior. The stubs return their
 // input unchanged, which is sufficient for lint to produce valid rendered YAML.
+//
+// The signatures MUST match the real EC v3 functions or Go template execution
+// raises "wrong number of args" and would false-fail a valid v3 release. Both
+// real functions take the image/registry string plus an optional variadic
+// noProxy bool: ReplicatedImageName(image string, np ...bool) (string, error)
+// and ReplicatedImageRegistry(registry string, np ...bool) (string, error).
+// Confirmed against replicatedhq/ec pkg/template/image_context.go @ 47490b4
+// (imageCtx.replicatedImageName / replicatedImageRegistry).
 type ecV3ImageContext struct{}
 
 func (ctx ecV3ImageContext) FuncMap() texttemplate.FuncMap {
 	return texttemplate.FuncMap{
-		"ReplicatedImageName":     func(image string) string { return image },
-		"ReplicatedImageRegistry": func(registry string) string { return registry },
+		"ReplicatedImageName":     func(image string, _ ...bool) string { return image },
+		"ReplicatedImageRegistry": func(registry string, _ ...bool) string { return registry },
 	}
 }
 

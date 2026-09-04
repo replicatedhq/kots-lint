@@ -860,6 +860,27 @@ spec:
 			forbid: []string{"unable-to-render", "helm-chart-missing", "helm-archive-missing"},
 		},
 		{
+			// kl-byv: the EC v3 image functions must stay withheld from non-v3
+			// releases. An EC v2 Config (version 2.x) using ReplicatedImageRegistry
+			// must still fail to render with unable-to-render, mirroring the
+			// existing ReplicatedImageName withhold assertion.
+			name: "ec_v2_release_still_withholds_replicated_image_registry",
+			files: []specFile{
+				{
+					Name: "ec.yaml", Path: "ec.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+metadata:
+  name: ec
+spec:
+  version: 2.0.0
+  name: '{{repl ReplicatedImageRegistry "gcr.io" }}'
+`,
+				},
+			},
+			want: []string{"unable-to-render"},
+		},
+		{
 			name: "status_informer_invalid_format_and_nonexistent_object",
 			files: []specFile{
 				{
