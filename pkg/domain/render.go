@@ -3,6 +3,7 @@ package domain
 import (
 	"strconv"
 	"strings"
+	texttemplate "text/template"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -150,6 +151,30 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	}
 
 	return b, nil
+}
+
+// ecV3ImageContext provides no-op stand-ins for the template functions that
+// only exist in the Embedded Cluster v3 runtime (ReplicatedImageName /
+// ReplicatedImageRegistry). The KOTS template engine used by lint does not
+// define these functions, so releases that use them (as instructed by the EC
+// v2->v3 migration guide) fail to render. `release create` accepts such
+// releases because it does no template validation; registering these stubs
+// keeps `release lint` consistent with that behavior. The stubs return their
+// input unchanged, which is sufficient for lint to produce valid rendered YAML.
+type ecV3ImageContext struct{}
+
+func (ctx ecV3ImageContext) FuncMap() texttemplate.FuncMap {
+	return texttemplate.FuncMap{
+		"ReplicatedImageName":     func(image string) string { return image },
+		"ReplicatedImageRegistry": func(registry string) string { return registry },
+	}
+}
+
+// ECV3ImageFunctionsContext returns a template context that resolves the
+// Embedded Cluster v3 image template functions to their input. Register it on a
+// builder via builder.AddCtx to allow rendering releases that use them.
+func ECV3ImageFunctionsContext() template.Ctx {
+	return ecV3ImageContext{}
 }
 
 func GetTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {
