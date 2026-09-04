@@ -153,22 +153,7 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	return b, nil
 }
 
-// ecV3ImageContext provides no-op stand-ins for the template functions that
-// only exist in the Embedded Cluster v3 runtime (ReplicatedImageName /
-// ReplicatedImageRegistry). The KOTS template engine used by lint does not
-// define these functions, so releases that use them (as instructed by the EC
-// v2->v3 migration guide) fail to render. `release create` accepts such
-// releases because it does no template validation; registering these stubs
-// keeps `release lint` consistent with that behavior. The stubs return their
-// input unchanged, which is sufficient for lint to produce valid rendered YAML.
-//
-// The signatures MUST match the real EC v3 functions or Go template execution
-// raises "wrong number of args" and would false-fail a valid v3 release. Both
-// real functions take the image/registry string plus an optional variadic
-// noProxy bool: ReplicatedImageName(image string, np ...bool) (string, error)
-// and ReplicatedImageRegistry(registry string, np ...bool) (string, error).
-// Confirmed against replicatedhq/ec pkg/template/image_context.go @ 47490b4
-// (imageCtx.replicatedImageName / replicatedImageRegistry).
+// ecV3ImageContext registers no-op stubs for the EC v3-only ReplicatedImageName/ReplicatedImageRegistry functions so lint can render releases that use them (matching `release create`); the variadic bool mirrors the real signatures in replicatedhq/ec.
 type ecV3ImageContext struct{}
 
 func (ctx ecV3ImageContext) FuncMap() texttemplate.FuncMap {
@@ -178,9 +163,7 @@ func (ctx ecV3ImageContext) FuncMap() texttemplate.FuncMap {
 	}
 }
 
-// ECV3ImageFunctionsContext returns a template context that resolves the
-// Embedded Cluster v3 image template functions to their input. Register it on a
-// builder via builder.AddCtx to allow rendering releases that use them.
+// ECV3ImageFunctionsContext returns a builder.AddCtx context resolving the EC v3 image functions to their input.
 func ECV3ImageFunctionsContext() template.Ctx {
 	return ecV3ImageContext{}
 }

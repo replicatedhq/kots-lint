@@ -709,9 +709,7 @@ func filterHelmTemplatePreflights(files domain.SpecFiles) domain.SpecFiles {
 	return out
 }
 
-// shouldRenderECV3ImageFunctions reports whether the Embedded Cluster v3 image
-// template functions (ReplicatedImageName / ReplicatedImageRegistry) should be
-// made available when rendering specFiles.
+// shouldRenderECV3ImageFunctions reports whether the EC v3 image functions should be available when rendering specFiles.
 //
 // These functions only exist in the EC v3 runtime, but `release create` accepts
 // releases using them regardless (it does no template validation) and the EC
@@ -771,9 +769,7 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 		return nil, nil, errors.Wrap(err, "failed to get template builder")
 	}
 
-	// Make the EC v3 image template functions available unless this is explicitly
-	// an EC v2 (or older) release, so releases using them render successfully and
-	// their HelmChart CRs are retained for archive matching (see kl-byv).
+	// Make the EC v3 image functions available (unless this is an explicit EC v2 release) so releases using them render and retain their HelmChart CRs for archive matching.
 	if shouldRenderECV3ImageFunctions(specFiles) {
 		builder.AddCtx(domain.ECV3ImageFunctionsContext())
 	}
