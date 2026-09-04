@@ -754,8 +754,6 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 		return nil, nil, errors.Wrap(err, "failed to separate multi docs")
 	}
 
-	releaseIsECV3 := isReleaseECV3(specFiles)
-
 	// check if config is valid
 	config, path, err := separatedSpecFiles.FindAndValidateConfig()
 	if err != nil {
@@ -771,6 +769,13 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 	builder, err := domain.GetTemplateBuilder(config)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to get template builder")
+	}
+
+	// Make the EC v3 image template functions available unless this is explicitly
+	// an EC v2 (or older) release, so releases using them render successfully and
+	// their HelmChart CRs are retained for archive matching (see kl-byv).
+	if shouldRenderECV3ImageFunctions(specFiles) {
+		builder.AddCtx(domain.ECV3ImageFunctionsContext())
 	}
 
 	// rendering files is an expensive process, store and return the rendered files
@@ -792,9 +797,6 @@ func lintRenderContent(specFiles domain.SpecFiles) ([]domain.LintExpression, dom
 		}
 		// check if the error is coming from kots RenderTemplate function
 		if renderErr, ok := errors.Cause(err).(domain.RenderTemplateError); ok {
-			if releaseIsECV3 && isECV3IgnoredFunctionError(renderErr.Error()) {
-				continue
-			}
 			lintExpression := domain.LintExpression{
 				Rule:    "unable-to-render",
 				Type:    "error",
