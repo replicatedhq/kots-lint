@@ -3,6 +3,7 @@ package domain
 import (
 	"strconv"
 	"strings"
+	texttemplate "text/template"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -150,6 +151,21 @@ func renderConfig(config *kotsv1beta1.Config) ([]byte, error) {
 	}
 
 	return b, nil
+}
+
+// ecV3ImageContext registers no-op stubs for the EC v3-only ReplicatedImageName/ReplicatedImageRegistry functions so lint can render releases that use them (matching `release create`); the variadic bool mirrors the real signatures in replicatedhq/ec.
+type ecV3ImageContext struct{}
+
+func (ctx ecV3ImageContext) FuncMap() texttemplate.FuncMap {
+	return texttemplate.FuncMap{
+		"ReplicatedImageName":     func(image string, _ ...bool) string { return image },
+		"ReplicatedImageRegistry": func(registry string, _ ...bool) string { return registry },
+	}
+}
+
+// ECV3ImageFunctionsContext returns a builder.AddCtx context resolving the EC v3 image functions to their input.
+func ECV3ImageFunctionsContext() template.Ctx {
+	return ecV3ImageContext{}
 }
 
 func GetTemplateBuilder(config *kotsv1beta1.Config) (*template.Builder, error) {

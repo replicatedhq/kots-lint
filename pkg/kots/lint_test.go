@@ -2243,7 +2243,7 @@ spec:
 			},
 		},
 		{
-			name: "ec v3 release ignores ReplicatedImageName and ReplicatedImageRegistry errors",
+			name: "ec v3 release renders ReplicatedImageName and ReplicatedImageRegistry",
 			specFiles: domain.SpecFiles{
 				{
 					Name: "cluster-config.yaml",
@@ -2261,8 +2261,120 @@ spec:
             registry: '{{repl ReplicatedImageRegistry "myapp" }}'`,
 				},
 			},
-			renderedFiles: domain.SpecFiles{},
-			expect:        []domain.LintExpression{},
+			renderedFiles: domain.SpecFiles{
+				{
+					Name: "cluster-config.yaml",
+					Path: "cluster-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0+k8s-1.34"
+  extensions:
+    helm:
+      charts:
+        - chartname: myapp
+          values: |
+            image: 'myapp'
+            registry: 'myapp'`,
+				},
+			},
+			expect: []domain.LintExpression{},
+		},
+		{
+			name: "case 1: ec v3 image functions render without a co-located ec config",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'repl{{ ReplicatedImageRegistry "gcr.io" }}'
+      repository: 'repl{{ ReplicatedImageName "gcr.io/edge/operator:1.0" }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'gcr.io'
+      repository: 'gcr.io/edge/operator:1.0'`,
+				},
+			},
+			expect: []domain.LintExpression{},
+		},
+		{
+			name: "case 2: ec v3 config present keeps rendered helm chart cr using image functions",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "cluster-config.yaml",
+					Path: "cluster-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0+k8s-1.34"`,
+				},
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'repl{{ ReplicatedImageRegistry "gcr.io" }}'
+      repository: 'repl{{ ReplicatedImageName "gcr.io/edge/operator:1.0" }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{
+				{
+					Name: "cluster-config.yaml",
+					Path: "cluster-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "3.0.0+k8s-1.34"`,
+				},
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'gcr.io'
+      repository: 'gcr.io/edge/operator:1.0'`,
+				},
+			},
+			expect: []domain.LintExpression{},
 		},
 		{
 			name: "non-ec-v3 release still errors on ReplicatedImageName",
@@ -2284,6 +2396,81 @@ spec:
 					Type:    "error",
 					Path:    "ec-config.yaml",
 					Message: `function "ReplicatedImageName" not defined`,
+					Positions: []domain.LintExpressionItemPosition{
+						{
+							Start: domain.LintExpressionItemLinePosition{
+								Line: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// The real EC v3 image functions accept an optional variadic
+			// noProxy bool as their second argument (see
+			// replicatedhq/ec pkg/template/image_context.go). A release that
+			// passes it must still render; a single-arg stub would raise
+			// "wrong number of args" and false-fail a valid v3 release.
+			name: "case 1: ec v3 image functions accept the variadic noProxy argument",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'repl{{ ReplicatedImageRegistry "gcr.io" true }}'
+      repository: 'repl{{ ReplicatedImageName "gcr.io/edge/operator:1.0" true }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{
+				{
+					Name: "helmchart.yaml",
+					Path: "helmchart.yaml",
+					Content: `apiVersion: kots.io/v1beta2
+kind: HelmChart
+metadata:
+  name: myapp
+spec:
+  chart:
+    name: myapp
+    chartVersion: 1.0.0
+  values:
+    image:
+      registry: 'gcr.io'
+      repository: 'gcr.io/edge/operator:1.0'`,
+				},
+			},
+			expect: []domain.LintExpression{},
+		},
+		{
+			name: "non-ec-v3 release still errors on ReplicatedImageRegistry",
+			specFiles: domain.SpecFiles{
+				{
+					Name: "ec-config.yaml",
+					Path: "ec-config.yaml",
+					Content: `apiVersion: embeddedcluster.replicated.com/v1beta1
+kind: Config
+spec:
+  version: "2.0.0+k8s-1.29"
+  name: '{{repl ReplicatedImageRegistry "myapp" }}'`,
+				},
+			},
+			renderedFiles: domain.SpecFiles{},
+			expect: []domain.LintExpression{
+				{
+					Rule:    "unable-to-render",
+					Type:    "error",
+					Path:    "ec-config.yaml",
+					Message: `function "ReplicatedImageRegistry" not defined`,
 					Positions: []domain.LintExpressionItemPosition{
 						{
 							Start: domain.LintExpressionItemLinePosition{
